@@ -17,6 +17,8 @@ public class MavenInvoker implements BuildToolInvoker {
 
   @Override
   public void invoke(Workspace workspace) {
+    System.out.println("Invoking maven build");
+
     InvocationRequest request = new DefaultInvocationRequest();
     request.setPomFile(workspace.getBuildFile().toFile());
     request.setGoals(ImmutableList.of("clean", "install"));
@@ -34,7 +36,7 @@ public class MavenInvoker implements BuildToolInvoker {
         throw new IllegalStateException("Maven build failed.");
       }
     } catch (MavenInvocationException e) {
-
+      throw new RuntimeException(e);
     }
   }
 }

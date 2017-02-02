@@ -45,6 +45,7 @@ public class RuntimeBuilder {
 
     // 1. build the project if necessary
     if (workspace.requiresBuild()) {
+      System.out.println("Initiating building your source...");
       BuildToolInvoker buildTool = buildToolInvokerFactory.get(workspace.getProjectType());
       buildTool.invoke(workspace);
       workspace.setRequiresBuild(false);
@@ -59,6 +60,8 @@ public class RuntimeBuilder {
     } catch (ArtifactNotFoundException e) {
       // TODO
     }
+
+    System.out.println("Preparing to deploy artifact " + deployable.toString());
 
     // 3. stage workspace
     Path STAGING_PATH = Paths.get("/workspace_staging");

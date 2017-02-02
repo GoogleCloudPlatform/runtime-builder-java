@@ -8,12 +8,16 @@
         <outputRelativeToContentRoot value="true" />
         <module name="builder-lib" />
         <module name="docker" />
+        <module name="java-runtime-builder-app" />
+        <module name="java-runtime-builder-docker" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="builder-lib" target="1.8" />
       <module name="docker" target="1.5" />
       <module name="java-runtime-builder" target="1.5" />
+      <module name="java-runtime-builder-app" target="1.8" />
+      <module name="java-runtime-builder-docker" target="1.5" />
     </bytecodeTargetLevel>
   </component>
 </project>

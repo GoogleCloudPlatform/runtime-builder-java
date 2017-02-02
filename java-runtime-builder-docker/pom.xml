@@ -2,15 +2,16 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
   <parent>
     <artifactId>java-runtime-builder</artifactId>
     <groupId>com.google.cloud.runtimes</groupId>
     <version>1.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
-  <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>docker</artifactId>
+  <artifactId>java-runtime-builder-docker</artifactId>
 
   <build>
     <plugins>
@@ -50,12 +51,13 @@
               <artifactItems>
                 <artifactItem>
                   <groupId>com.google.cloud.runtimes</groupId>
-                  <artifactId>builder-lib</artifactId>
-                  <version>1.0-SNAPSHOT</version>
+                  <artifactId>java-runtime-builder-app</artifactId>
+                  <version>${project.version}</version>
                   <type>jar</type>
                   <overWrite>true</overWrite>
                   <includes>**</includes>
                   <outputDirectory>${project.build.directory}/docker</outputDirectory>
+                  <destFileName>java-runtime-builder-app.jar</destFileName>
                 </artifactItem>
               </artifactItems>
             </configuration>
@@ -73,7 +75,7 @@
               <goal>build</goal>
             </goals>
             <configuration>
-              <imageName>java-builder</imageName>
+              <imageName>java-runtime-builder</imageName>
               <imageTags>
                 <!--<imageTag>${docker.tag.short}</imageTag>-->
                 <!--<imageTag>${docker.tag.long}</imageTag>-->
@@ -89,7 +91,7 @@
               <goal>removeImage</goal>
             </goals>
             <configuration>
-              <imageName>jetty</imageName>
+              <imageName>java-runtime-builder</imageName>
               <imageTags>
                 <!--<imageTag>${docker.tag.short}</imageTag>-->
                 <!--<imageTag>${docker.tag.long}</imageTag>-->

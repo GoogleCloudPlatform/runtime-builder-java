@@ -5,6 +5,8 @@
       <module fileurl="file://$PROJECT_DIR$/builder-lib/builder-lib.iml" filepath="$PROJECT_DIR$/builder-lib/builder-lib.iml" />
       <module fileurl="file://$PROJECT_DIR$/docker/docker.iml" filepath="$PROJECT_DIR$/docker/docker.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/java-runtime-builder.iml" filepath="$PROJECT_DIR$/.idea/java-runtime-builder.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java-runtime-builder-app/java-runtime-builder-app.iml" filepath="$PROJECT_DIR$/java-runtime-builder-app/java-runtime-builder-app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/java-runtime-builder-docker/java-runtime-builder-docker.iml" filepath="$PROJECT_DIR$/java-runtime-builder-docker/java-runtime-builder-docker.iml" />
     </modules>
   </component>
 </project>

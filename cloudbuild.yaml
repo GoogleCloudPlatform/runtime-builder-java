@@ -1,0 +1,3 @@
+steps:
+# TODO this should point to the repo statically
+- name: "gcr.io/$PROJECT_ID/java-runtime-builder"

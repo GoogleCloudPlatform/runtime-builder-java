@@ -26,6 +26,8 @@ public class MavenInvoker implements BuildToolInvoker {
     // TODO read from env var / system property
     invoker.setMavenHome(new File("/usr/local/google/home/alexsloan/tools/apache-maven-3.3.9"));
 
+    // TODO also get outputDir property from effective pom
+
     try {
       InvocationResult result = invoker.execute(request);
       if (result.getExitCode() != 0) {

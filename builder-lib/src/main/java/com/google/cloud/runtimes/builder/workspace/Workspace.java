@@ -1,20 +1,18 @@
 package com.google.cloud.runtimes.builder.workspace;
 
+import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
-import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.util.FileUtil;
 import com.google.common.collect.ImmutableList;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Represents a directory containing a Java project.
@@ -24,28 +22,19 @@ public class Workspace {
   private final static List<String> APP_YAML_LOCATIONS
       = ImmutableList.of("app.yaml", "src/main/appengine/app.yaml");
 
-  private final static Map<String, ProjectType> PROJECT_TYPE_MAP;
-
-  static {
-    PROJECT_TYPE_MAP = new HashMap<>();
-    PROJECT_TYPE_MAP.put("pom.xml", ProjectType.MAVEN);
-    PROJECT_TYPE_MAP.put("build.gradle", ProjectType.GRADLE);
-  }
-
   private final Path workspaceDir;
   private final Path buildFile;
   private final RuntimeConfig runtimeConfig;
   private final ProjectType projectType;
   private boolean requiresBuild;
 
-  public Workspace(Path workspaceDir, ProjectType projectType, RuntimeConfig runtimeConfig, boolean requiresBuild, Optional<Path> buildFile) {
+  public Workspace(Path workspaceDir, ProjectType projectType, RuntimeConfig runtimeConfig,
+      boolean requiresBuild, Path buildFile) {
     this.workspaceDir = workspaceDir;
     this.runtimeConfig = runtimeConfig;
     this.projectType = projectType;
     this.requiresBuild = requiresBuild;
-    this.buildFile = buildFile.orElse(null);
-
-    // TODO valdiation, etc? or should this occur in the builder?
+    this.buildFile = buildFile;
   }
 
   public ProjectType getProjectType() {
@@ -64,20 +53,26 @@ public class Workspace {
     this.requiresBuild = requiresBuild;
   }
 
-  public Path findArtifact() throws IOException, TooManyArtifactsException {
+  public Path findArtifact()
+      throws IOException, TooManyArtifactsException, ArtifactNotFoundException {
     // Check if the artifact location is specified in runtimeConfig.
     if (runtimeConfig.getArtifact() != null) {
-      return Paths.get(runtimeConfig.getArtifact());
+      return workspaceDir.resolve(runtimeConfig.getArtifact());
     } else {
       // Search for the artifact in the build output locations.
-      Path buildOutputDir = workspaceDir.resolve(projectType.getOutputPath());
-      List<Path> validArtifacts = FileUtil.findMatchingFilesInDir(buildOutputDir, file -> {
-        String extension = FileUtil.getFileExtension(file.toPath());
+      // TODO also check for overrides in pom.xml, build.gradle
+      Path buildOutputDir = workspaceDir.resolve(projectType.getDefaultOutputPath());
+
+      List<Path> validArtifacts = Files.list(buildOutputDir)
+      // filter out files that don't end in .war or .jar
+      .filter((path) -> {
+        String extension = FileUtil.getFileExtension(path);
         return extension.equals("war") || extension.equals("jar");
-      });
+      })
+      .collect(Collectors.toList());
 
       if (validArtifacts.size() < 1) {
-        throw new FileNotFoundException();
+        throw new ArtifactNotFoundException();
       } else if (validArtifacts.size() > 1) {
         throw new TooManyArtifactsException();
       } else {
@@ -107,53 +102,61 @@ public class Workspace {
 
     public Workspace build() throws IOException {
       if (this.appYaml == null) {
-        // Search for app.yaml within the workspace
-        this.appYaml = APP_YAML_LOCATIONS.stream()
-            .map(pathName -> workspaceDir.resolve(pathName))
-            .filter(path -> Files.exists(path) && Files.isRegularFile(path))
-            .findFirst()
-            .orElseThrow(() -> new FileNotFoundException("app.yaml file not found"));
+        this.appYaml = findAppYaml();
       }
 
-      // Deserialize app.yaml
-      RuntimeConfig runtimeConfig = appYamlParser.parse(appYaml).getRuntimeConfig();
-      if (runtimeConfig == null) {
-        // The user did not specify any options, use defaults.
-        runtimeConfig = new RuntimeConfig();
+      // 1. Deserialize app.yaml
+      AppYaml parsedAppYaml = appYamlParser.parse(appYaml);
+      RuntimeConfig runtimeConfig = parsedAppYaml.getRuntimeConfig() != null
+          ? parsedAppYaml.getRuntimeConfig()
+          : new RuntimeConfig();
+
+      // 2. Identify the project type and locate the build file
+      ProjectType projectType;
+      Optional<Path> buildFile;
+      if (runtimeConfig.getBuildTool() != null) {
+        // the user specified which build tool to use
+        projectType = ProjectType.getForBuildToolName(runtimeConfig.getBuildTool());
+        buildFile = Optional.of(workspaceDir.resolve(projectType.getBuildFileName()));
+      } else {
+        // search for an appropriate build tool
+        buildFile = findBuildFile(); // TODO we should really be able to find both the project type and build file in one go
+        projectType = identifyProjectType(buildFile, runtimeConfig);
       }
 
-      // Identify the project type and locate the build file
-      Optional<Path> buildFile = findBuildFile();
-      ProjectType projectType = identifyProjectType(buildFile);
       boolean requiresBuild = buildFile.isPresent() && !runtimeConfig.getDisableRemoteBuild();
 
-      return new Workspace(workspaceDir, projectType, runtimeConfig, requiresBuild, buildFile);
+      return new Workspace(workspaceDir, projectType, runtimeConfig, requiresBuild,
+          buildFile.orElse(null));
+    }
+
+    // Searches for app.yaml within the workspace
+    private Path findAppYaml() throws FileNotFoundException {
+      return APP_YAML_LOCATIONS.stream()
+          .map(pathName -> workspaceDir.resolve(pathName))
+          .filter(path -> Files.exists(path) && Files.isRegularFile(path))
+          .findFirst()
+          .orElseThrow(() -> new FileNotFoundException("app.yaml file not found"));
     }
 
     private Optional<Path> findBuildFile() throws IOException {
-      // TODO make sure keys are checked in proper order, make sure runtime_config is respected
-      Set<String> fileNames = PROJECT_TYPE_MAP.keySet();
-      for (String fileName : fileNames) {
-        List<Path> matches = FileUtil.findMatchingFilesInDir(workspaceDir,
-          file -> file.getName().equals(fileName));
-        if (!matches.isEmpty()) {
-          return Optional.of(matches.get(0));
-        }
-      }
-      return Optional.empty();
+      // Find a file in the workspace that looks like a recognized build file.
+      return Files.list(workspaceDir)
+          .filter((path) -> Files.isRegularFile(path))
+          .filter((path) -> ProjectType.getForBuildFileName(path.getFileName().toString()) != null)
+          .findFirst();
     }
 
-    private ProjectType identifyProjectType(Optional<Path> buildFile) throws IOException {
-      if (buildFile.isPresent()) {
-        String fileName = buildFile.get().getFileName().toString();
-        if (PROJECT_TYPE_MAP.containsKey(fileName)) {
-          return PROJECT_TYPE_MAP.get(fileName);
-        } else {
-          throw new IllegalStateException(String.format(
-              "Could not identify a project type for a build file named %s", fileName));
-        }
+    private ProjectType identifyProjectType(Optional<Path> buildFile, RuntimeConfig runtimeConfig)
+        throws IOException {
+      if (runtimeConfig.getBuildTool() != null) {
+        // if the build tool has
+        return ProjectType.getForBuildToolName(runtimeConfig.getBuildTool());
+      } else if (buildFile.isPresent()) {
+        return ProjectType.getForBuildFileName(buildFile.get().getFileName().toString());
+      } else {
+        return ProjectType.NONE;
       }
-      return ProjectType.NONE;
     }
   }
 }

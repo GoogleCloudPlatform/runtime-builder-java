@@ -57,6 +57,8 @@ public class Application {
         appYaml = Paths.get(appYamlValue);
       }
 
+      System.out.println("Starting run with workspace: " + workspace.toString());
+
       // Start the application.
       new Application(workspace, appYaml).start();
     }

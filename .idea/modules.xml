@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/builder-lib/builder-lib.iml" filepath="$PROJECT_DIR$/builder-lib/builder-lib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/docker/docker.iml" filepath="$PROJECT_DIR$/docker/docker.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/java-runtime-builder.iml" filepath="$PROJECT_DIR$/.idea/java-runtime-builder.iml" />
     </modules>
   </component>

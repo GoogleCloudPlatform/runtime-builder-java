@@ -4,9 +4,11 @@ import com.google.cloud.runtimes.builder.docker.DefaultDockerfileGenerator;
 import com.google.cloud.runtimes.builder.docker.DockerfileGenerator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
+import com.google.inject.TypeLiteral;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.Properties;
 
 /**
@@ -24,9 +26,16 @@ public class RootModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(Path.class).annotatedWith(AppYamlPath.class).toInstance(appYaml);
-    bind(Path.class).annotatedWith(WorkspacePath.class).toInstance(workspaceDir);
-    bind(DockerfileGenerator.class).to(DefaultDockerfileGenerator.class);
+    bind(new TypeLiteral<Optional<Path>>(){})
+        .annotatedWith(AppYamlPath.class)
+        .toInstance(Optional.ofNullable(appYaml));
+
+    bind(Path.class)
+        .annotatedWith(WorkspacePath.class)
+        .toInstance(workspaceDir);
+
+    bind(DockerfileGenerator.class)
+        .to(DefaultDockerfileGenerator.class);
   }
 
   @Provides

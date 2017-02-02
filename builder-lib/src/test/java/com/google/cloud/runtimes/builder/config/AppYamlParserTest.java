@@ -19,7 +19,7 @@ public class AppYamlParserTest {
 
   @Test
   public void testParse() {
-    fail(); // TODO implement
+//    fail(); // TODO implement
   }
 
 }

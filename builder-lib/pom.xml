@@ -7,6 +7,7 @@
     <groupId>com.google.cloud.runtimes</groupId>
     <artifactId>java-runtime-builder</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
 
   <artifactId>builder-lib</artifactId>
@@ -37,6 +38,12 @@
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.12</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <version>2.7.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>

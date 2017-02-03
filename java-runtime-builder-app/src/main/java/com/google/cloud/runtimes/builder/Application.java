@@ -30,6 +30,7 @@ public class Application {
       runtimeBuilder.run();
     } catch (IOException  e) {
       // TODO handle
+      throw new RuntimeException(e);
     }
   }
 

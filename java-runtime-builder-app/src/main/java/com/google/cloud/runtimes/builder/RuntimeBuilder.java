@@ -11,7 +11,9 @@ import com.google.cloud.runtimes.builder.workspace.TooManyArtifactsException;
 import com.google.cloud.runtimes.builder.workspace.Workspace;
 import com.google.cloud.runtimes.builder.workspace.Workspace.WorkspaceBuilder;
 import com.google.inject.Inject;
+import com.sun.corba.se.spi.extension.CopyObjectPolicy;
 import java.io.IOException;
+import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,13 +54,12 @@ public class RuntimeBuilder {
     }
 
     // 2. try to find an artifact to deploy
-    Path deployable = null;
+    Path deployable;
     try {
       deployable = workspace.findArtifact();
-    } catch (TooManyArtifactsException e) {
+    } catch (TooManyArtifactsException | ArtifactNotFoundException e) {
       // TODO
-    } catch (ArtifactNotFoundException e) {
-      // TODO
+      throw new RuntimeException(e);
     }
 
     System.out.println("Preparing to deploy artifact " + deployable.toString());
@@ -70,9 +71,20 @@ public class RuntimeBuilder {
     // mkdir /workspace_staging
     Files.createDirectory(STAGING_PATH);
 
-    // mv /workspace /workspace_staging
-    Files.move(workspaceDir, STAGING_PATH);
-    Path stagingDir = workspaceDir;
+    // mv /workspace/* /workspace_staging
+    Files.list(workspaceDir).forEach((source) -> {
+      Path subpath = source.subpath(workspaceDir.getNameCount(), source.getNameCount());
+      Path dest = STAGING_PATH.resolve(subpath);
+      System.out.println(String.format("Moving %s to %s", source, dest));
+      try {
+        Files.move(source, dest);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
+
+//    Files.move(workspaceDir, STAGING_PATH);
+//    Path stagingDir = workspaceDir;
 
     // mkdir /workspace
     workspaceDir = Paths.get(workspaceDirName);

@@ -11,7 +11,10 @@ import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 
 /**
- * Invokes a maven build. See also https://maven.apache.org/shared/maven-invoker/usage.html
+ * Invokes a forked maven process. Expects that either the $M2_HOME env variable, or the system
+ * property {@code maven.home} points to a valid maven installation.
+ *
+ * See also https://maven.apache.org/shared/maven-invoker/usage.html
  */
 public class MavenInvoker implements BuildToolInvoker {
 
@@ -25,18 +28,16 @@ public class MavenInvoker implements BuildToolInvoker {
     request.setBatchMode(true);
 
     Invoker invoker = new DefaultInvoker();
-    // TODO read from env var / system property
-    invoker.setMavenHome(new File("/usr/local/google/home/alexsloan/tools/apache-maven-3.3.9"));
-
     // TODO also get outputDir property from effective pom
 
     try {
       InvocationResult result = invoker.execute(request);
       if (result.getExitCode() != 0) {
+        // TODO different exception type?
         throw new IllegalStateException("Maven build failed.");
       }
     } catch (MavenInvocationException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException("An error was encountered invoking Maven", e);
     }
   }
 }

@@ -7,12 +7,12 @@ import com.google.cloud.runtimes.builder.util.FileUtil;
 import com.google.common.collect.ImmutableList;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import org.apache.commons.io.FileUtils;
 
 /**
  * Represents a directory containing a Java project.
@@ -22,11 +22,11 @@ public class Workspace {
   private final static List<String> APP_YAML_LOCATIONS
       = ImmutableList.of("app.yaml", "src/main/appengine/app.yaml");
 
-  private final Path workspaceDir;
   private final Path buildFile;
   private final RuntimeConfig runtimeConfig;
   private final ProjectType projectType;
   private boolean requiresBuild;
+  private Path workspaceDir;
 
   public Workspace(Path workspaceDir, ProjectType projectType, RuntimeConfig runtimeConfig,
       boolean requiresBuild, Path buildFile) {
@@ -53,6 +53,10 @@ public class Workspace {
     this.requiresBuild = requiresBuild;
   }
 
+  public Path getWorkspaceDir() {
+    return this.workspaceDir;
+  }
+
   public Path findArtifact()
       throws IOException, TooManyArtifactsException, ArtifactNotFoundException {
     // Check if the artifact location is specified in runtimeConfig.
@@ -63,13 +67,16 @@ public class Workspace {
       // TODO also check for overrides in pom.xml, build.gradle
       Path buildOutputDir = workspaceDir.resolve(projectType.getDefaultOutputPath());
 
-      List<Path> validArtifacts = Files.list(buildOutputDir)
-      // filter out files that don't end in .war or .jar
-      .filter((path) -> {
-        String extension = FileUtil.getFileExtension(path);
-        return extension.equals("war") || extension.equals("jar");
-      })
-      .collect(Collectors.toList());
+      List<Path> validArtifacts = new ArrayList<>();
+      if (Files.exists(buildOutputDir) && Files.isDirectory(buildOutputDir)) {
+        Files.list(buildOutputDir)
+            // filter out files that don't end in .war or .jar
+            .filter((path) -> {
+              String extension = FileUtil.getFileExtension(path);
+              return extension.equals("war") || extension.equals("jar");
+            })
+            .forEach(validArtifacts::add);
+      }
 
       if (validArtifacts.size() < 1) {
         throw new ArtifactNotFoundException();
@@ -79,6 +86,16 @@ public class Workspace {
         return validArtifacts.get(0);
       }
     }
+  }
+
+  /**
+   * Empties the workspace and moves all contents to the destination directory. The destination
+   * directory becomes the new workspaceDir.
+   */
+  public void moveContentsTo(Path dest) throws IOException {
+    FileUtils.copyDirectory(workspaceDir.toFile(), dest.toFile());
+    FileUtils.cleanDirectory(workspaceDir.toFile());
+    workspaceDir = dest;
   }
 
   /**

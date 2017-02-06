@@ -24,7 +24,7 @@ public class MavenInvoker implements BuildToolInvoker {
 
     InvocationRequest request = new DefaultInvocationRequest();
     request.setPomFile(workspace.getBuildFile().toFile());
-    request.setGoals(ImmutableList.of("clean", "install"));
+    request.setGoals(ImmutableList.of("-DskipTests=true", "clean", "install"));
     request.setBatchMode(true);
 
     Invoker invoker = new DefaultInvoker();

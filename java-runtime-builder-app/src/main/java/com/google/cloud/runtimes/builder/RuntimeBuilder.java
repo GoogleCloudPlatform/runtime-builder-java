@@ -11,15 +11,15 @@ import com.google.cloud.runtimes.builder.workspace.TooManyArtifactsException;
 import com.google.cloud.runtimes.builder.workspace.Workspace;
 import com.google.cloud.runtimes.builder.workspace.Workspace.WorkspaceBuilder;
 import com.google.inject.Inject;
-import com.sun.corba.se.spi.extension.CopyObjectPolicy;
 import java.io.IOException;
-import java.nio.file.CopyOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
 public class RuntimeBuilder {
+
+  private static final String STAGING_DIR_NAME = "workspace_staging";
 
   private final DockerfileGenerator dockerfileGenerator;
   private final BuildToolInvokerFactory buildToolInvokerFactory;
@@ -53,7 +53,12 @@ public class RuntimeBuilder {
       workspace.setRequiresBuild(false);
     }
 
-    // 2. try to find an artifact to deploy
+    // 2. stage the workspace
+    Path originalWorkspaceDir = workspace.getWorkspaceDir();
+    Path stagingPath = workspace.getWorkspaceDir().resolveSibling(Paths.get(STAGING_DIR_NAME));
+    workspace.moveContentsTo(stagingPath);
+
+    // 3. try to find an artifact to deploy
     Path deployable;
     try {
       deployable = workspace.findArtifact();
@@ -62,38 +67,12 @@ public class RuntimeBuilder {
       throw new RuntimeException(e);
     }
 
+    // 4. put the artifact in the workspace, update our reference to the artifact
+    Files.copy(deployable, (deployable = originalWorkspaceDir.resolve(deployable.getFileName())));
+
     System.out.println("Preparing to deploy artifact " + deployable.toString());
 
-    // 3. stage workspace
-    Path STAGING_PATH = Paths.get("/workspace_staging");
-    String workspaceDirName = workspaceDir.toString();
-
-    // mkdir /workspace_staging
-    Files.createDirectory(STAGING_PATH);
-
-    // mv /workspace/* /workspace_staging
-    Files.list(workspaceDir).forEach((source) -> {
-      Path subpath = source.subpath(workspaceDir.getNameCount(), source.getNameCount());
-      Path dest = STAGING_PATH.resolve(subpath);
-      System.out.println(String.format("Moving %s to %s", source, dest));
-      try {
-        Files.move(source, dest);
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    });
-
-//    Files.move(workspaceDir, STAGING_PATH);
-//    Path stagingDir = workspaceDir;
-
-    // mkdir /workspace
-    workspaceDir = Paths.get(workspaceDirName);
-    Files.createDirectory(workspaceDir);
-
-    // cp /workspace_staging/<path_to_deployable> workspace/<deployable_name>
-//    Files.copy() TODO
-
-    // 4. generate dockerfile
+    // 5. generate dockerfile
     String dockerfile = dockerfileGenerator.generateDockerfile(deployable);
 
     System.out.println("Generated dockerfile:\n");

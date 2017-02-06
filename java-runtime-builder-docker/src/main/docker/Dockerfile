@@ -13,5 +13,5 @@ RUN mkdir -p /usr/share/maven /usr/share/maven/ref \
 
 ENV M2_HOME /usr/share/maven
 
-ADD java-runtime-builder-app.jar java-runtime-builder-app.jar
-ENTRYPOINT ["java", "-jar", "java-runtime-builder-app.jar"]
+ADD java-runtime-builder-app.jar /java-runtime-builder-app.jar
+ENTRYPOINT ["java", "-jar", "/java-runtime-builder-app.jar"]

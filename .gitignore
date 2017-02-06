@@ -10,4 +10,6 @@
 .idea/.name
 **/*.iml
 
-**/target
+target/**
+java-runtime-builder-docker/target/**
+java-runtime-builder-app/target/**

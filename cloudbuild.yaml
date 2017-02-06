@@ -1,4 +1,9 @@
 steps:
-# TODO this should point to the repo statically
+# TODO this should point to the repo statically. need to figure out how we'll release this in order to get the hash in here
 - name: "gcr.io/$PROJECT_ID/java-runtime-builder"
   args: ["--workspace", "/workspace"]
+
+- name: "gcr.io/cloud-builders/docker"
+  args: ["build", "-t", "gcr.io/$PROJECT_ID/user-app-img", "."]
+
+images: ["gcr.io/$PROJECT_ID/user-app-img"]

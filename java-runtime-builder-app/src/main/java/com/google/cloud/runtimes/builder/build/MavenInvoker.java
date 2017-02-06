@@ -9,6 +9,8 @@ import org.apache.maven.shared.invoker.InvocationRequest;
 import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Invokes a forked maven process. Expects that either the $M2_HOME env variable, or the system
@@ -18,9 +20,11 @@ import org.apache.maven.shared.invoker.MavenInvocationException;
  */
 public class MavenInvoker implements BuildToolInvoker {
 
+  private final Logger logger = LoggerFactory.getLogger(MavenInvoker.class);
+
   @Override
   public void invoke(Workspace workspace) {
-    System.out.println("Invoking maven build");
+    logger.info("Invoking maven build");
 
     InvocationRequest request = new DefaultInvocationRequest();
     request.setPomFile(workspace.getBuildFile().toFile());

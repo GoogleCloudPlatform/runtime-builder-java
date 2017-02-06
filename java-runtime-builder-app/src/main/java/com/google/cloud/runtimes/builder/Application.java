@@ -1,7 +1,6 @@
 package com.google.cloud.runtimes.builder;
 
 import com.google.cloud.runtimes.builder.injection.RootModule;
-import com.google.cloud.runtimes.builder.workspace.TooManyArtifactsException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import java.io.IOException;
@@ -17,7 +16,6 @@ import org.apache.commons.cli.ParseException;
 public class Application {
 
   private static final String EXECUTABLE_NAME = "java-builder";
-
   private final RuntimeBuilder runtimeBuilder;
 
   public Application(Path workspaceDir, Path appYaml) {
@@ -57,8 +55,6 @@ public class Application {
       if (appYamlValue != null) {
         appYaml = Paths.get(appYamlValue);
       }
-
-      System.out.println("Starting run with workspace: " + workspace.toString());
 
       // Start the application.
       new Application(workspace, appYaml).start();

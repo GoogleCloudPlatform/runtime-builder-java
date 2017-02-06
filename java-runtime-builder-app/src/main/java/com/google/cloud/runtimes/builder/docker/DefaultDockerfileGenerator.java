@@ -13,7 +13,7 @@ import java.util.Properties;
 public class DefaultDockerfileGenerator implements DockerfileGenerator {
 
   // TODO externalize
-  private static final String DOCKERFILE = "FROM $BASE_RUNTIME\nADD $APP_NAME /app";
+  private static final String DOCKERFILE = "FROM $BASE_RUNTIME\nADD $APP_NAME /app\n";
 
   private TemplateRenderer templateRenderer;
   private Properties runtimeDigests;

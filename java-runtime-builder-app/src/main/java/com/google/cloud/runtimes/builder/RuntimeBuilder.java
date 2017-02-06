@@ -11,16 +11,21 @@ import com.google.cloud.runtimes.builder.workspace.TooManyArtifactsException;
 import com.google.cloud.runtimes.builder.workspace.Workspace;
 import com.google.cloud.runtimes.builder.workspace.Workspace.WorkspaceBuilder;
 import com.google.inject.Inject;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RuntimeBuilder {
 
   private static final String STAGING_DIR_NAME = "workspace_staging";
 
+  private final Logger logger = LoggerFactory.getLogger(RuntimeBuilder.class);
   private final DockerfileGenerator dockerfileGenerator;
   private final BuildToolInvokerFactory buildToolInvokerFactory;
   private final Optional<Path> appYaml;
@@ -47,13 +52,13 @@ public class RuntimeBuilder {
 
     // 1. build the project if necessary
     if (workspace.requiresBuild()) {
-      System.out.println("Initiating building your source...");
+      logger.info("Initiating building your source...");
       BuildToolInvoker buildTool = buildToolInvokerFactory.get(workspace.getProjectType());
       buildTool.invoke(workspace);
       workspace.setRequiresBuild(false);
     }
 
-    // 2. stage the workspace
+    // 2. clear the source files from the workspace
     Path originalWorkspaceDir = workspace.getWorkspaceDir();
     Path stagingPath = workspace.getWorkspaceDir().resolveSibling(Paths.get(STAGING_DIR_NAME));
     workspace.moveContentsTo(stagingPath);
@@ -67,16 +72,21 @@ public class RuntimeBuilder {
       throw new RuntimeException(e);
     }
 
-    // 4. put the artifact in the workspace, update our reference to the artifact
+    // 4. put the artifact at the root of the original workspace
     Files.copy(deployable, (deployable = originalWorkspaceDir.resolve(deployable.getFileName())));
-
-    System.out.println("Preparing to deploy artifact " + deployable.toString());
+    logger.info("Preparing to deploy artifact " + deployable.toString());
 
     // 5. generate dockerfile
-    String dockerfile = dockerfileGenerator.generateDockerfile(deployable);
+    String dockerfile = dockerfileGenerator.generateDockerfile(deployable.getFileName());
+    Path dockerFileDest = originalWorkspaceDir.resolve("Dockerfile");
 
-    System.out.println("Generated dockerfile:\n");
-    System.out.println(dockerfile);
+    try (BufferedWriter writer
+        = Files.newBufferedWriter(dockerFileDest, StandardCharsets.US_ASCII)) {
+      writer.write(dockerfile);
+    }
+
+    logger.info("Generated dockerfile:");
+    logger.info(dockerfile);
   }
 
 }

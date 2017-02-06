@@ -91,6 +91,8 @@ public class Workspace {
   /**
    * Empties the workspace and moves all contents to the destination directory. The destination
    * directory becomes the new workspaceDir.
+   * @param dest the destination for the move
+   * @throws IOException if there was an error accessing the file system
    */
   public void moveContentsTo(Path dest) throws IOException {
     FileUtils.copyDirectory(workspaceDir.toFile(), dest.toFile());

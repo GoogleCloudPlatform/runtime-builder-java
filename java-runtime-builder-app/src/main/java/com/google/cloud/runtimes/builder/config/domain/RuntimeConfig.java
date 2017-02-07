@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class RuntimeConfig {
 
   private boolean disableRemoteBuild = false;
-  private String buildTool;
+  private BuildTool buildTool;
   private String artifact;
   private String server;
   private String jdk;
@@ -22,11 +22,11 @@ public class RuntimeConfig {
   }
 
   @JsonProperty("build_tool")
-  public String getBuildTool() {
+  public BuildTool getBuildTool() {
     return buildTool;
   }
 
-  public void setBuildTool(String buildTool) {
+  public void setBuildTool(BuildTool buildTool) {
     this.buildTool = buildTool;
   }
 
@@ -53,4 +53,5 @@ public class RuntimeConfig {
   public void setJdk(String jdk) {
     this.jdk = jdk;
   }
+
 }

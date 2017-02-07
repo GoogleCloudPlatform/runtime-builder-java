@@ -3,6 +3,7 @@ package com.google.cloud.runtimes.builder.build;
 import com.google.cloud.runtimes.builder.workspace.Workspace;
 import com.google.common.collect.ImmutableList;
 import java.io.File;
+import java.io.FileNotFoundException;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
@@ -27,7 +28,11 @@ public class MavenInvoker implements BuildToolInvoker {
     logger.info("Invoking maven build");
 
     InvocationRequest request = new DefaultInvocationRequest();
-    request.setPomFile(workspace.getBuildFile().toFile());
+    try {
+      request.setPomFile(workspace.getBuildFile().toFile());
+    } catch (FileNotFoundException e) {
+      // TODO rethrow
+    }
     request.setGoals(ImmutableList.of("-DskipTests=true", "clean", "install"));
     request.setBatchMode(true);
 

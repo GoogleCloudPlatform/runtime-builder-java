@@ -18,6 +18,7 @@ public class AppYamlParser implements YamlParser<AppYaml> {
 
   @Override
   public AppYaml parse(Path yamlFilePath) throws IOException {
+    // TODO validation logic, i.e. should not have both build_tool and disable_build specified
     return objectMapper.readValue(yamlFilePath.toFile(), AppYaml.class);
   }
 }

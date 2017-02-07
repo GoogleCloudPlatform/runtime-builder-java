@@ -6,8 +6,10 @@ import com.google.cloud.runtimes.builder.config.AppYamlParser;
 import com.google.cloud.runtimes.builder.docker.DockerfileGenerator;
 import com.google.cloud.runtimes.builder.injection.AppYamlPath;
 import com.google.cloud.runtimes.builder.injection.WorkspacePath;
-import com.google.cloud.runtimes.builder.workspace.ArtifactNotFoundException;
-import com.google.cloud.runtimes.builder.workspace.TooManyArtifactsException;
+import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
+import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
+import com.google.cloud.runtimes.builder.exception.WorkspaceConfigurationException;
+import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import com.google.cloud.runtimes.builder.workspace.Workspace;
 import com.google.cloud.runtimes.builder.workspace.Workspace.WorkspaceBuilder;
 import com.google.inject.Inject;
@@ -44,39 +46,33 @@ public class RuntimeBuilder {
     this.appYaml = appYaml;
   }
 
-  public void run() throws IOException {
-    // 0. initialize and validate the workspace
+  public void run()
+      throws IOException, AppYamlNotFoundException, WorkspaceConfigurationException, TooManyArtifactsException, ArtifactNotFoundException {
+    // 0. Initialize and validate the workspace.
     Workspace workspace = new WorkspaceBuilder(appYamlParser, workspaceDir)
-          .appYaml(appYaml.orElse(null))
-          .build();
+        .appYaml(appYaml.orElse(null))
+        .build();
 
-    // 1. build the project if necessary
-    if (workspace.requiresBuild()) {
+    // 1. Build the project if necessary
+    if (workspace.isBuildable()) {
       logger.info("Initiating building your source...");
-      BuildToolInvoker buildTool = buildToolInvokerFactory.get(workspace.getProjectType());
+      BuildToolInvoker buildTool = buildToolInvokerFactory.get(workspace.getBuildTool().get());
       buildTool.invoke(workspace);
-      workspace.setRequiresBuild(false);
     }
 
-    // 2. clear the source files from the workspace
+    // 2. Clear the source files from the workspace
     Path originalWorkspaceDir = workspace.getWorkspaceDir();
     Path stagingPath = workspace.getWorkspaceDir().resolveSibling(Paths.get(STAGING_DIR_NAME));
     workspace.moveContentsTo(stagingPath);
 
-    // 3. try to find an artifact to deploy
-    Path deployable;
-    try {
-      deployable = workspace.findArtifact();
-    } catch (TooManyArtifactsException | ArtifactNotFoundException e) {
-      // TODO
-      throw new RuntimeException(e);
-    }
+    // 3. Try to find an artifact to deploy
+    Path deployable = workspace.findArtifact();
 
-    // 4. put the artifact at the root of the original workspace
+    // 4. Put the artifact at the root of the original workspace
     Files.copy(deployable, (deployable = originalWorkspaceDir.resolve(deployable.getFileName())));
     logger.info("Preparing to deploy artifact " + deployable.toString());
 
-    // 5. generate dockerfile
+    // 5. Generate dockerfile
     String dockerfile = dockerfileGenerator.generateDockerfile(deployable.getFileName());
     Path dockerFileDest = originalWorkspaceDir.resolve("Dockerfile");
 

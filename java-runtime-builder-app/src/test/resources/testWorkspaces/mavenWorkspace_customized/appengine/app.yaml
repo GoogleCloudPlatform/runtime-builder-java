@@ -2,6 +2,5 @@ runtime: java
 env: flex
 
 runtime_config:
-  build_tool: maven
   disable_remote_build: true
   artifact: my_output_dir/artifact.jar

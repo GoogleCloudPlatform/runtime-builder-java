@@ -4,11 +4,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.google.cloud.runtimes.builder.config.domain.BuildTool;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
+import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
+import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
@@ -26,51 +30,45 @@ public class WorkspaceTest {
     return destDir;
   }
 
-  private Workspace createTestWorkspace(String workspacePath, ProjectType projectType)
-      throws IOException {
-    return new Workspace(getTestDataDir(workspacePath), projectType, new RuntimeConfig(),
-        false, null);
+  private Workspace createTestWorkspace(String workspacePath, BuildTool buildTool)
+      throws Exception {
+    return new Workspace(getTestDataDir(workspacePath), Optional.ofNullable(buildTool),
+        new RuntimeConfig(), false);
   }
 
   @Test
-  public void testFindArtifact_simple()
-      throws ArtifactNotFoundException, IOException, TooManyArtifactsException {
-    Path artifact = createTestWorkspace("simple", ProjectType.NONE).findArtifact();
+  public void testFindArtifact_simple() throws Exception {
+    Path artifact = createTestWorkspace("simple", null).findArtifact();
     assertEquals("foo.war", artifact.getFileName().toString());
   }
 
   @Test(expected = ArtifactNotFoundException.class)
-  public void testFindArtifact_notFound()
-      throws ArtifactNotFoundException, IOException, TooManyArtifactsException {
-    createTestWorkspace("noArtifact", ProjectType.NONE).findArtifact();
+  public void testFindArtifact_notFound() throws Exception {
+    createTestWorkspace("noArtifact", null).findArtifact();
   }
 
   @Test(expected = TooManyArtifactsException.class)
-  public void testFindArtifact_tooMany()
-      throws ArtifactNotFoundException, IOException, TooManyArtifactsException {
-    createTestWorkspace("ambiguousArtifacts", ProjectType.NONE).findArtifact();
+  public void testFindArtifact_tooMany() throws Exception {
+    createTestWorkspace("ambiguousArtifacts", null).findArtifact();
   }
 
   @Test
-  public void testFindArtifact_mavenWorkspace()
-      throws ArtifactNotFoundException, IOException, TooManyArtifactsException {
-    Path artifact = createTestWorkspace("mavenWorkspace", ProjectType.MAVEN)
+  public void testFindArtifact_mavenWorkspace() throws Exception {
+    Path artifact = createTestWorkspace("mavenWorkspace", BuildTool.MAVEN)
         .findArtifact();
     assertEquals("artifact.jar", artifact.getFileName().toString());
   }
 
   @Test
-  public void testFindArtifact_gradleWorkspace()
-      throws ArtifactNotFoundException, IOException, TooManyArtifactsException {
-    Path artifact = createTestWorkspace("gradleWorkspace", ProjectType.GRADLE)
+  public void testFindArtifact_gradleWorkspace() throws Exception {
+    Path artifact = createTestWorkspace("gradleWorkspace", BuildTool.GRADLE)
         .findArtifact();
     assertEquals("artifact.jar", artifact.getFileName().toString());
   }
 
   @Test
-  public void testMoveContentsTo()
-      throws IOException, TooManyArtifactsException, ArtifactNotFoundException {
-    Workspace workspace = createTestWorkspace("mavenWorkspace", ProjectType.MAVEN);
+  public void testMoveContentsTo() throws Exception {
+    Workspace workspace = createTestWorkspace("mavenWorkspace", BuildTool.MAVEN);
 
     // make a tmp copy for performing assertions on content
     Path originalWorkspaceCopy = Files.createTempDirectory(null);

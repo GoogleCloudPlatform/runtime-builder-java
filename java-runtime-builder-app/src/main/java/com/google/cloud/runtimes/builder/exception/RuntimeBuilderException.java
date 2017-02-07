@@ -6,4 +6,8 @@ public class RuntimeBuilderException extends Exception {
     super(message);
   }
 
+  public RuntimeBuilderException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
 }

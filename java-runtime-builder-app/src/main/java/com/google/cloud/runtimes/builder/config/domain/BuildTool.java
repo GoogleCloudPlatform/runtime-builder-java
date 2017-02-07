@@ -43,13 +43,13 @@ public enum BuildTool {
    * Looks up the {@link BuildTool} associated with the given build file.
    */
   public static BuildTool getForBuildFile(Path buildFilePath) {
-    // TODO refactor
     String fileName = buildFilePath.getFileName().toString();
     if (fileName.equals("pom.xml")) {
       return BuildTool.MAVEN;
     } else if (fileName.equals("build.gradle")) {
       return BuildTool.GRADLE;
     } else {
+      // TODO not this
       return null;
     }
   }

@@ -2,14 +2,16 @@ package com.google.cloud.runtimes.builder.docker;
 
 import com.google.cloud.runtimes.builder.template.TemplateRenderer;
 import com.google.cloud.runtimes.builder.util.FileUtil;
-import com.google.inject.Inject;
-import java.io.IOException;
-import java.io.InputStream;
+
 import java.nio.file.Path;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
+/**
+ * Default implementation of a {@link DockerfileGenerator}.
+ */
 public class DefaultDockerfileGenerator implements DockerfileGenerator {
 
   // TODO externalize
@@ -18,12 +20,15 @@ public class DefaultDockerfileGenerator implements DockerfileGenerator {
   private TemplateRenderer templateRenderer;
   private Properties runtimeDigests;
 
-  @Inject
+  /**
+   * Constructs a new {@link DefaultDockerfileGenerator}.
+   */
   public DefaultDockerfileGenerator(TemplateRenderer templateRenderer, Properties runtimeDigests) {
     this.templateRenderer = templateRenderer;
     this.runtimeDigests = runtimeDigests;
   }
 
+  @Override
   public String generateDockerfile(Path artifactToDeploy) {
     String fileType = FileUtil.getFileExtension(artifactToDeploy);
     String runtime;
@@ -36,7 +41,8 @@ public class DefaultDockerfileGenerator implements DockerfileGenerator {
       throw new IllegalArgumentException("Unable to determine runtime");
     }
 
-    String baseImage = String.format("gcr.io/google_appengine/%s@%s", runtime, runtimeDigests.getProperty(runtime));
+    String baseImage = String.format("gcr.io/google_appengine/%s@%s",
+        runtime, runtimeDigests.getProperty(runtime));
     Map<String,String> variables = new HashMap<>();
     variables.put("$BASE_RUNTIME", baseImage);
     variables.put("$APP_NAME", artifactToDeploy.toString());

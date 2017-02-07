@@ -4,15 +4,16 @@ import com.google.cloud.runtimes.builder.build.BuildToolInvoker;
 import com.google.cloud.runtimes.builder.build.BuildToolInvokerFactory;
 import com.google.cloud.runtimes.builder.config.AppYamlParser;
 import com.google.cloud.runtimes.builder.docker.DockerfileGenerator;
+import com.google.cloud.runtimes.builder.exception.RuntimeBuilderException;
 import com.google.cloud.runtimes.builder.injection.AppYamlPath;
 import com.google.cloud.runtimes.builder.injection.WorkspacePath;
-import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
-import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
-import com.google.cloud.runtimes.builder.exception.WorkspaceConfigurationException;
-import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import com.google.cloud.runtimes.builder.workspace.Workspace;
 import com.google.cloud.runtimes.builder.workspace.Workspace.WorkspaceBuilder;
 import com.google.inject.Inject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -20,9 +21,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+/**
+ * Handles the main logic required to build a runtime.
+ */
 public class RuntimeBuilder {
 
   private static final String STAGING_DIR_NAME = "workspace_staging";
@@ -34,6 +36,9 @@ public class RuntimeBuilder {
   private final AppYamlParser appYamlParser;
   private Path workspaceDir;
 
+  /**
+   * Constructs a new {@link RuntimeBuilder}.
+   */
   @Inject
   public RuntimeBuilder(DockerfileGenerator dockerfileGenerator,
       BuildToolInvokerFactory buildToolInvokerFactory,
@@ -46,8 +51,14 @@ public class RuntimeBuilder {
     this.appYaml = appYaml;
   }
 
-  public void run()
-      throws IOException, AppYamlNotFoundException, WorkspaceConfigurationException, TooManyArtifactsException, ArtifactNotFoundException {
+  /**
+   * Runs through the main logic of building a runtime. Modifies the workspace directory so that it
+   * only contains a deployable artifact and a Dockerfile.
+   *
+   * @throws IOException if low-level IO error was encountered
+   * @throws RuntimeBuilderException if the given workspace is invalid and/or misconfigured
+   */
+  public void run() throws IOException, RuntimeBuilderException {
     // 0. Initialize and validate the workspace.
     Workspace workspace = new WorkspaceBuilder(appYamlParser, workspaceDir)
         .appYaml(appYaml.orElse(null))

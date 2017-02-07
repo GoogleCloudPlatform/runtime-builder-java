@@ -5,6 +5,7 @@ import com.google.cloud.runtimes.builder.docker.DockerfileGenerator;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -40,8 +41,8 @@ public class RootModule extends AbstractModule {
 
   @Provides
   Properties provideRuntimeDigestsProperties() {
-    InputStream runtimeDigestsStream
-        = DefaultDockerfileGenerator.class.getClassLoader().getResourceAsStream("runtimes.properties");
+    InputStream runtimeDigestsStream = DefaultDockerfileGenerator.class.getClassLoader()
+        .getResourceAsStream("runtimes.properties");
     if (runtimeDigestsStream == null) {
       throw new IllegalStateException("runtimes.properties file not found on classpath");
     }

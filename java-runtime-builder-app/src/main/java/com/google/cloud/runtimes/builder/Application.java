@@ -1,12 +1,10 @@
 package com.google.cloud.runtimes.builder;
 
-import com.google.cloud.runtimes.builder.injection.RootModule;
 import com.google.cloud.runtimes.builder.exception.RuntimeBuilderException;
+import com.google.cloud.runtimes.builder.injection.RootModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -14,6 +12,13 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+/**
+ * Top-level class for executing from the command line.
+ */
 public class Application {
 
   private static final Options CLI_OPTIONS = new Options();
@@ -25,11 +30,19 @@ public class Application {
     CLI_OPTIONS.addOption("w", "workspace", true, "absolute path to workspace directory");
   }
 
+  /**
+   * Constructs a new {@link Application} instance.
+   * @param workspaceDir the source directory that this application will act on
+   * @param appYaml the app.yaml configuration file
+   */
   public Application(Path workspaceDir, Path appYaml) {
     Injector injector = Guice.createInjector(new RootModule(workspaceDir, appYaml));
     this.runtimeBuilder = injector.getInstance(RuntimeBuilder.class);
   }
 
+  /**
+   * Initiates the application's run.
+   */
   public void start() {
     try {
       runtimeBuilder.run();

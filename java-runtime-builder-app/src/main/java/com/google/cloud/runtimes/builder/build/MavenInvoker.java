@@ -2,8 +2,7 @@ package com.google.cloud.runtimes.builder.build;
 
 import com.google.cloud.runtimes.builder.workspace.Workspace;
 import com.google.common.collect.ImmutableList;
-import java.io.File;
-import java.io.FileNotFoundException;
+
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
@@ -13,11 +12,12 @@ import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileNotFoundException;
+
 /**
  * Invokes a forked maven process. Expects that either the $M2_HOME env variable, or the system
  * property {@code maven.home} points to a valid maven installation.
- *
- * See also https://maven.apache.org/shared/maven-invoker/usage.html
+ * <p>See also https://maven.apache.org/shared/maven-invoker/usage.html</p>
  */
 public class MavenInvoker implements BuildToolInvoker {
 

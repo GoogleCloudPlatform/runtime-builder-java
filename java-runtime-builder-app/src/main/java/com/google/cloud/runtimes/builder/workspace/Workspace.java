@@ -10,6 +10,9 @@ import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import com.google.cloud.runtimes.builder.exception.WorkspaceConfigurationException;
 import com.google.cloud.runtimes.builder.util.FileUtil;
 import com.google.common.collect.ImmutableList;
+
+import org.apache.commons.io.FileUtils;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,14 +21,13 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import org.apache.commons.io.FileUtils;
 
 /**
  * Represents a directory containing a Java project.
  */
 public class Workspace {
 
-  private final static List<String> APP_YAML_LOCATIONS
+  private static final List<String> APP_YAML_LOCATIONS
       = ImmutableList.of("app.yaml", "src/main/appengine/app.yaml");
 
   private final RuntimeConfig runtimeConfig;
@@ -33,7 +35,16 @@ public class Workspace {
   private final boolean requiresBuild;
   private Path workspaceDir;
 
-  public Workspace(Path workspaceDir, Optional<BuildTool> buildTool, RuntimeConfig runtimeConfig,
+  /**
+   * Constructs a new {@link Workspace}.
+   *
+   * @param workspaceDir the directory containing the workspace
+   * @param buildTool the buildTool that the workspace will be built with
+   * @param runtimeConfig the user-provided configuration
+   * @param requiresBuild true if a build must be performed in this workspace
+   * @throws WorkspaceConfigurationException if the workspace requires a build, but is not buildable
+   */
+  Workspace(Path workspaceDir, Optional<BuildTool> buildTool, RuntimeConfig runtimeConfig,
       boolean requiresBuild) throws WorkspaceConfigurationException {
     this.workspaceDir = workspaceDir;
     this.runtimeConfig = runtimeConfig;
@@ -46,10 +57,19 @@ public class Workspace {
     }
   }
 
+  /**
+   * Returns the configured build tool.
+   */
   public Optional<BuildTool> getBuildTool() {
     return this.buildTool;
   }
 
+  /**
+   * Finds and returns the build file that should be used to build the code in this workspace, based
+   * on the {@link BuildTool} that is configured.
+   *
+   * @throws FileNotFoundException if a build file could not be found
+   */
   public Path getBuildFile() throws FileNotFoundException {
     Path buildFilePath = workspaceDir.resolve(buildTool
         .orElseThrow(FileNotFoundException::new)
@@ -62,25 +82,42 @@ public class Workspace {
     return buildFilePath;
   }
 
+  /**
+   * Returns true if this workspace must be built before it can be deployed.
+   */
   public boolean requiresBuild() {
     return requiresBuild;
   }
 
+  /**
+   * Returns true if this workspace is correctly configured for a build to be executed.
+   */
   public boolean isBuildable() {
     boolean buildFileExists;
     try {
       getBuildFile();
       buildFileExists = true;
-    } catch (FileNotFoundException e){
+    } catch (FileNotFoundException e) {
       buildFileExists = false;
     }
     return getBuildTool().isPresent() && buildFileExists && !runtimeConfig.getDisableRemoteBuild();
   }
 
+  /**
+   * Returns a reference to the directory that this {@link Workspace} encapsulates.
+   */
   public Path getWorkspaceDir() {
     return this.workspaceDir;
   }
 
+  /**
+   * Searches the workspace for a valid deployable artifact.
+   *
+   * @return the path to the discovered artifact
+   * @throws IOException if a low-level IO exception was encountered
+   * @throws TooManyArtifactsException if ambiguous artifacts were found
+   * @throws ArtifactNotFoundException if no valid artifacts were found
+   */
   public Path findArtifact()
       throws IOException, TooManyArtifactsException, ArtifactNotFoundException {
     // Check if the artifact location is specified in runtimeConfig.
@@ -122,7 +159,7 @@ public class Workspace {
    * Empties the workspace and moves all contents to the destination directory. The destination
    * directory becomes the new workspaceDir.
    * @param dest the destination for the move
-   * @throws IOException if there was an error accessing the file system
+   * @throws IOException if a low-level IO exception was encountered
    */
   public void moveContentsTo(Path dest) throws IOException {
     FileUtils.copyDirectory(workspaceDir.toFile(), dest.toFile());
@@ -149,6 +186,13 @@ public class Workspace {
       return this;
     }
 
+    /**
+     * Builds the workspace.
+     * @return the new Workspace instance
+     * @throws AppYamlNotFoundException if no app.yaml configuration file was found
+     * @throws IOException if a low-level IO exception was encountered
+     * @throws WorkspaceConfigurationException if the workspace is not configured correctly
+     */
     public Workspace build()
         throws AppYamlNotFoundException, IOException, WorkspaceConfigurationException {
       if (this.appYaml == null) {

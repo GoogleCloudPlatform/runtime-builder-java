@@ -1,8 +1,12 @@
 package com.google.cloud.runtimes.builder.config.domain;
 
 import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.nio.file.Path;
 
+/**
+ * Enum that represents a Java build tool.
+ */
 public enum BuildTool {
   MAVEN("maven", "pom.xml", "target"), GRADLE("gradle", "build.gradle", "build/libs");
 
@@ -17,29 +21,27 @@ public enum BuildTool {
   }
 
   @JsonValue
-  public String getBuildToolName() {
+  String getBuildToolName() {
     return buildToolName;
   }
 
+  /**
+   * Returns the default path for build output for this build tool.
+   */
   public String getDefaultOutputPath() {
     return this.defaultOutputPath;
   }
 
+  /**
+   * Returns the name of this build tool's build file.
+   */
   public String getBuildFileName() {
     return this.buildFileName;
   }
 
-  public static BuildTool getForName(String name) {
-    // TODO refactor
-    if (name.equals("maven")) {
-      return BuildTool.MAVEN;
-    } else if (name.equals("gradle")) {
-      return BuildTool.GRADLE;
-    } else {
-      return null;
-    }
-  }
-
+  /**
+   * Looks up the {@link BuildTool} associated with the given build file.
+   */
   public static BuildTool getForBuildFile(Path buildFilePath) {
     // TODO refactor
     String fileName = buildFilePath.getFileName().toString();

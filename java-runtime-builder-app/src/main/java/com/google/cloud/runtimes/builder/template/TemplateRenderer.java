@@ -2,10 +2,22 @@ package com.google.cloud.runtimes.builder.template;
 
 import java.util.Map;
 
+/**
+ * Handles the rendering of templates.
+ */
 public class TemplateRenderer {
 
-  private final char VARIABLE_START = '$';
+  private static final char VARIABLE_START = '$';
 
+  /**
+   * Renders the given template String, replacing variable tokens with their associated values in
+   * the given map.
+   *
+   * @param template the template to render
+   * @param variables a map in which to look up variable substitutions
+   * @return the rendered template
+   * @throws IllegalArgumentException if a variable is not found in the provided map
+   */
   public String render(String template, Map<String, String> variables) {
     StringBuilder document = new StringBuilder();
 

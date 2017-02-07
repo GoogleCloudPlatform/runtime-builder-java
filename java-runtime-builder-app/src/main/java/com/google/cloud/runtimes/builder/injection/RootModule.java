@@ -51,8 +51,8 @@ public class RootModule extends AbstractModule {
     try {
       properties.load(runtimeDigestsStream);
     } catch (IOException e) {
-      // TODO
-      e.printStackTrace();
+      // we want the process to fail fast if this happens
+      throw new RuntimeException(e);
     }
     return properties;
   }

@@ -14,7 +14,6 @@ import java.util.Properties;
  */
 public class DefaultDockerfileGenerator implements DockerfileGenerator {
 
-  // TODO externalize
   private static final String DOCKERFILE = "FROM $BASE_RUNTIME\nADD $APP_NAME /app\n";
 
   private TemplateRenderer templateRenderer;
@@ -32,7 +31,7 @@ public class DefaultDockerfileGenerator implements DockerfileGenerator {
   public String generateDockerfile(Path artifactToDeploy) {
     String fileType = FileUtil.getFileExtension(artifactToDeploy);
     String runtime;
-    // TODO move to map?
+    // TODO factor in the user's overrides in runtime_config
     if (fileType.equals("jar")) {
       runtime = "openjdk";
     } else if (fileType.equals("war")) {

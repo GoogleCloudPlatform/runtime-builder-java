@@ -2,9 +2,9 @@ package com.google.cloud.runtimes.builder.docker;
 
 import com.google.cloud.runtimes.builder.template.TemplateRenderer;
 import com.google.cloud.runtimes.builder.util.FileUtil;
+import com.google.inject.Inject;
 
 import java.nio.file.Path;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -22,7 +22,8 @@ public class DefaultDockerfileGenerator implements DockerfileGenerator {
   /**
    * Constructs a new {@link DefaultDockerfileGenerator}.
    */
-  public DefaultDockerfileGenerator(TemplateRenderer templateRenderer, Properties runtimeDigests) {
+  @Inject
+  DefaultDockerfileGenerator(TemplateRenderer templateRenderer, Properties runtimeDigests) {
     this.templateRenderer = templateRenderer;
     this.runtimeDigests = runtimeDigests;
   }

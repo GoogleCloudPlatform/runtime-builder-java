@@ -16,6 +16,9 @@ public class AppYamlParser implements YamlParser<AppYaml> {
 
   private final ObjectMapper objectMapper;
 
+  /**
+   * Constructs a new {@link AppYamlParser}.
+   */
   public AppYamlParser() {
     // TODO handle tabs in addition to spaces??
     this.objectMapper = new ObjectMapper(new YAMLFactory());

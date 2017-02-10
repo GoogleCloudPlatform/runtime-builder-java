@@ -1,3 +1,4 @@
+# TODO choose better base image?
 FROM openjdk:8-jdk
 
 # install utilities

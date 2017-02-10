@@ -17,5 +17,5 @@ envsubst < cloudbuild.yaml > $cloudBuildFile
 # kick off the gcloud deploy process
 pushd $testApp
 gcloud container builds submit --config=$cloudBuildFile .
-gcloud app deploy --image-url=$_OUTPUT_IMAGE
+gcloud app deploy -q --image-url="$_OUTPUT_IMAGE" src/main/appengine/app.yaml
 popd

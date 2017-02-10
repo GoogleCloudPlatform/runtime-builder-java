@@ -8,13 +8,16 @@ import com.google.cloud.runtimes.builder.config.domain.BuildTool;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
 import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
+
+import org.apache.commons.io.FileUtils;
+import org.junit.Test;
+
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
-import org.apache.commons.io.FileUtils;
-import org.junit.Test;
 
 /**
  * Unit tests for {@link Workspace}. See also {@link WorkspaceBuilderTest}.
@@ -102,5 +105,26 @@ public class WorkspaceTest {
 
     // assert that we can still find the artifact in the new directory
     assertEquals("artifact.jar", workspace.findArtifact().getFileName().toString());
+  }
+
+  @Test(expected = FileNotFoundException.class)
+  public void testGetBuildFile_notfound() throws Exception {
+    createTestWorkspace("simple", null).getBuildFile();
+  }
+
+  @Test
+  public void testGetBuildFile_maven() throws Exception {
+    Path buildFile = createTestWorkspace("mavenWorkspace", BuildTool.MAVEN)
+        .getBuildFile();
+    assertTrue(Files.exists(buildFile));
+    assertEquals("pom.xml", buildFile.getFileName().toString());
+  }
+
+  @Test
+  public void testGetBuildFile_gradle() throws Exception {
+    Path buildFile = createTestWorkspace("gradleWorkspace", BuildTool.GRADLE)
+        .getBuildFile();
+    assertTrue(Files.exists(buildFile));
+    assertEquals("build.gradle", buildFile.getFileName().toString());
   }
 }

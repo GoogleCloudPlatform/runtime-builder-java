@@ -2,20 +2,20 @@ package com.google.cloud.runtimes.builder.workspace;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.cloud.runtimes.builder.config.AppYamlParser;
 import com.google.cloud.runtimes.builder.config.domain.BuildTool;
 import com.google.cloud.runtimes.builder.workspace.Workspace.WorkspaceBuilder;
+
+import org.junit.Test;
+
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
-import org.junit.Test;
 
 /**
  * Unit tests for {@link com.google.cloud.runtimes.builder.workspace.Workspace.WorkspaceBuilder}.
@@ -45,10 +45,10 @@ public class WorkspaceBuilderTest {
 
     assertEquals(BuildTool.MAVEN, workspace.getBuildTool().get());
     assertFalse(workspace.requiresBuild());
-    assertTrue(Files.isSameFile(getTestDir("mavenWorkspace_customized").resolve("pom.xml"),
-        workspace.getBuildFile()));
-    assertTrue(Files.isSameFile(getTestDir("mavenWorkspace_customized").resolve("my_output_dir/artifact.jar"),
-        workspace.findArtifact()));
+    assertTrue(Files.isSameFile(getTestDir("mavenWorkspace_customized")
+            .resolve("pom.xml"), workspace.getBuildFile()));
+    assertTrue(Files.isSameFile(getTestDir("mavenWorkspace_customized")
+            .resolve("my_output_dir/artifact.jar"), workspace.findArtifact()));
   }
 
   @Test
@@ -57,10 +57,10 @@ public class WorkspaceBuilderTest {
 
     assertEquals(BuildTool.GRADLE, workspace.getBuildTool().get());
     assertTrue(workspace.requiresBuild());
-    assertTrue(Files.isSameFile(getTestDir("mavenAndGradleWorkspace").resolve("build.gradle"),
-        workspace.getBuildFile()));
-    assertTrue(Files.isSameFile(getTestDir("mavenAndGradleWorkspace").resolve("build/libs/gradle_artifact.jar"),
-        workspace.findArtifact()));
+    assertTrue(Files.isSameFile(getTestDir("mavenAndGradleWorkspace")
+            .resolve("build.gradle"), workspace.getBuildFile()));
+    assertTrue(Files.isSameFile(getTestDir("mavenAndGradleWorkspace")
+            .resolve("build/libs/gradle_artifact.jar"), workspace.findArtifact()));
   }
 
   @Test

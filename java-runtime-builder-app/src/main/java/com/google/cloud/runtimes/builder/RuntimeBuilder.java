@@ -64,6 +64,14 @@ public class RuntimeBuilder {
         .appYaml(appYaml.orElse(null))
         .build();
 
+    // TODO there are two kinds of workspaces. 1) deployment from source, and 2) deploying a binary
+
+    // if an artifact exists at root
+      // construct "deployment"
+    // else
+      // construct source/workspace
+      // deployment = workspace.build();
+
     // 1. Build the project if necessary
     if (workspace.isBuildable()) {
       logger.info("Initiating building your source...");

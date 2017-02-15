@@ -4,4 +4,5 @@ steps:
   args: ["--workspace", "/workspace"]
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '--tag=$_OUTPUT_IMAGE', '.']
+
 images: ['$_OUTPUT_IMAGE']

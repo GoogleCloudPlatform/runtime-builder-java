@@ -32,7 +32,6 @@ public class Workspace {
 
   private final RuntimeConfig runtimeConfig;
   private final Optional<BuildTool> buildTool;
-  private final boolean requiresBuild;
   private Path workspaceDir;
 
   /**
@@ -41,20 +40,13 @@ public class Workspace {
    * @param workspaceDir the directory containing the workspace
    * @param buildTool the buildTool that the workspace will be built with
    * @param runtimeConfig the user-provided configuration
-   * @param requiresBuild true if a build must be performed in this workspace
    * @throws WorkspaceConfigurationException if the workspace requires a build, but is not buildable
    */
-  Workspace(Path workspaceDir, Optional<BuildTool> buildTool, RuntimeConfig runtimeConfig,
-      boolean requiresBuild) throws WorkspaceConfigurationException {
+  Workspace(Path workspaceDir, Optional<BuildTool> buildTool, RuntimeConfig runtimeConfig)
+      throws WorkspaceConfigurationException {
     this.workspaceDir = workspaceDir;
     this.runtimeConfig = runtimeConfig;
     this.buildTool = buildTool;
-    this.requiresBuild = requiresBuild;
-
-    if (requiresBuild() && !isBuildable()) {
-      throw new WorkspaceConfigurationException(
-          "The workspace requires a build, but is unable to be built.");
-    }
   }
 
   /**
@@ -83,13 +75,6 @@ public class Workspace {
   }
 
   /**
-   * Returns true if this workspace must be built before it can be deployed.
-   */
-  public boolean requiresBuild() {
-    return requiresBuild;
-  }
-
-  /**
    * Returns true if this workspace is correctly configured for a build to be executed.
    */
   public boolean isBuildable() {
@@ -100,7 +85,7 @@ public class Workspace {
     } catch (FileNotFoundException e) {
       buildFileExists = false;
     }
-    return getBuildTool().isPresent() && buildFileExists && !runtimeConfig.getDisableRemoteBuild();
+    return getBuildTool().isPresent() && buildFileExists;
   }
 
   /**
@@ -207,25 +192,18 @@ public class Workspace {
 
       // 2. Identify the build tool to use
       BuildTool buildTool;
-      boolean requiresBuild = false;
 
-      if (runtimeConfig.getBuildTool() != null) {
-        // the user specified which build tool to use
-        requiresBuild = true;
-        buildTool = runtimeConfig.getBuildTool();
+      // search for valid build files, and take the first one we find
+      Optional<Path> buildFile = findBuildFile();
+      if (buildFile.isPresent()) {
+        buildTool = BuildTool.getForBuildFile(buildFile.get());
       } else {
-        // search for valid build files, and take the first one we find
-        Optional<Path> buildFile = findBuildFile();
-        if (buildFile.isPresent()) {
-          buildTool = BuildTool.getForBuildFile(buildFile.get());
-        } else {
-          // FYI this means the project cannot be built.
-          // this will fail later if there's no artifact included in the sources.
-          buildTool = null;
-        }
+        // FYI this means the project cannot be built.
+        // this will fail later if there's no artifact included in the sources.
+        buildTool = null;
       }
-      return new Workspace(workspaceDir, Optional.ofNullable(buildTool), runtimeConfig,
-          requiresBuild);
+
+      return new Workspace(workspaceDir, Optional.ofNullable(buildTool), runtimeConfig);
     }
 
     // Searches for app.yaml in a few expected paths within the workspace

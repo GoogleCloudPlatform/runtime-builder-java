@@ -1,5 +1,6 @@
-package com.google.cloud.runtimes.builder.docker;
+package com.google.cloud.runtimes.builder.buildsteps.docker;
 
+import com.google.cloud.runtimes.builder.injection.RuntimeDigests;
 import com.google.cloud.runtimes.builder.template.TemplateRenderer;
 import com.google.cloud.runtimes.builder.util.FileUtil;
 import com.google.inject.Inject;
@@ -23,7 +24,8 @@ public class DefaultDockerfileGenerator implements DockerfileGenerator {
    * Constructs a new {@link DefaultDockerfileGenerator}.
    */
   @Inject
-  DefaultDockerfileGenerator(TemplateRenderer templateRenderer, Properties runtimeDigests) {
+  DefaultDockerfileGenerator(TemplateRenderer templateRenderer,
+      @RuntimeDigests Properties runtimeDigests) {
     this.templateRenderer = templateRenderer;
     this.runtimeDigests = runtimeDigests;
   }

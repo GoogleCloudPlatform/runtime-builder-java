@@ -1,15 +1,21 @@
 package com.google.cloud.runtimes.builder.injection;
 
-import com.google.cloud.runtimes.builder.docker.DefaultDockerfileGenerator;
-import com.google.cloud.runtimes.builder.docker.DockerfileGenerator;
+import com.google.cloud.runtimes.builder.BuildPipelineConfigurator;
+import com.google.cloud.runtimes.builder.buildsteps.BuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.docker.DefaultDockerfileGenerator;
+import com.google.cloud.runtimes.builder.buildsteps.docker.DockerfileGenerator;
+import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
+import com.google.cloud.runtimes.builder.config.AppYamlParser;
+import com.google.cloud.runtimes.builder.config.YamlParser;
+import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
-
+import com.google.inject.throwingproviders.ThrowingProviderBinder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.Optional;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -17,30 +23,29 @@ import java.util.Properties;
  */
 public class RootModule extends AbstractModule {
 
-  private final Path workspaceDir;
-  private final Path appYaml;
+  private final Path workspacePath;
 
-  public RootModule(Path workspaceDir, Path appYaml) {
-    this.workspaceDir = workspaceDir;
-    this.appYaml = appYaml;
+  public RootModule(Path workspacePath) {
+    this.workspacePath = workspacePath;
   }
 
   @Override
   protected void configure() {
-    bind(new TypeLiteral<Optional<Path>>(){})
-        .annotatedWith(AppYamlPath.class)
-        .toInstance(Optional.ofNullable(appYaml));
-
     bind(Path.class)
         .annotatedWith(WorkspacePath.class)
-        .toInstance(workspaceDir);
+        .toInstance(workspacePath);
 
+    bind(new TypeLiteral<YamlParser<AppYaml>>(){})
+        .to(AppYamlParser.class);
     bind(DockerfileGenerator.class)
         .to(DefaultDockerfileGenerator.class);
+
+    bind(StageDockerArtifactBuildStep.class);
   }
 
   @Provides
-  Properties provideRuntimeDigestsProperties() {
+  @RuntimeDigests
+  Properties provideRuntimeDigests() {
     InputStream runtimeDigestsStream = DefaultDockerfileGenerator.class.getClassLoader()
         .getResourceAsStream("runtimes.properties");
     if (runtimeDigestsStream == null) {

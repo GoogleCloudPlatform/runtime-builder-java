@@ -1,4 +1,4 @@
-package com.google.cloud.runtimes.builder.docker;
+package com.google.cloud.runtimes.builder.buildsteps.docker;
 
 import java.nio.file.Path;
 

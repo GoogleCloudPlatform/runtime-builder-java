@@ -1,17 +1,17 @@
-package com.google.cloud.runtimes.builder.build;
+package com.google.cloud.runtimes.builder.buildsteps.gradle;
 
-import com.google.cloud.runtimes.builder.workspace.Workspace;
-
+import com.google.cloud.runtimes.builder.exception.BuildToolInvokerException;
+import java.nio.file.Path;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // TODO class-level javadoc
-public class GradleInvoker implements BuildToolInvoker {
+public class GradleInvoker {
 
   private final Logger logger = LoggerFactory.getLogger(GradleInvoker.class);
 
-  @Override
-  public void invoke(Workspace workspace) {
+  public void invoke(Path buildFile, List<String> args) throws BuildToolInvokerException {
     logger.info("Invoking gradle build");
 
     // TODO gradle build

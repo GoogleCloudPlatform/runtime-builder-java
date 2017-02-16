@@ -1,5 +1,7 @@
 package com.google.cloud.runtimes.builder;
 
+import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
+import com.google.cloud.runtimes.builder.exception.BuildStepException;
 import com.google.cloud.runtimes.builder.exception.RuntimeBuilderException;
 import com.google.cloud.runtimes.builder.injection.RootModule;
 import com.google.inject.Guice;
@@ -23,33 +25,10 @@ public class Application {
 
   private static final Options CLI_OPTIONS = new Options();
   private static final String EXECUTABLE_NAME = "<BUILDER_JAR>";
-  private final RuntimeBuilder runtimeBuilder;
 
   static {
     CLI_OPTIONS.addOption("c", "config", true, "absolute path to app.yaml config file");
     CLI_OPTIONS.addOption("w", "workspace", true, "absolute path to workspace directory");
-  }
-
-  /**
-   * Constructs a new {@link Application} instance.
-   * @param workspaceDir the source directory that this application will act on
-   * @param appYaml the app.yaml configuration file
-   */
-  public Application(Path workspaceDir, Path appYaml) {
-    Injector injector = Guice.createInjector(new RootModule(workspaceDir, appYaml));
-    this.runtimeBuilder = injector.getInstance(RuntimeBuilder.class);
-  }
-
-  /**
-   * Initiates the application's run.
-   */
-  public void start() {
-    try {
-      runtimeBuilder.run();
-    } catch (IOException | RuntimeBuilderException e) {
-      // TODO log? make sure exceptions will get logged
-      throw new RuntimeException(e);
-    }
   }
 
   /**
@@ -74,8 +53,14 @@ public class Application {
         appYaml = Paths.get(appYamlValue);
       }
 
-      // Start the application.
-      new Application(workspace, appYaml).start();
+      // Perform dependency injection and run the pipeline
+      Injector injector = Guice.createInjector(new RootModule());
+      try {
+        injector.getInstance(BuildPipeline.class).build(workspace);
+      } catch (IOException | AppYamlNotFoundException | BuildStepException e) {
+        // TODO log? make sure exceptions will get logged
+        throw new RuntimeException(e);
+      }
     }
   }
 

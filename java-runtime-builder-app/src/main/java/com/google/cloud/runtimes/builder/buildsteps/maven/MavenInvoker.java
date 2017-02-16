@@ -1,9 +1,9 @@
-package com.google.cloud.runtimes.builder.build;
+package com.google.cloud.runtimes.builder.buildsteps.maven;
 
 import com.google.cloud.runtimes.builder.exception.BuildToolInvokerException;
-import com.google.cloud.runtimes.builder.workspace.Workspace;
 import com.google.common.collect.ImmutableList;
-
+import java.nio.file.Path;
+import java.util.List;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
@@ -13,28 +13,23 @@ import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileNotFoundException;
-
 /**
  * Invokes a forked maven process. Expects that either the $M2_HOME env variable, or the system
  * property {@code maven.home} points to a valid maven installation.
  * <p>See also https://maven.apache.org/shared/maven-invoker/usage.html</p>
  */
-public class MavenInvoker implements BuildToolInvoker {
+public class MavenInvoker {
 
   private final Logger logger = LoggerFactory.getLogger(MavenInvoker.class);
+  private final List<String> DEFAULT_GOALS
+      = ImmutableList.of("-B", "-DskipTests=true", "clean", "package");
 
-  @Override
-  public void invoke(Workspace workspace) throws BuildToolInvokerException {
-    logger.info("Invoking maven build");
+  public void invoke(Path pomFile, List<String> goals) throws BuildToolInvokerException {
+    logger.info("Invoking maven");
 
     InvocationRequest request = new DefaultInvocationRequest();
-    try {
-      request.setPomFile(workspace.getBuildFile().toFile());
-    } catch (FileNotFoundException e) {
-      throw new BuildToolInvokerException("Maven build file not found", e);
-    }
-    request.setGoals(ImmutableList.of("-DskipTests=true", "clean", "install"));
+    request.setPomFile(pomFile.toFile());
+    request.setGoals(goals);
     request.setBatchMode(true);
     Invoker invoker = new DefaultInvoker();
     try {
@@ -45,5 +40,9 @@ public class MavenInvoker implements BuildToolInvoker {
     } catch (MavenInvocationException e) {
       throw new BuildToolInvokerException("An error was encountered invoking Maven", e);
     }
+  }
+
+  public void invoke(Path pomFile) throws BuildToolInvokerException {
+    invoke(pomFile, DEFAULT_GOALS);
   }
 }

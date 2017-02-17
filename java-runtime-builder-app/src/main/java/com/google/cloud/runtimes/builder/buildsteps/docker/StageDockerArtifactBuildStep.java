@@ -8,6 +8,7 @@ import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import com.google.cloud.runtimes.builder.util.FileUtil;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -18,12 +19,14 @@ import java.util.Optional;
 
 public class StageDockerArtifactBuildStep extends BuildStep {
 
-  private Optional<String> artifactPathOverride = Optional.empty();
+  private final Optional<String> artifactPathOverride;
   private final DockerfileGenerator dockerfileGenerator;
 
   @Inject
-  StageDockerArtifactBuildStep(DockerfileGenerator dockerfileGenerator) {
+  StageDockerArtifactBuildStep(DockerfileGenerator dockerfileGenerator,
+      @Assisted Optional<String> artifactPathOverride) {
     this.dockerfileGenerator = dockerfileGenerator;
+    this.artifactPathOverride = artifactPathOverride;
   }
 
   @Override

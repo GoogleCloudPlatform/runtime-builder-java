@@ -1,5 +1,6 @@
 package com.google.cloud.runtimes.builder.injection;
 
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
 import com.google.cloud.runtimes.builder.buildsteps.docker.DefaultDockerfileGenerator;
 import com.google.cloud.runtimes.builder.buildsteps.docker.DockerfileGenerator;
 import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
@@ -9,6 +10,7 @@ import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -32,7 +34,8 @@ public class RootModule extends AbstractModule {
     bind(DockerfileGenerator.class)
         .to(DefaultDockerfileGenerator.class);
 
-    bind(StageDockerArtifactBuildStep.class);
+    install(new FactoryModuleBuilder()
+        .build(BuildStepFactory.class));
   }
 
   @Provides

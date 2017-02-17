@@ -1,7 +1,8 @@
 package com.google.cloud.runtimes.builder;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
-import com.google.cloud.runtimes.builder.buildsteps.ScriptExecutionBuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
+import com.google.cloud.runtimes.builder.buildsteps.script.ScriptExecutionBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.gradle.GradleBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.maven.MavenBuildStep;
@@ -30,19 +31,12 @@ public class BuildPipelineConfigurator {
       = ImmutableList.of("app.yaml", "src/main/appengine/app.yaml");
 
   private final YamlParser<AppYaml> appYamlParser;
-  private final StageDockerArtifactBuildStep stageDockerArtifactBuildStep;
-  private final MavenBuildStep mavenBuildStep;
-  private final GradleBuildStep gradleBuildStep;
+  private final BuildStepFactory buildStepFactory;
 
   @Inject
-  BuildPipelineConfigurator(YamlParser<AppYaml> appYamlParser,
-      StageDockerArtifactBuildStep stageDockerArtifactBuildStep,
-      MavenBuildStep mavenBuildStep,
-      GradleBuildStep gradleBuildStep) {
+  BuildPipelineConfigurator(YamlParser<AppYaml> appYamlParser, BuildStepFactory buildStepFactory) {
     this.appYamlParser = appYamlParser;
-    this.stageDockerArtifactBuildStep = stageDockerArtifactBuildStep;
-    this.mavenBuildStep = mavenBuildStep;
-    this.gradleBuildStep = gradleBuildStep;
+    this.buildStepFactory = buildStepFactory;
   }
 
   /**
@@ -61,11 +55,13 @@ public class BuildPipelineConfigurator {
 
     // assemble the list of build steps
     List<BuildStep> steps = new ArrayList<>();
-    if (!Strings.isNullOrEmpty(runtimeConfig.getBuildScript())) {
-      // the user has specified a command to build the project
-      steps.add(new ScriptExecutionBuildStep(runtimeConfig.getBuildScript()));
+
+    String buildScript = runtimeConfig.getBuildScript();
+    if (!Strings.isNullOrEmpty(buildScript)) {
+      // the user has specified a custom command to build the project
+      steps.add(buildStepFactory.createScriptExecutionBuildStep(buildScript));
     } else {
-      // search for build files, keeping the first one we find
+      // search for build files in the workspace
       Optional<Path> buildFile = findBuildFile(workspaceDir);
       if (buildFile.isPresent()) {
         // select the correct build step for the buildTool
@@ -74,20 +70,20 @@ public class BuildPipelineConfigurator {
       }
     }
 
-    steps.add(stageDockerArtifactBuildStep);
+    Optional<String> pathToArtifact = Optional.ofNullable(runtimeConfig.getArtifact());
+    steps.add(buildStepFactory.createStageDockerArtifactBuildStep(pathToArtifact));
     return steps;
   }
 
   /*
-   * Looks up a build step for a build tool.
-   * TODO move this into the enum class?
+   * Selects a build step for a build tool.
    */
   private BuildStep getBuildStepForTool(BuildTool buildTool) {
     switch(buildTool) {
       case MAVEN:
-        return mavenBuildStep;
+        return buildStepFactory.createMavenBuildStep();
       case GRADLE:
-        return gradleBuildStep;
+        return buildStepFactory.createGradleBuildStep();
       default:
         throw new IllegalArgumentException(
             String.format("No build step available for build tool %s", buildTool));

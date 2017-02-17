@@ -1,13 +1,16 @@
-package com.google.cloud.runtimes.builder.buildsteps;
+package com.google.cloud.runtimes.builder.buildsteps.script;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import java.nio.file.Path;
 import java.util.Map;
 
 public class ScriptExecutionBuildStep extends BuildStep {
 
-  public ScriptExecutionBuildStep(String buildCommand) {
+  @Inject
+  ScriptExecutionBuildStep(@Assisted String buildCommand) {
   }
 
   @Override

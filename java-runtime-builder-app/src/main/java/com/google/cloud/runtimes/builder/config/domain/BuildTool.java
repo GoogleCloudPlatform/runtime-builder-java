@@ -1,14 +1,8 @@
 package com.google.cloud.runtimes.builder.config.domain;
 
-import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
-import com.google.cloud.runtimes.builder.buildsteps.gradle.GradleBuildStep;
-import com.google.cloud.runtimes.builder.buildsteps.maven.MavenBuildStep;
-import com.google.inject.Provider;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * Enum that represents a Java build tool.
@@ -59,6 +53,6 @@ public enum BuildTool {
   }
 
   public static boolean isABuildFile(Path path) {
-    return BUILD_FILENAME_TO_BUILD_TOOL.containsKey(path.getFileName());
+    return BUILD_FILENAME_TO_BUILD_TOOL.containsKey(path.getFileName().toString());
   }
 }

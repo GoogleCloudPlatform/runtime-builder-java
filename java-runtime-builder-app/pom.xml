@@ -44,7 +44,7 @@
     </dependency>
     <dependency>
       <groupId>com.google.inject.extensions</groupId>
-      <artifactId>guice-throwingproviders</artifactId>
+      <artifactId>guice-assistedinject</artifactId>
       <version>${guice.version}</version>
     </dependency>
     <dependency>

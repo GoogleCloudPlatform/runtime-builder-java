@@ -2,11 +2,13 @@ package com.google.cloud.runtimes.builder.buildsteps.gradle;
 
 import com.google.cloud.runtimes.builder.TestUtils;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Unit tests for {@link GradleBuildStep}

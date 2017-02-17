@@ -1,6 +1,7 @@
 package com.google.cloud.runtimes.builder.buildsteps.base;
 
 import com.google.common.base.Preconditions;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -31,7 +32,7 @@ public abstract class BuildStep {
 
   private Map<String, String> readMetaData() throws IOException {
     // load metadata into memory
-    try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(metaDataPath.toFile()))){
+    try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(metaDataPath.toFile()))) {
       return (HashMap<String, String>) in.readObject();
     } catch (FileNotFoundException e) {
       // return an empty map.
@@ -45,7 +46,7 @@ public abstract class BuildStep {
   private void writeMetaData(Map<String, String> metadata) throws IOException {
     // serialize metadata to disk
     try (ObjectOutputStream out = new ObjectOutputStream(
-        new FileOutputStream(metaDataPath.toFile()))){
+        new FileOutputStream(metaDataPath.toFile()))) {
       out.writeObject(metadata);
     }
   }

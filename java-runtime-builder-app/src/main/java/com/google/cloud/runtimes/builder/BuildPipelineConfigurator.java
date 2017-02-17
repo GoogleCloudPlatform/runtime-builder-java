@@ -1,12 +1,7 @@
 package com.google.cloud.runtimes.builder;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
-import com.google.cloud.runtimes.builder.buildsteps.script.ScriptExecutionBuildStep;
-import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
-import com.google.cloud.runtimes.builder.buildsteps.gradle.GradleBuildStep;
-import com.google.cloud.runtimes.builder.buildsteps.maven.MavenBuildStep;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.BuildTool;
@@ -15,6 +10,11 @@ import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
+
+import com.fasterxml.jackson.databind.JsonMappingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,8 +22,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Fingerprints a directory and determines what set of build steps should be performed on it.
@@ -93,7 +91,7 @@ public class BuildPipelineConfigurator {
    * Selects a build step for a build tool.
    */
   private BuildStep getBuildStepForTool(BuildTool buildTool) {
-    switch(buildTool) {
+    switch (buildTool) {
       case MAVEN:
         return buildStepFactory.createMavenBuildStep();
       case GRADLE:

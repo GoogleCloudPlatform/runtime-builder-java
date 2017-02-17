@@ -1,10 +1,12 @@
 package com.google.cloud.runtimes.builder.buildsteps.gradle;
 
 import com.google.cloud.runtimes.builder.exception.BuildToolInvokerException;
-import java.nio.file.Path;
-import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.file.Path;
+import java.util.List;
 
 // TODO class-level javadoc
 public class GradleInvoker {

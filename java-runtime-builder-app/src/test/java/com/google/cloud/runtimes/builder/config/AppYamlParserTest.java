@@ -2,15 +2,16 @@ package com.google.cloud.runtimes.builder.config;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
 
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * Tests for {@link AppYamlParser}

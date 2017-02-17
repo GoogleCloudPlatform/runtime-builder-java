@@ -1,7 +1,7 @@
 package com.google.cloud.runtimes.builder;
 
-import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.cloud.runtimes.builder.injection.RootModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -36,7 +36,7 @@ public class Application {
     Path workspace = parseWorkspaceOption(args);
 
     // Perform dependency injection and run the application
-    Injector injector = Guice.createInjector(new RootModule(workspace));
+    Injector injector = Guice.createInjector(new RootModule());
     try {
       injector.getInstance(BuildPipeline.class).build(workspace);
     } catch (IOException | AppYamlNotFoundException | BuildStepException e) {

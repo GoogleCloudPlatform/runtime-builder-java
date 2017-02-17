@@ -21,8 +21,6 @@ import org.slf4j.LoggerFactory;
 public class MavenInvoker {
 
   private final Logger logger = LoggerFactory.getLogger(MavenInvoker.class);
-  private final List<String> DEFAULT_GOALS
-      = ImmutableList.of("-B", "-DskipTests=true", "clean", "package");
 
   public void invoke(Path pomFile, List<String> goals) throws BuildToolInvokerException {
     logger.info("Invoking maven");
@@ -40,9 +38,5 @@ public class MavenInvoker {
     } catch (MavenInvocationException e) {
       throw new BuildToolInvokerException("An error was encountered invoking Maven", e);
     }
-  }
-
-  public void invoke(Path pomFile) throws BuildToolInvokerException {
-    invoke(pomFile, DEFAULT_GOALS);
   }
 }

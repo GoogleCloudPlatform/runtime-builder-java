@@ -5,14 +5,19 @@ import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepMetadataConstants;
 import com.google.cloud.runtimes.builder.exception.BuildToolInvokerException;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class MavenBuildStep extends BuildStep {
+
+  private final List<String> DEFAULT_GOALS
+      = ImmutableList.of("-B", "-DskipTests=true", "clean", "package");
 
   private final static Logger logger = LoggerFactory.getLogger(MavenBuildStep.class);
   private final MavenInvoker mavenInvoker;
@@ -27,8 +32,10 @@ public class MavenBuildStep extends BuildStep {
     Path pomFile = directory.resolve("pom.xml");
     Preconditions.checkArgument(Files.isRegularFile(pomFile));
 
+    logger.info("Invoking maven build step with goals {}", DEFAULT_GOALS);
+
     try {
-      mavenInvoker.invoke(pomFile);
+      mavenInvoker.invoke(pomFile, DEFAULT_GOALS);
 
       // TODO query the pom to include overrides
       metadata.put(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH, "target/");

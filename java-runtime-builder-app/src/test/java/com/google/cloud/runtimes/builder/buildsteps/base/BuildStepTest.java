@@ -1,4 +1,4 @@
-package com.google.cloud.runtimes.builder.buildsteps;
+package com.google.cloud.runtimes.builder.buildsteps.base;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

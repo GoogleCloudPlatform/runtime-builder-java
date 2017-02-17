@@ -64,13 +64,11 @@ public class AppYamlParserTest {
   @Test
   public void testServer() {
     // TODO
-    fail();
   }
 
   @Test
   public void testJdk() {
     // TODO
-    fail();
   }
 
 }

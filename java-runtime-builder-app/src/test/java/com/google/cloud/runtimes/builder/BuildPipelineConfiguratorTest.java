@@ -1,5 +1,6 @@
 package com.google.cloud.runtimes.builder;
 
+import static com.google.cloud.runtimes.builder.TestUtils.getTestDataDir;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -107,9 +108,5 @@ public class BuildPipelineConfiguratorTest {
     return buildPipelineConfigurator.configurePipeline(workspace);
   }
 
-  private Path getTestDataDir(String name) {
-    return Paths.get(System.getProperty("user.dir")).resolve("src/test/resources/testWorkspaces")
-        .resolve(name);
-  }
 
 }

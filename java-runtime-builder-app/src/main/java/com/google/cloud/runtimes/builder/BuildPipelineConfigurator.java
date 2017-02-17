@@ -1,5 +1,6 @@
 package com.google.cloud.runtimes.builder;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
 import com.google.cloud.runtimes.builder.buildsteps.script.ScriptExecutionBuildStep;
@@ -21,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Fingerprints a directory and determines what set of build steps should be performed on it.
@@ -29,6 +32,8 @@ public class BuildPipelineConfigurator {
 
   private static final List<String> APP_YAML_LOCATIONS
       = ImmutableList.of("app.yaml", "src/main/appengine/app.yaml");
+
+  private final Logger logger = LoggerFactory.getLogger(BuildPipelineConfigurator.class);
 
   private final YamlParser<AppYaml> appYamlParser;
   private final BuildStepFactory buildStepFactory;
@@ -48,7 +53,16 @@ public class BuildPipelineConfigurator {
   public List<BuildStep> configurePipeline(Path workspaceDir)
       throws AppYamlNotFoundException, IOException {
     // locate and deserialize configuration files
-    AppYaml appYaml = appYamlParser.parse(findAppYaml(workspaceDir));
+    Path pathToAppYaml = findAppYaml(workspaceDir);
+    AppYaml appYaml;
+    try {
+      appYaml = appYamlParser.parse(pathToAppYaml);
+    } catch (JsonMappingException e) {
+      logger.error("There was an error parsing app.yaml file located at {}. Please make sure it is "
+          + "a valid yaml file.", pathToAppYaml, e);
+      throw e;
+    }
+
     RuntimeConfig runtimeConfig = appYaml.getRuntimeConfig() != null
         ? appYaml.getRuntimeConfig()
         : new RuntimeConfig();

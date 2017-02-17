@@ -1,7 +1,7 @@
 package com.google.cloud.runtimes.builder.buildsteps.gradle;
 
-import com.google.cloud.runtimes.builder.buildsteps.BuildStep;
-import com.google.cloud.runtimes.builder.exception.BuildStepException;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;

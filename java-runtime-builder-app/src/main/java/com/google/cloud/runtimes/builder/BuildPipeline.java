@@ -1,8 +1,8 @@
 package com.google.cloud.runtimes.builder;
 
-import com.google.cloud.runtimes.builder.buildsteps.BuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
-import com.google.cloud.runtimes.builder.exception.BuildStepException;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -36,7 +36,7 @@ public class BuildPipeline {
    */
   public void build(Path workspaceDir) throws AppYamlNotFoundException, IOException,
       BuildStepException {
-    List<BuildStep> buildSteps = buildPipelineConfigurator.getPipeline();
+    List<BuildStep> buildSteps = buildPipelineConfigurator.configurePipeline(workspaceDir);
     for (BuildStep buildStep : buildSteps) {
       buildStep.run(workspaceDir);
     }

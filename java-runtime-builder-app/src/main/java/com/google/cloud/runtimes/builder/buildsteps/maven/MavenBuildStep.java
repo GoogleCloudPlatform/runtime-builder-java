@@ -1,13 +1,16 @@
 package com.google.cloud.runtimes.builder.buildsteps.maven;
 
-import com.google.cloud.runtimes.builder.buildsteps.BuildStep;
-import com.google.cloud.runtimes.builder.buildsteps.MetadataConstants;
-import com.google.cloud.runtimes.builder.exception.BuildStepException;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepMetadataConstants;
 import com.google.cloud.runtimes.builder.exception.BuildToolInvokerException;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -15,9 +18,18 @@ import org.slf4j.LoggerFactory;
 
 public class MavenBuildStep extends BuildStep {
 
-  private final Logger logger = LoggerFactory.getLogger(MavenBuildStep.class);
-
+  private final static Logger logger = LoggerFactory.getLogger(MavenBuildStep.class);
   private final MavenInvoker mavenInvoker;
+
+  public static void main(String[] args) throws IOException, BuildStepException {
+    logger.info("Running main method");
+    new MavenBuildStep(Arrays.asList(args)).run(Paths.get(System.getProperty("user.dir")));
+  }
+
+  public MavenBuildStep(List<String> args) {
+    // TODO delete this constructor
+    mavenInvoker = new MavenInvoker();
+  }
 
   @Inject
   MavenBuildStep(MavenInvoker mavenInvoker) {
@@ -38,7 +50,7 @@ public class MavenBuildStep extends BuildStep {
 //      }
 
       // TODO query the pom to include overrides
-      metadata.put(MetadataConstants.BUILD_ARTIFACT_PATH, "target/");
+      metadata.put(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH, "target/");
 
     } catch (BuildToolInvokerException e) {
       throw new BuildStepException(e);

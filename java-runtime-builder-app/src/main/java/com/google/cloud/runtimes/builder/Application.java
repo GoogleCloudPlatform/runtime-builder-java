@@ -1,8 +1,7 @@
 package com.google.cloud.runtimes.builder;
 
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
-import com.google.cloud.runtimes.builder.exception.BuildStepException;
-import com.google.cloud.runtimes.builder.exception.RuntimeBuilderException;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.injection.RootModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -27,46 +26,43 @@ public class Application {
   private static final String EXECUTABLE_NAME = "<BUILDER_JAR>";
 
   static {
-    CLI_OPTIONS.addOption("c", "config", true, "absolute path to app.yaml config file");
     CLI_OPTIONS.addOption("w", "workspace", true, "absolute path to workspace directory");
   }
 
   /**
-   * Main method for invocation from the command-line. Handles parsing of command-line options.
+   * Main method for invocation from the command line. Handles parsing of command line options.
    */
   public static void main(String[] args) {
+    Path workspace = parseWorkspaceOption(args);
+
+    // Perform dependency injection and run the application
+    Injector injector = Guice.createInjector(new RootModule(workspace));
+    try {
+      injector.getInstance(BuildPipeline.class).build(workspace);
+    } catch (IOException | AppYamlNotFoundException | BuildStepException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static Path parseWorkspaceOption(String[] args) {
     CommandLineParser parser = new DefaultParser();
     CommandLine cmd = null;
     try {
       cmd = parser.parse(CLI_OPTIONS, args);
     } catch (ParseException e) {
-      printInstructionsAndExit(1);
+      // print instructions and exit
+      HelpFormatter formatter = new HelpFormatter();
+      formatter.printHelp(EXECUTABLE_NAME, CLI_OPTIONS, true);
+      System.exit(1);
     }
 
+    Path workspace;
     if (!cmd.hasOption("w")) {
-      printInstructionsAndExit(1);
+      // use the current working directory as a default
+      workspace = Paths.get(System.getProperty("user.dir"));
     } else {
-      Path workspace = Paths.get(cmd.getOptionValue("w"));
-      Path appYaml = null;
-      String appYamlValue = cmd.getOptionValue("c");
-      if (appYamlValue != null) {
-        appYaml = Paths.get(appYamlValue);
-      }
-
-      // Perform dependency injection and run the pipeline
-      Injector injector = Guice.createInjector(new RootModule());
-      try {
-        injector.getInstance(BuildPipeline.class).build(workspace);
-      } catch (IOException | AppYamlNotFoundException | BuildStepException e) {
-        // TODO log? make sure exceptions will get logged
-        throw new RuntimeException(e);
-      }
+      workspace = Paths.get(cmd.getOptionValue("w"));
     }
-  }
-
-  private static void printInstructionsAndExit(int statusCode) {
-    HelpFormatter formatter = new HelpFormatter();
-    formatter.printHelp(EXECUTABLE_NAME, CLI_OPTIONS, true);
-    System.exit(statusCode);
+    return workspace;
   }
 }

@@ -3,7 +3,8 @@ package com.google.cloud.runtimes.builder.buildsteps;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.google.cloud.runtimes.builder.exception.BuildStepException;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,7 +45,8 @@ public class BuildStepTest {
   private BuildStep getTestBuildStep(Consumer<Map<String,String>> implementation) {
     return new BuildStep() {
       @Override
-      protected void doBuild(Map<String, String> metadata) {
+      protected void doBuild(Path directory, Map<String, String> metadata)
+          throws BuildStepException {
         implementation.accept(metadata);
       }
     };

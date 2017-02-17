@@ -1,9 +1,9 @@
 package com.google.cloud.runtimes.builder.buildsteps.docker;
 
-import com.google.cloud.runtimes.builder.buildsteps.BuildStep;
-import com.google.cloud.runtimes.builder.buildsteps.MetadataConstants;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepMetadataConstants;
 import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
-import com.google.cloud.runtimes.builder.exception.BuildStepException;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import com.google.cloud.runtimes.builder.util.FileUtil;
 import com.google.common.base.Preconditions;
@@ -55,9 +55,9 @@ public class StageDockerArtifactBuildStep extends BuildStep {
       return directory.resolve(artifactPathOverride.get());
     }
     // if the artifact path is found in the metadata
-    else if (metadata.containsKey(MetadataConstants.BUILD_ARTIFACT_PATH)) {
+    else if (metadata.containsKey(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH)) {
       // TODO if the metadata cant contain the exact path, still need to perform search in dir
-      String buildArtifactPath = metadata.get(MetadataConstants.BUILD_ARTIFACT_PATH);
+      String buildArtifactPath = metadata.get(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH);
       Path buildOutputDir = directory.resolve(buildArtifactPath);
       return searchForArtifactInDir(buildOutputDir);
     }

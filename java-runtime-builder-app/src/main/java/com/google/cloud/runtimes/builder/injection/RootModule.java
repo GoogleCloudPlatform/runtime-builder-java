@@ -1,7 +1,5 @@
 package com.google.cloud.runtimes.builder.injection;
 
-import com.google.cloud.runtimes.builder.BuildPipelineConfigurator;
-import com.google.cloud.runtimes.builder.buildsteps.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.docker.DefaultDockerfileGenerator;
 import com.google.cloud.runtimes.builder.buildsteps.docker.DockerfileGenerator;
 import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
@@ -11,11 +9,9 @@ import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
-import com.google.inject.throwingproviders.ThrowingProviderBinder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Properties;
 
 /**
@@ -31,10 +27,6 @@ public class RootModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(Path.class)
-        .annotatedWith(WorkspacePath.class)
-        .toInstance(workspacePath);
-
     bind(new TypeLiteral<YamlParser<AppYaml>>(){})
         .to(AppYamlParser.class);
     bind(DockerfileGenerator.class)

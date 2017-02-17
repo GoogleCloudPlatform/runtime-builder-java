@@ -1,8 +1,10 @@
 package com.google.cloud.runtimes.builder;
 
-import com.google.cloud.runtimes.builder.buildsteps.BuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.ScriptExecutionBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.gradle.GradleBuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.maven.MavenBuildStep;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.BuildTool;
@@ -11,7 +13,6 @@ import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
-import com.google.inject.throwingproviders.CheckedProvider;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,14 +31,18 @@ public class BuildPipelineConfigurator {
 
   private final YamlParser<AppYaml> appYamlParser;
   private final StageDockerArtifactBuildStep stageDockerArtifactBuildStep;
-  private final Path workspaceDir;
+  private final MavenBuildStep mavenBuildStep;
+  private final GradleBuildStep gradleBuildStep;
 
   @Inject
-  BuildPipelineConfigurator(Path workspaceDir, YamlParser<AppYaml> appYamlParser,
-      StageDockerArtifactBuildStep stageDockerArtifactBuildStep) {
-    this.workspaceDir = workspaceDir;
+  BuildPipelineConfigurator(YamlParser<AppYaml> appYamlParser,
+      StageDockerArtifactBuildStep stageDockerArtifactBuildStep,
+      MavenBuildStep mavenBuildStep,
+      GradleBuildStep gradleBuildStep) {
     this.appYamlParser = appYamlParser;
     this.stageDockerArtifactBuildStep = stageDockerArtifactBuildStep;
+    this.mavenBuildStep = mavenBuildStep;
+    this.gradleBuildStep = gradleBuildStep;
   }
 
   /**
@@ -46,7 +51,8 @@ public class BuildPipelineConfigurator {
    * @throws AppYamlNotFoundException if an app.yaml config file is not found
    * @throws IOException if a transient file system error is encountered
    */
-  public List<BuildStep> getPipeline() throws AppYamlNotFoundException, IOException {
+  public List<BuildStep> configurePipeline(Path workspaceDir)
+      throws AppYamlNotFoundException, IOException {
     // locate and deserialize configuration files
     AppYaml appYaml = appYamlParser.parse(findAppYaml(workspaceDir));
     RuntimeConfig runtimeConfig = appYaml.getRuntimeConfig() != null
@@ -62,16 +68,30 @@ public class BuildPipelineConfigurator {
       // search for build files, keeping the first one we find
       Optional<Path> buildFile = findBuildFile(workspaceDir);
       if (buildFile.isPresent()) {
+        // select the correct build step for the buildTool
         BuildTool buildTool = BuildTool.getForBuildFile(buildFile.get());
-
-        // TODO(alexsloan) support custom maven and gradle goals here
-        List<String> buildToolGoals = new ArrayList<>();
-        steps.add(buildTool.getBuildStep(buildToolGoals));
+        steps.add(getBuildStepForTool(buildTool));
       }
     }
 
     steps.add(stageDockerArtifactBuildStep);
     return steps;
+  }
+
+  /*
+   * Looks up a build step for a build tool.
+   * TODO move this into the enum class?
+   */
+  private BuildStep getBuildStepForTool(BuildTool buildTool) {
+    switch(buildTool) {
+      case MAVEN:
+        return mavenBuildStep;
+      case GRADLE:
+        return gradleBuildStep;
+      default:
+        throw new IllegalArgumentException(
+            String.format("No build step available for build tool %s", buildTool));
+    }
   }
 
   /*

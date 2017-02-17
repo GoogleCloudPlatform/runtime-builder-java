@@ -1,6 +1,5 @@
-package com.google.cloud.runtimes.builder.buildsteps;
+package com.google.cloud.runtimes.builder.buildsteps.base;
 
-import com.google.cloud.runtimes.builder.exception.BuildStepException;
 import com.google.common.base.Preconditions;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;

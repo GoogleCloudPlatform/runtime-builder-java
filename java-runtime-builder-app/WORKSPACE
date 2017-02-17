@@ -1,0 +1,141 @@
+# The following dependencies were calculated from:
+# /usr/local/google/home/alexsloan/code/java-runtimes/java-runtime-builder/java-runtime-builder-app/pom.xml
+
+
+# /usr/local/google/home/alexsloan/code/java-runtimes/java-runtime-builder/java-runtime-builder-app/pom.xml
+# com.google.cloud.runtimes:java-runtime-builder-app:jar:1.0-SNAPSHOT
+maven_jar(
+    name = "org_slf4j_slf4j_jdk14",
+    artifact = "org.slf4j:slf4j-jdk14:1.7.22",
+    sha1 = "9589f32b2bdbefa93e6dbe6d8772600ee5e68e8b",
+)
+
+# org.apache.maven.shared:maven-invoker:jar:3.0.0
+maven_jar(
+    name = "org_codehaus_plexus_plexus_utils",
+    artifact = "org.codehaus.plexus:plexus-utils:3.0.24",
+    sha1 = "b4ac9780b37cb1b736eae9fbcef27609b7c911ef",
+)
+
+# /usr/local/google/home/alexsloan/code/java-runtimes/java-runtime-builder/java-runtime-builder-app/pom.xml
+# com.google.cloud.runtimes:java-runtime-builder-app:jar:1.0-SNAPSHOT
+# org.slf4j:slf4j-jdk14:jar:1.7.22
+maven_jar(
+    name = "org_slf4j_slf4j_api",
+    artifact = "org.slf4j:slf4j-api:1.7.22",
+    sha1 = "a1c83373863cec7ae8d89dc1c5722d8cb6ec0309",
+)
+
+# com.google.inject:guice:jar:4.1.0
+maven_jar(
+    name = "aopalliance_aopalliance",
+    artifact = "aopalliance:aopalliance:1.0",
+    sha1 = "0235ba8b489512805ac13a8f9ea77a1ca5ebe3e8",
+)
+
+# /usr/local/google/home/alexsloan/code/java-runtimes/java-runtime-builder/java-runtime-builder-app/pom.xml
+# com.google.cloud.runtimes:java-runtime-builder-app:jar:1.0-SNAPSHOT
+maven_jar(
+    name = "commons_io_commons_io",
+    artifact = "commons-io:commons-io:2.5",
+    sha1 = "2852e6e05fbb95076fc091f6d1780f1f8fe35e0f",
+)
+
+# com.google.inject:guice:jar:4.1.0
+maven_jar(
+    name = "javax_inject_javax_inject",
+    artifact = "javax.inject:javax.inject:1",
+    sha1 = "6975da39a7040257bd51d21a231b76c915872d38",
+)
+
+# /usr/local/google/home/alexsloan/code/java-runtimes/java-runtime-builder/java-runtime-builder-app/pom.xml
+# com.google.cloud.runtimes:java-runtime-builder-app:jar:1.0-SNAPSHOT
+maven_jar(
+    name = "com_google_inject_extensions_guice_throwingproviders",
+    artifact = "com.google.inject.extensions:guice-throwingproviders:4.1.0",
+    sha1 = "73603ce760adf5bccb1be6f8b3716c2588ebba7f",
+)
+
+# com.fasterxml.jackson.core:jackson-databind:bundle:2.8.4 wanted version 2.8.0
+# /usr/local/google/home/alexsloan/code/java-runtimes/java-runtime-builder/java-runtime-builder-app/pom.xml
+# com.google.cloud.runtimes:java-runtime-builder-app:jar:1.0-SNAPSHOT
+maven_jar(
+    name = "com_fasterxml_jackson_core_jackson_annotations",
+    artifact = "com.fasterxml.jackson.core:jackson-annotations:2.8.4",
+    sha1 = "de3570327cf8d1d4f37920535c51a1f74225a6de",
+)
+
+# /usr/local/google/home/alexsloan/code/java-runtimes/java-runtime-builder/java-runtime-builder-app/pom.xml
+# com.google.cloud.runtimes:java-runtime-builder-app:jar:1.0-SNAPSHOT
+maven_jar(
+    name = "commons_cli_commons_cli",
+    artifact = "commons-cli:commons-cli:1.3.1",
+    sha1 = "1303efbc4b181e5a58bf2e967dc156a3132b97c0",
+)
+
+# /usr/local/google/home/alexsloan/code/java-runtimes/java-runtime-builder/java-runtime-builder-app/pom.xml
+# com.google.cloud.runtimes:java-runtime-builder-app:jar:1.0-SNAPSHOT
+maven_jar(
+    name = "com_fasterxml_jackson_core_jackson_databind",
+    artifact = "com.fasterxml.jackson.core:jackson-databind:2.8.4",
+    sha1 = "1c36c81e79cacdf48116afba8495e3393d267ba1",
+)
+
+# /usr/local/google/home/alexsloan/code/java-runtimes/java-runtime-builder/java-runtime-builder-app/pom.xml
+# com.google.cloud.runtimes:java-runtime-builder-app:jar:1.0-SNAPSHOT
+maven_jar(
+    name = "com_fasterxml_jackson_dataformat_jackson_dataformat_yaml",
+    artifact = "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.8.4",
+    sha1 = "b345f237bad9534973cd7c330a9d9cc8d49fa633",
+)
+
+# com.google.inject:guice:jar:4.1.0
+# /usr/local/google/home/alexsloan/code/java-runtimes/java-runtime-builder/java-runtime-builder-app/pom.xml
+# com.google.cloud.runtimes:java-runtime-builder-app:jar:1.0-SNAPSHOT
+maven_jar(
+    name = "com_google_guava_guava",
+    artifact = "com.google.guava:guava:19.0",
+    sha1 = "6ce200f6b23222af3d8abb6b6459e6c44f4bb0e9",
+)
+
+# /usr/local/google/home/alexsloan/code/java-runtimes/java-runtime-builder/java-runtime-builder-app/pom.xml
+# com.google.cloud.runtimes:java-runtime-builder-app:jar:1.0-SNAPSHOT
+# com.google.inject.extensions:guice-throwingproviders:jar:4.1.0
+maven_jar(
+    name = "com_google_inject_guice",
+    artifact = "com.google.inject:guice:4.1.0",
+    sha1 = "eeb69005da379a10071aa4948c48d89250febb07",
+)
+
+# com.fasterxml.jackson.core:jackson-databind:bundle:2.8.4
+# /usr/local/google/home/alexsloan/code/java-runtimes/java-runtime-builder/java-runtime-builder-app/pom.xml
+# com.google.cloud.runtimes:java-runtime-builder-app:jar:1.0-SNAPSHOT
+# com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:bundle:2.8.4
+maven_jar(
+    name = "com_fasterxml_jackson_core_jackson_core",
+    artifact = "com.fasterxml.jackson.core:jackson-core:2.8.4",
+    sha1 = "ca365c0817cc345ea831cae7c4e9b42a72b32281",
+)
+
+# com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:bundle:2.8.4
+maven_jar(
+    name = "org_yaml_snakeyaml",
+    artifact = "org.yaml:snakeyaml:1.15",
+    sha1 = "3b132bea69e8ee099f416044970997bde80f4ea6",
+)
+
+# /usr/local/google/home/alexsloan/code/java-runtimes/java-runtime-builder/java-runtime-builder-app/pom.xml
+# com.google.cloud.runtimes:java-runtime-builder-app:jar:1.0-SNAPSHOT
+maven_jar(
+    name = "org_apache_maven_shared_maven_invoker",
+    artifact = "org.apache.maven.shared:maven-invoker:3.0.0",
+    sha1 = "54839b41d4bbe49401ff162b68276dd69e194a10",
+)
+
+# org.apache.maven.shared:maven-invoker:jar:3.0.0
+maven_jar(
+    name = "org_codehaus_plexus_plexus_component_annotations",
+    artifact = "org.codehaus.plexus:plexus-component-annotations:1.7",
+    sha1 = "05721c75d45fe15b9212877ad5b3dd7578e9dfc0",
+)
+

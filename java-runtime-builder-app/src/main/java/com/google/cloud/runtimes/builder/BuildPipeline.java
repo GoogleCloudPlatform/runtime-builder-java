@@ -39,7 +39,9 @@ public class BuildPipeline {
   public void build(Path workspaceDir) throws AppYamlNotFoundException, IOException,
       BuildStepException {
     List<BuildStep> buildSteps = buildPipelineConfigurator.configurePipeline(workspaceDir);
+    logger.info("Beginning build pipeline {}", buildSteps);
     for (BuildStep buildStep : buildSteps) {
+      logger.info("Executing build step {}", buildStep);
       buildStep.run(workspaceDir);
     }
   }

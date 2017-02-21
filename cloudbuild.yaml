@@ -1,8 +1,7 @@
 steps:
-# TODO point to specific hashes in release process
 - name: "gcr.io/$PROJECT_ID/java-runtime-builder"
-  args: ["--workspace", "/workspace"]
+#  args: ["--workspace", "/workspace"]
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '--tag=$_OUTPUT_IMAGE', '.']
+  args: ['build', '--tag=$_OUTPUT_IMAGE', '.docker_staging']
 
 images: ['$_OUTPUT_IMAGE']

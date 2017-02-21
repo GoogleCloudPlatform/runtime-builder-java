@@ -6,11 +6,15 @@ import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepMetadataConsta
 import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
 import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import com.google.cloud.runtimes.builder.util.FileUtil;
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -20,6 +24,7 @@ import java.util.Optional;
 
 public class StageDockerArtifactBuildStep extends BuildStep {
 
+  private final Logger logger = LoggerFactory.getLogger(StageDockerArtifactBuildStep.class);
   private final Optional<String> artifactPathOverride;
   private final DockerfileGenerator dockerfileGenerator;
 
@@ -33,17 +38,28 @@ public class StageDockerArtifactBuildStep extends BuildStep {
   @Override
   protected void doBuild(Path directory, Map<String, String> metadata) throws BuildStepException {
     try {
+      // TODO wrap this in a try block and log a more friendly message
       Path artifact = getArtifact(directory, metadata);
+      logger.info("Found artifact {}", artifact);
 
-      // TODO make staging dir
+      // make staging dir
+      // TODO delete dir if exists
+      Path stagingDir = Files.createDirectory(directory.resolve(".docker_staging"));
+      metadata.put(BuildStepMetadataConstants.DOCKER_STAGING_PATH, stagingDir.toString());
+
+      logger.info("Preparing docker files in {}", stagingDir);
+
+      // copy the artifact into the staging dir
+      Files.copy(artifact, stagingDir.resolve(artifact.getFileName()));
+
       // Generate dockerfile
       String dockerfile = dockerfileGenerator.generateDockerfile(artifact.getFileName());
-      // Path dockerFileDest = originalWorkspaceDir.resolve("Dockerfile");
+      Path dockerFileDest = stagingDir.resolve("Dockerfile");
 
-      // try (BufferedWriter writer
-      //  = Files.newBufferedWriter(dockerFileDest, StandardCharsets.US_ASCII)) {
-      // writer.write(dockerfile);
-      // }
+      try (BufferedWriter writer
+          = Files.newBufferedWriter(dockerFileDest, StandardCharsets.US_ASCII)) {
+        writer.write(dockerfile);
+      }
     } catch (IOException | ArtifactNotFoundException | TooManyArtifactsException e) {
       throw new BuildStepException(e);
     }
@@ -74,7 +90,10 @@ public class StageDockerArtifactBuildStep extends BuildStep {
    */
   private Path searchForArtifactInDir(Path directory) throws ArtifactNotFoundException,
       TooManyArtifactsException, IOException {
-    Preconditions.checkArgument(Files.isDirectory(directory));
+    logger.info("Searching for a deployable artifact in {}", directory.toString());
+    if (!Files.isDirectory(directory)) {
+      throw new IllegalArgumentException(String.format("%s is not a valid directory.", directory));
+    }
 
     List<Path> validArtifacts = new ArrayList<>();
     Files.list(directory)

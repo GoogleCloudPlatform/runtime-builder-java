@@ -3,7 +3,7 @@
 set -e
 
 cloudBuildFile=/usr/local/google/home/alexsloan/tmp/java.yaml
-testApp=/usr/local/google/home/alexsloan/tmp/spring-boot/spring-boot-samples/spring-boot-sample-war
+testApp=/usr/local/google/home/alexsloan/tmp/gs-spring-boot/complete
 
 # build and push the builder image
 mvn -DskipTests clean install

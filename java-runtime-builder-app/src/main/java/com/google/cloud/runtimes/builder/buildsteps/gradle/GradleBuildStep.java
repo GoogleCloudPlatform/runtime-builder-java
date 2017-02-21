@@ -14,6 +14,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
+/**
+ * Build step that invokes gradle.
+ */
 public class GradleBuildStep extends BuildStep {
 
   private final Logger logger = LoggerFactory.getLogger(GradleBuildStep.class);
@@ -46,7 +49,7 @@ public class GradleBuildStep extends BuildStep {
 
     String gradleHome = System.getenv("GRADLE_HOME");
     if (Strings.isNullOrEmpty(gradleHome)) {
-      throw new IllegalStateException("$GRADLE_HOME must be set");
+      throw new IllegalStateException("$GRADLE_HOME must be set.");
     }
     Path systemGradle = Paths.get(gradleHome).resolve("bin").resolve("gradle");
     if (Files.isExecutable(systemGradle)) {

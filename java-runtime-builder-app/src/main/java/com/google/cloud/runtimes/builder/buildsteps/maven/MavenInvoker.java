@@ -23,6 +23,10 @@ public class MavenInvoker {
 
   private final Logger logger = LoggerFactory.getLogger(MavenInvoker.class);
 
+  /**
+   * Synchronously executes the given maven goals from the current working directory.
+   * @throws BuildToolInvokerException if an exception was encountered invoking maven
+   */
   public void invoke(Path pomFile, List<String> goals) throws BuildToolInvokerException {
     logger.info("Invoking maven");
 

@@ -21,6 +21,12 @@ public abstract class BuildStep {
   protected abstract void doBuild(Path directory, Map<String, String> metadata)
       throws BuildStepException;
 
+  /**
+   * Executes the build step on the given directory.
+   *
+   * @throws IOException if a transient file system error was encountered
+   * @throws BuildStepException if an exception occurred while executing the build step
+   */
   public void run(Path directory) throws IOException, BuildStepException {
     Preconditions.checkArgument(Files.isDirectory(directory));
     this.metaDataPath = directory.resolve(METADATA_FILE_NAME);

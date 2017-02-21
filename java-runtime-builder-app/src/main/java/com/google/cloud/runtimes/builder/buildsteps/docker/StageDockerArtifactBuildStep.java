@@ -36,14 +36,14 @@ public class StageDockerArtifactBuildStep extends BuildStep {
       Path artifact = getArtifact(directory, metadata);
 
       // TODO make staging dir
-//    Generate dockerfile
+      // Generate dockerfile
       String dockerfile = dockerfileGenerator.generateDockerfile(artifact.getFileName());
-//      Path dockerFileDest = originalWorkspaceDir.resolve("Dockerfile");
-//
-//    try (BufferedWriter writer
-//        = Files.newBufferedWriter(dockerFileDest, StandardCharsets.US_ASCII)) {
-//      writer.write(dockerfile);
-//    }
+      // Path dockerFileDest = originalWorkspaceDir.resolve("Dockerfile");
+
+      // try (BufferedWriter writer
+      //  = Files.newBufferedWriter(dockerFileDest, StandardCharsets.US_ASCII)) {
+      // writer.write(dockerfile);
+      // }
     } catch (IOException | ArtifactNotFoundException | TooManyArtifactsException e) {
       throw new BuildStepException(e);
     }

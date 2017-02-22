@@ -1,6 +1,7 @@
+# Java runtime builder pipeline.
+# TODO replace $PROJECT_ID with the literal image URL
 steps:
-- name: "gcr.io/$PROJECT_ID/java-runtime-builder"
-#  args: ["--workspace", "/workspace"]
+- name: 'gcr.io/$PROJECT_ID/java-runtime-builder'
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '--tag=$_OUTPUT_IMAGE', '.docker_staging']
 

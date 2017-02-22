@@ -2,6 +2,7 @@ package com.google.cloud.runtimes.builder.buildsteps.gradle;
 
 import com.google.cloud.runtimes.builder.TestUtils;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepMetadataConstants;
 
 import org.junit.Before;
 import org.junit.Test;

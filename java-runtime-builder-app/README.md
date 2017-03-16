@@ -1,8 +1,4 @@
 # Java Runtime Builder App
-
-This module contains the core logic for the Java Runtime Builder.
-
-## Issues (these should be moved to github issues once available):
- - add checkstyle check for license file
- - thoughtful progress logging 
- - add support for deploying slim jar (and war also?) that references local paths to other jar dependencies
+This module contains the core logic for the java-runtime-builder build step. It is responsible for
+fingerprinting the user's source directory, invoking the appropriate build tool to build the user's
+source, and generating any required files for a docker build.

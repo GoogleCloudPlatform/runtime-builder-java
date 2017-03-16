@@ -41,7 +41,7 @@ public abstract class BuildStep {
     try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(metaDataPath.toFile()))) {
       return (HashMap<String, String>) in.readObject();
     } catch (FileNotFoundException e) {
-      // return an empty map.
+      // if the metadata file is not found, this is equivalent to an empty map
       return new HashMap<>();
     } catch (ClassNotFoundException e) {
       // this should never happen

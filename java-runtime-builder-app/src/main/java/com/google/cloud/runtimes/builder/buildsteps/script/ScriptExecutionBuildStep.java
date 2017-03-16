@@ -13,7 +13,7 @@ import java.nio.file.Path;
 import java.util.Map;
 
 /**
- * Build step that invokes an arbitrary string as a command.
+ * Build step that invokes an arbitrary string as a shell command.
  */
 public class ScriptExecutionBuildStep extends BuildStep {
 

@@ -30,11 +30,9 @@ public class GradleBuildStep extends BuildStep {
           .inheritIO()
           .start().waitFor();
 
-      // TODO look for build output overrides?
       metadata.put(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH, "build/libs");
 
     } catch (IOException | InterruptedException e) {
-      // TODO handle interrupt differently?
       throw new BuildStepException(e);
     }
   }

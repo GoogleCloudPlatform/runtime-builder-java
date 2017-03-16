@@ -32,11 +32,9 @@ public class MavenBuildStep extends BuildStep {
           .inheritIO()
           .start().waitFor();
 
-      // TODO look for build output overrides
       metadata.put(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH, "target/");
 
     } catch (IOException | InterruptedException e) {
-      // TODO handle interrupt differently?
       throw new BuildStepException(e);
     }
   }

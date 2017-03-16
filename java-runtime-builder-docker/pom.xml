@@ -13,6 +13,10 @@
 
   <artifactId>java-runtime-builder-docker</artifactId>
 
+  <properties>
+    <runtime.builder.artifact>java-runtime-builder.jar</runtime.builder.artifact>
+  </properties>
+
   <build>
     <plugins>
       <plugin>
@@ -57,7 +61,7 @@
                   <overWrite>true</overWrite>
                   <includes>**</includes>
                   <outputDirectory>${project.build.directory}/docker</outputDirectory>
-                  <destFileName>java-runtime-builder-app.jar</destFileName>
+                  <destFileName>${runtime.builder.artifact}</destFileName>
                 </artifactItem>
               </artifactItems>
             </configuration>
@@ -76,10 +80,6 @@
             </goals>
             <configuration>
               <imageName>java-runtime-builder</imageName>
-              <imageTags>
-                <!--<imageTag>${docker.tag.short}</imageTag>-->
-                <!--<imageTag>${docker.tag.long}</imageTag>-->
-              </imageTags>
               <dockerDirectory>${project.build.directory}/docker</dockerDirectory>
               <pullOnBuild>true</pullOnBuild>
             </configuration>
@@ -92,10 +92,6 @@
             </goals>
             <configuration>
               <imageName>java-runtime-builder</imageName>
-              <imageTags>
-                <!--<imageTag>${docker.tag.short}</imageTag>-->
-                <!--<imageTag>${docker.tag.long}</imageTag>-->
-              </imageTags>
             </configuration>
           </execution>
         </executions>

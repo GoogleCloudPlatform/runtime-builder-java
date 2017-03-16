@@ -1,4 +1,3 @@
-# TODO choose better base image?
 FROM openjdk:8-jdk
 
 # install utilities
@@ -6,7 +5,6 @@ RUN apt-get -q update \
   && apt-get -q -y --no-install-recommends install curl \
   && apt-get clean \
   && rm /var/lib/apt/lists/*_*
-
 
 # install maven
 ARG MAVEN_VERSION=3.3.9
@@ -27,5 +25,5 @@ RUN mkdir -p /usr/share/gradle \
   && ln -s /usr/share/gradle-$GRADLE_VERSION/bin/gradle /usr/bin/gradle
 ENV GRADLE_HOME /usr/share/gradle-$GRADLE_VERSION
 
-ADD java-runtime-builder-app.jar /java-runtime-builder-app.jar
-ENTRYPOINT ["java", "-jar", "/java-runtime-builder-app.jar"]
+ADD ${runtime.builder.artifact} /${runtime.builder.artifact}
+ENTRYPOINT ["java", "-jar", "/${runtime.builder.artifact}"]

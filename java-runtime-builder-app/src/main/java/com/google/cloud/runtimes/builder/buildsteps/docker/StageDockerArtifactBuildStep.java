@@ -38,7 +38,7 @@ public class StageDockerArtifactBuildStep extends BuildStep {
   @Override
   protected void doBuild(Path directory, Map<String, String> metadata) throws BuildStepException {
     try {
-      // TODO wrap this in a try block and log a more friendly message
+      // TODO wrap this in a try block and log a more friendly message if not found
       Path artifact = getArtifact(directory, metadata);
       logger.info("Found artifact {}", artifact);
 

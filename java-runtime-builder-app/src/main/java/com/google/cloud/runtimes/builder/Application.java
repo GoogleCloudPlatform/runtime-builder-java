@@ -43,42 +43,45 @@ public class Application {
 
   static {
     CLI_OPTIONS.addOption("w", "workspace", true, "absolute path to workspace directory");
+    CLI_OPTIONS.addRequiredOption("j", "jar-runtime", true, "base runtime to use for jars");
+    CLI_OPTIONS.addRequiredOption("s", "server-runtime", true, "base runtime to use for web server "
+        + "deployments");
   }
 
   /**
    * Main method for invocation from the command line. Handles parsing of command line options.
    */
   public static void main(String[] args) {
-    Path workspace = parseWorkspaceOption(args);
+    CommandLine cmd = parse(args);
+
+    // if workspace is not specified, use the working directory
+    String workspace = cmd.hasOption("w")
+        ? cmd.getOptionValue("w")
+        : System.getProperty("user.dir");
+    Path workspaceDir  = Paths.get(workspace);
+
+    String jarRuntime = cmd.getOptionValue("j");
+    String serverRuntime = cmd.getOptionValue("s");
 
     // Perform dependency injection and run the application
-    Injector injector = Guice.createInjector(new RootModule());
+    Injector injector = Guice.createInjector(new RootModule(jarRuntime, serverRuntime));
     try {
-      injector.getInstance(BuildPipeline.class).build(workspace);
+      injector.getInstance(BuildPipeline.class).build(workspaceDir);
     } catch (IOException | AppYamlNotFoundException | BuildStepException e) {
       throw new RuntimeException(e);
     }
   }
 
-  private static Path parseWorkspaceOption(String[] args) {
+  private static CommandLine parse(String[] args) {
     CommandLineParser parser = new DefaultParser();
-    CommandLine cmd = null;
     try {
-      cmd = parser.parse(CLI_OPTIONS, args);
+      return parser.parse(CLI_OPTIONS, args);
     } catch (ParseException e) {
       // print instructions and exit
       HelpFormatter formatter = new HelpFormatter();
       formatter.printHelp(EXECUTABLE_NAME, CLI_OPTIONS, true);
       System.exit(1);
     }
-
-    Path workspace;
-    if (!cmd.hasOption("w")) {
-      // use the current working directory as a default
-      workspace = Paths.get(System.getProperty("user.dir"));
-    } else {
-      workspace = Paths.get(cmd.getOptionValue("w"));
-    }
-    return workspace;
+    return null;
   }
 }

@@ -27,14 +27,18 @@ import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
-
 /**
  * Module class for configuring Guice bindings.
  */
 public class RootModule extends AbstractModule {
+
+  private final String jarRuntimeImage;
+  private final String serverRuntimeImage;
+
+  public RootModule(String jarRuntimeImage, String serverRuntimeImage) {
+    this.jarRuntimeImage = jarRuntimeImage;
+    this.serverRuntimeImage = serverRuntimeImage;
+  }
 
   @Override
   protected void configure() {
@@ -48,22 +52,14 @@ public class RootModule extends AbstractModule {
   }
 
   @Provides
-  @RuntimeDigests
-  Properties provideRuntimeDigests() {
-    InputStream runtimeDigestsStream = DefaultDockerfileGenerator.class.getClassLoader()
-        .getResourceAsStream("runtimes.properties");
-    if (runtimeDigestsStream == null) {
-      throw new IllegalStateException("runtimes.properties file not found on classpath");
-    }
-
-    Properties properties = new Properties();
-    try {
-      properties.load(runtimeDigestsStream);
-    } catch (IOException e) {
-      // we want the process to fail fast if this happens
-      throw new RuntimeException(e);
-    }
-    return properties;
+  @JarRuntimeImage
+  String provideJarRuntimeImage() {
+    return jarRuntimeImage;
   }
 
+  @Provides
+  @ServerRuntimeImage
+  String provideServerRuntimeImage() {
+    return serverRuntimeImage;
+  }
 }

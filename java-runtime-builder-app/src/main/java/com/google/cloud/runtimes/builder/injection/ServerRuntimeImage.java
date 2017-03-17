@@ -28,4 +28,4 @@ import java.lang.annotation.Target;
 
 @BindingAnnotation
 @Target({ FIELD, PARAMETER, METHOD }) @Retention(RUNTIME)
-public @interface RuntimeDigests {}
+public @interface ServerRuntimeImage {}

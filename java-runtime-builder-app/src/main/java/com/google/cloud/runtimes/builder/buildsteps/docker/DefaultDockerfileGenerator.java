@@ -16,12 +16,12 @@
 
 package com.google.cloud.runtimes.builder.buildsteps.docker;
 
-import com.google.cloud.runtimes.builder.injection.RuntimeDigests;
+import com.google.cloud.runtimes.builder.injection.JarRuntimeImage;
+import com.google.cloud.runtimes.builder.injection.ServerRuntimeImage;
 import com.google.cloud.runtimes.builder.util.FileUtil;
 import com.google.inject.Inject;
 
 import java.nio.file.Path;
-import java.util.Properties;
 
 /**
  * Default implementation of a {@link DockerfileGenerator}.
@@ -31,36 +31,37 @@ public class DefaultDockerfileGenerator implements DockerfileGenerator {
   private static final String DOCKERFILE = "FROM %s\n"
       + "ADD %s %s\n";
 
-  private Properties runtimeDigests;
+  private final String jarRuntime;
+  private final String serverRuntime;
 
   /**
    * Constructs a new {@link DefaultDockerfileGenerator}.
    */
   @Inject
-  DefaultDockerfileGenerator(@RuntimeDigests Properties runtimeDigests) {
-    this.runtimeDigests = runtimeDigests;
+  DefaultDockerfileGenerator(@JarRuntimeImage String jarRuntime,
+      @ServerRuntimeImage String serverRuntime) {
+    this.jarRuntime = jarRuntime;
+    this.serverRuntime = serverRuntime;
   }
 
   @Override
   public String generateDockerfile(Path artifactToDeploy) {
     String fileType = FileUtil.getFileExtension(artifactToDeploy);
-    String runtime;
+    String baseImage;
     String appDest;
 
+    // TODO both runtimes should suppport adding the application to the same destination
     if (fileType.equals("jar")) {
-      runtime = "openjdk";
+      baseImage = jarRuntime;
       appDest = "app.jar";
     } else if (fileType.equals("war")) {
-      runtime = "jetty";
+      baseImage = serverRuntime;
       appDest = "/app";
     } else {
       throw new IllegalArgumentException(
           String.format("Unable to determine the runtime for artifact %s.",
               artifactToDeploy.getFileName()));
     }
-
-    String baseImage = String.format("gcr.io/google_appengine/%s@%s",
-        runtime, runtimeDigests.getProperty(runtime));
     return String.format(DOCKERFILE, baseImage, artifactToDeploy.toString(), appDest);
   }
 

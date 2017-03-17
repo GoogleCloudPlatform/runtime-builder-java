@@ -17,16 +17,13 @@
 package com.google.cloud.runtimes.builder.buildsteps.docker;
 
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Properties;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 /**
@@ -35,33 +32,29 @@ import org.mockito.MockitoAnnotations;
 public class DefaultDockerfileGeneratorTest {
 
   private DefaultDockerfileGenerator generator;
-  @Mock private Properties runtimeDigestsProperties;
+  private String jarRuntime = "gcr.io/google-appengine/openjdk@sha256:12345";
+  private String serverRuntime = "gcr.io/google-appengine/server@sha256:12345";
 
   @Before
   public void setup() throws IOException {
     MockitoAnnotations.initMocks(this);
-    generator = new DefaultDockerfileGenerator(runtimeDigestsProperties);
+    generator = new DefaultDockerfileGenerator(jarRuntime, serverRuntime);
   }
 
   @Test
   public void testGenerateOpenjdk() throws IOException {
     Path jar = Files.createTempFile( null, ".jar").toAbsolutePath();
-    testGenerateForBaseRuntime("openjdk", jar);
+    String result = generator.generateDockerfile(jar);
+    assertTrue(result.contains("FROM " + jarRuntime));
+    assertTrue(result.contains("ADD " + jar.toString()));
   }
 
   @Test
   public void testGenerateJetty() throws IOException {
     Path war = Files.createTempFile( null, ".war").toAbsolutePath();
-    testGenerateForBaseRuntime("jetty", war);
-  }
-
-  private void testGenerateForBaseRuntime(String runtimeName, Path artifactToDeploy) {
-    String digest = "sha256:123456789";
-
-    when(runtimeDigestsProperties.getProperty(runtimeName)).thenReturn(digest);
-    String result = generator.generateDockerfile(artifactToDeploy);
-    assertTrue(result.contains("FROM gcr.io/google_appengine/" + runtimeName + "@" + digest));
-    assertTrue(result.contains("ADD " + artifactToDeploy.toString()));
+    String result = generator.generateDockerfile(war);
+    assertTrue(result.contains("FROM " + serverRuntime));
+    assertTrue(result.contains("ADD " + war.toString()));
   }
 
 }

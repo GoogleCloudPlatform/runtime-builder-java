@@ -40,5 +40,40 @@
         </plugin>
       </plugins>
     </pluginManagement>
+
+    <plugins>
+      <plugin>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>2.17</version>
+        <configuration>
+          <consoleOutput>false</consoleOutput>
+          <failOnViolation>true</failOnViolation>
+          <violationSeverity>warning</violationSeverity>
+        </configuration>
+        <executions>
+          <execution>
+            <id>validate-google-style</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <configLocation>google_checks.xml</configLocation>
+            </configuration>
+          </execution>
+          <execution>
+            <id>validate-file-header</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <headerLocation>java.header</headerLocation>
+              <configLocation>license-checks.xml</configLocation>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
   </build>
 </project>

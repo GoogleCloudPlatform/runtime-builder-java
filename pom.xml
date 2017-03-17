@@ -68,8 +68,8 @@
               <goal>check</goal>
             </goals>
             <configuration>
-              <headerLocation>java.header</headerLocation>
-              <configLocation>license-checks.xml</configLocation>
+              <headerLocation>checkstyle/java.header</headerLocation>
+              <configLocation>checkstyle/license-checks.xml</configLocation>
             </configuration>
           </execution>
         </executions>

@@ -75,7 +75,6 @@ public class StageDockerArtifactBuildStep extends BuildStep {
       return directory.resolve(artifactPathOverride.get());
     } else if (metadata.containsKey(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH)) {
       // if the artifact path is found in the metadata
-      // TODO if the metadata cant contain the exact path, still need to perform search in dir
       String buildArtifactPath = metadata.get(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH);
       Path buildOutputDir = directory.resolve(buildArtifactPath);
       return searchForArtifactInDir(buildOutputDir);

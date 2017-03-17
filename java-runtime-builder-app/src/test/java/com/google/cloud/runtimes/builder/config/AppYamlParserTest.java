@@ -62,14 +62,4 @@ public class AppYamlParserTest {
     assertEquals(artifact, result.getRuntimeConfig().getArtifact());
   }
 
-  @Test
-  public void testServer() {
-    // TODO
-  }
-
-  @Test
-  public void testJdk() {
-    // TODO
-  }
-
 }

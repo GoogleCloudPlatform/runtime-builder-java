@@ -7,4 +7,7 @@
         <property name="fileExtensions" value="java"/>
         <property name="headerFile" value="${checkstyle.header.file}"/>
     </module>
+    <module name="TreeWalker">
+        <module name="UnusedImports"/>
+    </module>
 </module>

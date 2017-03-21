@@ -23,7 +23,6 @@ import com.google.cloud.runtimes.builder.config.AppYamlParser;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 

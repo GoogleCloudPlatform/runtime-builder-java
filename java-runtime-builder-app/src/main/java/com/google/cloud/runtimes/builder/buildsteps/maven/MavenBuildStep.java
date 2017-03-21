@@ -19,11 +19,7 @@ package com.google.cloud.runtimes.builder.buildsteps.maven;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepMetadataConstants;
-import com.google.cloud.runtimes.builder.exception.BuildToolInvokerException;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
-import com.google.inject.Inject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +28,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Map;
 
 public class MavenBuildStep extends BuildStep {

@@ -51,30 +51,25 @@
         </executions>
       </plugin>
       <plugin>
-        <groupId>com.spotify</groupId>
+        <groupId>io.fabric8</groupId>
         <artifactId>docker-maven-plugin</artifactId>
+        <version>0.20.0</version>
+        <configuration>
+          <images>
+            <image>
+              <name>java-runtime-builder</name>
+              <build>
+                <dockerFileDir>${project.build.outputDirectory}/docker</dockerFileDir>
+              </build>
+            </image>
+          </images>
+        </configuration>
         <executions>
           <execution>
-            <id>build</id>
-            <phase>package</phase>
+            <id>docker-build</id>
             <goals>
               <goal>build</goal>
             </goals>
-            <configuration>
-              <imageName>java-runtime-builder</imageName>
-              <dockerDirectory>${project.build.outputDirectory}/docker</dockerDirectory>
-              <pullOnBuild>true</pullOnBuild>
-            </configuration>
-          </execution>
-          <execution>
-            <id>clean-docker</id>
-            <phase>clean</phase>
-            <goals>
-              <goal>removeImage</goal>
-            </goals>
-            <configuration>
-              <imageName>java-runtime-builder</imageName>
-            </configuration>
           </execution>
         </executions>
       </plugin>

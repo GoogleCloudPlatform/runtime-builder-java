@@ -34,11 +34,6 @@
           <artifactId>maven-resources-plugin</artifactId>
           <version>3.0.1</version>
         </plugin>
-        <plugin>
-          <groupId>com.spotify</groupId>
-          <artifactId>docker-maven-plugin</artifactId>
-          <version>0.4.13</version>
-        </plugin>
       </plugins>
     </pluginManagement>
 

@@ -46,20 +46,15 @@ public class RootModule extends AbstractModule {
         .to(AppYamlParser.class);
     bind(DockerfileGenerator.class)
         .to(DefaultDockerfileGenerator.class);
+    bind(String.class)
+        .annotatedWith(JarRuntimeImage.class)
+        .toInstance(jarRuntimeImage);
+    bind(String.class)
+        .annotatedWith(ServerRuntimeImage.class)
+        .toInstance(serverRuntimeImage);
 
     install(new FactoryModuleBuilder()
         .build(BuildStepFactory.class));
   }
 
-  @Provides
-  @JarRuntimeImage
-  String provideJarRuntimeImage() {
-    return jarRuntimeImage;
-  }
-
-  @Provides
-  @ServerRuntimeImage
-  String provideServerRuntimeImage() {
-    return serverRuntimeImage;
-  }
 }

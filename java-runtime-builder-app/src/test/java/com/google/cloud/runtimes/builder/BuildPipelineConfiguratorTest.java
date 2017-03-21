@@ -67,7 +67,7 @@ public class BuildPipelineConfiguratorTest {
 
     when(buildStepFactory.createMavenBuildStep()).thenReturn(mavenBuildStep);
     when(buildStepFactory.createGradleBuildStep()).thenReturn(gradleBuildStep);
-    when(buildStepFactory.createStageDockerArtifactBuildStep(any()))
+    when(buildStepFactory.createStageDockerArtifactBuildStep())
         .thenReturn(stageDockerArtifactBuildStep);
     when(buildStepFactory.createScriptExecutionBuildStep(anyString()))
         .thenReturn(scriptExecutionBuildStep);
@@ -105,8 +105,8 @@ public class BuildPipelineConfiguratorTest {
     assertEquals(2, buildSteps.size());
     assertEquals(mavenBuildStep, buildSteps.get(0));
     assertEquals(stageDockerArtifactBuildStep, buildSteps.get(1));
-    verify(buildStepFactory, times(1))
-        .createStageDockerArtifactBuildStep(eq(Optional.of("my_output_dir/artifact.jar")));
+    verify(stageDockerArtifactBuildStep, times(1))
+        .setArtifactPathOverride(eq("my_output_dir/artifact.jar"));
   }
 
   @Test

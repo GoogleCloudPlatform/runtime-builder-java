@@ -50,7 +50,8 @@ public class Application {
   /**
    * Main method for invocation from the command line. Handles parsing of command line options.
    */
-  public static void main(String[] args) {
+  public static void main(String[] args)
+      throws BuildStepException, IOException, AppYamlNotFoundException {
     CommandLine cmd = parse(args);
     String jarRuntime = cmd.getOptionValue("j");
     String serverRuntime = cmd.getOptionValue("s");
@@ -59,11 +60,7 @@ public class Application {
 
     // Perform dependency injection and run the application
     Injector injector = Guice.createInjector(new RootModule(jarRuntime, serverRuntime));
-    try {
-      injector.getInstance(BuildPipeline.class).build(workspaceDir);
-    } catch (IOException | AppYamlNotFoundException | BuildStepException e) {
-      throw new RuntimeException(e);
-    }
+    injector.getInstance(BuildPipeline.class).build(workspaceDir);
   }
 
   private static CommandLine parse(String[] args) {

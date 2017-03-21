@@ -18,6 +18,7 @@ package com.google.cloud.runtimes.builder;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
+import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.BuildTool;
@@ -98,8 +99,10 @@ public class BuildPipelineConfigurator {
       }
     }
 
-    Optional<String> pathToArtifact = Optional.ofNullable(runtimeConfig.getArtifact());
-    steps.add(buildStepFactory.createStageDockerArtifactBuildStep(pathToArtifact));
+    StageDockerArtifactBuildStep stageDockerBuildStep
+        = buildStepFactory.createStageDockerArtifactBuildStep();
+    stageDockerBuildStep.setArtifactPathOverride(runtimeConfig.getArtifact());
+    steps.add(stageDockerBuildStep);
     return steps;
   }
 

@@ -34,7 +34,7 @@ public interface BuildStepFactory {
 
   GradleBuildStep createGradleBuildStep();
 
-  StageDockerArtifactBuildStep createStageDockerArtifactBuildStep(Optional<String> artifactPath);
+  StageDockerArtifactBuildStep createStageDockerArtifactBuildStep();
 
   ScriptExecutionBuildStep createScriptExecutionBuildStep(String buildCommand);
 

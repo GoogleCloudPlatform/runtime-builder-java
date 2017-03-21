@@ -22,7 +22,6 @@ import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepMetadataConsta
 import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
 import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,18 +34,19 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class StageDockerArtifactBuildStep extends BuildStep {
 
   private final Logger logger = LoggerFactory.getLogger(StageDockerArtifactBuildStep.class);
-  private final Optional<String> artifactPathOverride;
   private final DockerfileGenerator dockerfileGenerator;
+  private String artifactPathOverride;
 
   @Inject
-  StageDockerArtifactBuildStep(DockerfileGenerator dockerfileGenerator,
-      @Assisted Optional<String> artifactPathOverride) {
+  StageDockerArtifactBuildStep(DockerfileGenerator dockerfileGenerator) {
     this.dockerfileGenerator = dockerfileGenerator;
+  }
+
+  public void setArtifactPathOverride(String artifactPathOverride) {
     this.artifactPathOverride = artifactPathOverride;
   }
 
@@ -86,8 +86,8 @@ public class StageDockerArtifactBuildStep extends BuildStep {
   private Path getArtifact(Path directory, Map<String, String> metadata)
       throws ArtifactNotFoundException, IOException, TooManyArtifactsException {
     // if the artifact path has been overridden, use that value
-    if (artifactPathOverride.isPresent()) {
-      return directory.resolve(artifactPathOverride.get());
+    if (artifactPathOverride != null) {
+      return directory.resolve(artifactPathOverride);
     } else if (metadata.containsKey(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH)) {
       // if the artifact path is found in the metadata
       String buildArtifactPath = metadata.get(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH);

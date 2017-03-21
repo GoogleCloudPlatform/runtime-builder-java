@@ -42,7 +42,6 @@ public class Application {
   private static final String EXECUTABLE_NAME = "<BUILDER_JAR>";
 
   static {
-    CLI_OPTIONS.addOption("w", "workspace", true, "absolute path to workspace directory");
     CLI_OPTIONS.addRequiredOption("j", "jar-runtime", true, "base runtime to use for jars");
     CLI_OPTIONS.addRequiredOption("s", "server-runtime", true, "base runtime to use for web server "
         + "deployments");
@@ -53,15 +52,10 @@ public class Application {
    */
   public static void main(String[] args) {
     CommandLine cmd = parse(args);
-
-    // if workspace is not specified, use the working directory
-    String workspace = cmd.hasOption("w")
-        ? cmd.getOptionValue("w")
-        : System.getProperty("user.dir");
-    Path workspaceDir  = Paths.get(workspace);
-
     String jarRuntime = cmd.getOptionValue("j");
     String serverRuntime = cmd.getOptionValue("s");
+
+    Path workspaceDir  = Paths.get(System.getProperty("user.dir"));
 
     // Perform dependency injection and run the application
     Injector injector = Guice.createInjector(new RootModule(jarRuntime, serverRuntime));

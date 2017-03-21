@@ -18,7 +18,7 @@ package com.google.cloud.runtimes.builder.buildsteps.docker;
 
 import com.google.cloud.runtimes.builder.injection.JarRuntimeImage;
 import com.google.cloud.runtimes.builder.injection.ServerRuntimeImage;
-import com.google.cloud.runtimes.builder.util.FileUtil;
+import com.google.common.io.Files;
 import com.google.inject.Inject;
 
 import java.nio.file.Path;
@@ -46,17 +46,16 @@ public class DefaultDockerfileGenerator implements DockerfileGenerator {
 
   @Override
   public String generateDockerfile(Path artifactToDeploy) {
-    String fileType = FileUtil.getFileExtension(artifactToDeploy);
+    String fileType = Files.getFileExtension(artifactToDeploy.toString());
     String baseImage;
     String appDest;
 
-    // TODO both runtimes should suppport adding the application to the same destination
     if (fileType.equals("jar")) {
       baseImage = jarRuntime;
       appDest = "app.jar";
     } else if (fileType.equals("war")) {
       baseImage = serverRuntime;
-      appDest = "/app";
+      appDest = System.getenv("JETTY_BASE") + "/webapps/root.war";
     } else {
       throw new IllegalArgumentException(
           String.format("Unable to determine the runtime for artifact %s.",

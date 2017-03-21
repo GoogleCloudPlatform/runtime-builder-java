@@ -7,7 +7,7 @@
   <parent>
     <artifactId>java-runtime-builder</artifactId>
     <groupId>com.google.cloud.runtimes</groupId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
@@ -18,31 +18,13 @@
   </properties>
 
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
     <plugins>
-      <plugin>
-      <artifactId>maven-resources-plugin</artifactId>
-      <executions>
-      <execution>
-        <id>copy-resources</id>
-        <phase>generate-resources</phase>
-        <goals>
-          <goal>copy-resources</goal>
-        </goals>
-        <configuration>
-          <outputDirectory>${project.build.directory}/docker</outputDirectory>
-          <resources>
-            <resource>
-              <directory>${basedir}/src/main/docker</directory>
-              <filtering>true</filtering>
-              <includes>
-                <include>*</include>
-              </includes>
-            </resource>
-          </resources>
-        </configuration>
-      </execution>
-      </executions>
-      </plugin>
       <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
         <executions>
@@ -60,7 +42,7 @@
                   <type>jar</type>
                   <overWrite>true</overWrite>
                   <includes>**</includes>
-                  <outputDirectory>${project.build.directory}/docker</outputDirectory>
+                  <outputDirectory>${project.build.outputDirectory}/docker</outputDirectory>
                   <destFileName>${runtime.builder.artifact}</destFileName>
                 </artifactItem>
               </artifactItems>
@@ -80,7 +62,7 @@
             </goals>
             <configuration>
               <imageName>java-runtime-builder</imageName>
-              <dockerDirectory>${project.build.directory}/docker</dockerDirectory>
+              <dockerDirectory>${project.build.outputDirectory}/docker</dockerDirectory>
               <pullOnBuild>true</pullOnBuild>
             </configuration>
           </execution>

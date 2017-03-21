@@ -21,7 +21,6 @@ import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepMetadataConstants;
 import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
 import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
-import com.google.cloud.runtimes.builder.util.FileUtil;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
@@ -114,7 +113,7 @@ public class StageDockerArtifactBuildStep extends BuildStep {
     Files.list(directory)
         // filter out files that don't end in .war or .jar
         .filter((path) -> {
-          String extension = FileUtil.getFileExtension(path);
+          String extension = com.google.common.io.Files.getFileExtension(path.toString());
           return extension.equals("war") || extension.equals("jar");
         })
         .forEach(validArtifacts::add);

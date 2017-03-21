@@ -1,0 +1,10 @@
+# Java runtime builder pipeline.
+
+steps:
+- name: 'gcr.io/$PROJECT_ID/java-runtime-builder'
+  args: ['--server-runtime', 'gcr.io/google_appengine/jetty:latest',
+  '--jar-runtime', 'gcr.io/google_appengine/openjdk:latest']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '--tag=$_OUTPUT_IMAGE', '.docker_staging']
+
+images: ['$_OUTPUT_IMAGE']

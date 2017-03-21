@@ -1,12 +1,16 @@
 # Java Runtime Builder
 
 A [Google Cloud Container Builder](https://cloud.google.com/container-builder/docs/) pipeline for 
-packaging Java applications into supported Google Cloud Runtime containers.
-
-## Runnning Locally
-TODO
+packaging Java applications into supported Google Cloud Runtime containers. It consists of several
+docker containers which are run using the [cloudbuild.yaml](cloudbuild.yaml) configuration file.
 
 ## Building
+To build all docker images:
+```bash
+mvn package
+```
+
+## Runnning Locally
 TODO
 
 ## Contributing changes

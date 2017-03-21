@@ -55,7 +55,7 @@ public class DefaultDockerfileGenerator implements DockerfileGenerator {
       appDest = "app.jar";
     } else if (fileType.equals("war")) {
       baseImage = serverRuntime;
-      appDest = System.getenv("JETTY_BASE") + "/webapps/root.war";
+      appDest = "$JETTY_BASE/webapps/root.war";
     } else {
       throw new IllegalArgumentException(
           String.format("Unable to determine the runtime for artifact %s.",

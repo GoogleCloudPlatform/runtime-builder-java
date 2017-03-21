@@ -57,7 +57,14 @@ public class Application {
     String serverRuntime = cmd.getOptionValue("s");
 
     Path workspaceDir  = Paths.get(System.getProperty("user.dir"));
+    build(jarRuntime, serverRuntime, workspaceDir);
+  }
 
+  /**
+   * Invokes the builder.
+   */
+  public static void build(String jarRuntime, String serverRuntime, Path workspaceDir)
+      throws BuildStepException, IOException, AppYamlNotFoundException {
     // Perform dependency injection and run the application
     Injector injector = Guice.createInjector(new RootModule(jarRuntime, serverRuntime));
     injector.getInstance(BuildPipeline.class).build(workspaceDir);

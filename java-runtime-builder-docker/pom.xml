@@ -55,11 +55,14 @@
         <artifactId>docker-maven-plugin</artifactId>
         <version>0.20.0</version>
         <configuration>
+          <verbose>true</verbose>
+          <autoPull>always</autoPull>
           <images>
             <image>
               <name>java-runtime-builder</name>
               <build>
                 <dockerFileDir>${project.build.outputDirectory}/docker</dockerFileDir>
+                <nocache>true</nocache>
               </build>
             </image>
           </images>

@@ -28,13 +28,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -73,6 +73,12 @@ public class StageDockerArtifactBuildStep extends BuildStep {
 
       // copy the artifact into the staging dir
       Files.copy(artifact, stagingDir.resolve(artifact.getFileName()));
+
+      // copy the .dockerignore file into staging dir, if it exists
+      Path dockerIgnoreFile = directory.resolve(".dockerignore");
+      if (Files.exists(dockerIgnoreFile)) {
+        Files.copy(dockerIgnoreFile, stagingDir.resolve(".dockerignore"));
+      }
 
       // Generate dockerfile
       String dockerfile = dockerfileGenerator.generateDockerfile(artifact.getFileName());
@@ -128,7 +134,11 @@ public class StageDockerArtifactBuildStep extends BuildStep {
     if (Files.exists(dockerIgnoreFile)) {
       PathMatcher dockerIgnoreMatcher = getDockerIgnoreFileMatcher(dockerIgnoreFile);
       fileStream = fileStream
-          .filter(dockerIgnoreMatcher::matches);
+          // apply the dockerignore filter to all file names relative to the workspace root
+          .filter((path) -> {
+            Path relativePath = path.subpath(directory.getNameCount(), path.getNameCount());
+            return !dockerIgnoreMatcher.matches(relativePath);
+          });
     }
 
     List<Path> validArtifacts = fileStream.collect(Collectors.toList());
@@ -145,24 +155,19 @@ public class StageDockerArtifactBuildStep extends BuildStep {
     try (BufferedReader in = Files.newBufferedReader(file)) {
       StringBuilder pathMatcherExpression = new StringBuilder("glob:");
       in.lines()
-          // TODO strip leading and trailing whitespace
-          .map((line) -> line)
-          .map((line) -> {
-            // clean "." and ".." elements from the path, etc.
-            try {
-              return new File(line).getCanonicalPath().toString();
-            } catch (IOException e) {
-              // assume that IOExceptions here are due to invalid filenames
-              return line;
-            }
-          })
-          .filter((line) -> {
-            // remove comments and blank lines
-            return line.isEmpty() || line.charAt(0) == '#';
-          })
-          .forEach(pathMatcherExpression::append); // TODO delimiter required between elements?
+          // strip leading and trailing whitespace
+          .map((line) -> line.replaceAll("^\\s*", "").replaceAll("\\s*$", ""))
+          // clean "." and ".." elements from the path, etc.
+          .map((line) -> Paths.get(line).normalize().toString())
+          // remove comments and blank lines
+          .filter((line) -> !line.isEmpty() && line.charAt(0) != '#')
+          // add all remaining lines to the matcher
+          // TODO delimiter required between elements?
+          .forEach(pathMatcherExpression::append);
 
-      // TODO identify explicit includes (lines starting with !) and do something different with
+      // TODO handle case where no lines are appended
+
+      // TODO identify explicit includes (lines starting with !)
       return FileSystems.getDefault().getPathMatcher(pathMatcherExpression.toString());
     }
   }

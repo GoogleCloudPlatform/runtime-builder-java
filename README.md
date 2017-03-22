@@ -4,14 +4,19 @@
 
 A [Google Cloud Container Builder](https://cloud.google.com/container-builder/docs/) pipeline for 
 packaging Java applications into supported Google Cloud Runtime containers. It consists of a series
-of docker containers and a [cloudbuild.yaml](cloudbuild.yaml) configuration file.
+of docker containers, used as build steps, and a [cloudbuild.yaml](cloudbuild.yaml) configuration 
+file.
 
 ## Running via Google Cloud Container Builder (recommended)
 To run via Google Cloud Container Builder, first install the 
-[Google Cloud SDK](https://cloud.google.com/sdk/). Then, initiate a Cloud Container Build:
+[Google Cloud SDK](https://cloud.google.com/sdk/). Then, initiate a Cloud Container Build using the 
+provided [cloudbuild.yaml](cloudbuild.yaml) file:
 ```bash
 gcloud container builds submit /path/to/my/java/app --config cloudbuild.yaml
 ```
+After the build completes, the built application container will appear in the [gcr.io container 
+registry](https://cloud.google.com/container-registry/) for the GCP project configured in the Cloud 
+SDK.
 
 ## Configuration
 An [app.yaml](https://cloud.google.com/appengine/docs/flexible/java/configuring-your-app-with-app-yaml) 
@@ -23,6 +28,17 @@ section of this file tells the builder how to build and package your source. In 
 |----------|------|---------|-------------|
 | artifact | string |  Discovered based on the content of your build output | The path where the builder should expect to find the artifact to package in the resulting docker container. This setting will be required if your build produces more than one artifact. 
 | build_script | string | `mvn -B -DskipTests clean package` if a maven project is detected, or `gradle build` if a gradle project is detected | The build command that is executed to build your source |
+
+### Sample app.yaml
+```yaml
+runtime: java
+env: flex
+
+# all parameters specified below in the runtime_config block are optional
+runtime_config:
+  artifact: "target/my-artifact.jar"
+  build_script: "mvn clean install -Pcloud-build-profile"
+```
 
 ## Building and Running locally
 The build pipeline can be built using maven:

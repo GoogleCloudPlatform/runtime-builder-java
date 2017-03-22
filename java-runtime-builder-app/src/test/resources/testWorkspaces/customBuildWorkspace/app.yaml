@@ -1,4 +1,0 @@
-env: flex
-runtime: java
-runtime_config:
-  build_script: "bazel build //:all"

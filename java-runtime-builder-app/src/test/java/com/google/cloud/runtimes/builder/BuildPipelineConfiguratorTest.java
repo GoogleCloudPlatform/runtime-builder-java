@@ -16,7 +16,6 @@
 
 package com.google.cloud.runtimes.builder;
 
-import static com.google.cloud.runtimes.builder.TestUtils.getTestDataDir;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -25,6 +24,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
 import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
@@ -77,14 +77,24 @@ public class BuildPipelineConfiguratorTest {
 
   @Test
   public void test_simpleWorkspace() throws AppYamlNotFoundException, IOException {
-    List<BuildStep> buildSteps = runConfigurator("simple");
+    Path workspace = new TestWorkspaceBuilder()
+        .file("foo.war").build()
+        .file("app.yaml").withContents("env: flex\nruntime: java").build()
+        .build();
+
+    List<BuildStep> buildSteps = buildPipelineConfigurator.configurePipeline(workspace);
     assertEquals(1, buildSteps.size());
     assertEquals(stageDockerArtifactBuildStep, buildSteps.get(0));
   }
 
   @Test
   public void test_mavenWorkspace() throws AppYamlNotFoundException, IOException {
-    List<BuildStep> buildSteps = runConfigurator("mavenWorkspace");
+    Path workspace = new TestWorkspaceBuilder()
+        .file("pom.xml").build()
+        .file("src/main/appengine/app.yaml").withContents("env: flex\nruntime: java").build()
+        .build();
+
+    List<BuildStep> buildSteps = buildPipelineConfigurator.configurePipeline(workspace);
     assertEquals(2, buildSteps.size());
     assertEquals(mavenBuildStep, buildSteps.get(0));
     assertEquals(stageDockerArtifactBuildStep, buildSteps.get(1));
@@ -92,7 +102,13 @@ public class BuildPipelineConfiguratorTest {
 
   @Test
   public void test_mavenAndGradleWorkspace() throws AppYamlNotFoundException, IOException {
-    List<BuildStep> buildSteps = runConfigurator("mavenAndGradleWorkspace");
+    Path workspace = new TestWorkspaceBuilder()
+        .file("pom.xml").build()
+        .file("build.gradle").build()
+        .file("src/main/appengine/app.yaml").withContents("env: flex\nruntime: java").build()
+        .build();
+
+    List<BuildStep> buildSteps = buildPipelineConfigurator.configurePipeline(workspace);
     assertEquals(2, buildSteps.size());
     // maven takes precedence
     assertEquals(mavenBuildStep, buildSteps.get(0));
@@ -101,7 +117,17 @@ public class BuildPipelineConfiguratorTest {
 
   @Test
   public void test_mavenWorkspace_customArtifact() throws AppYamlNotFoundException, IOException {
-    List<BuildStep> buildSteps = runConfigurator("mavenWorkspace_customArtifact");
+    Path workspace = new TestWorkspaceBuilder()
+        .file("pom.xml").build()
+        .file("src/main/appengine/app.yaml")
+            .withContents(
+                "runtime: java\n" +
+                "env: flex\n" +
+                "runtime_config:\n" +
+                "  artifact: my_output_dir/artifact.jar\n").build()
+        .build();
+
+    List<BuildStep> buildSteps = buildPipelineConfigurator.configurePipeline(workspace);
     assertEquals(2, buildSteps.size());
     assertEquals(mavenBuildStep, buildSteps.get(0));
     assertEquals(stageDockerArtifactBuildStep, buildSteps.get(1));
@@ -111,19 +137,23 @@ public class BuildPipelineConfiguratorTest {
 
   @Test
   public void test_customBuildWorkspace() throws AppYamlNotFoundException, IOException {
-    List<BuildStep> buildSteps = runConfigurator("customBuildWorkspace");
+    String buildScript = "gradle clean test buildThing";
+    Path workspace = new TestWorkspaceBuilder()
+        .file("pom.xml").build()
+        .file("src/main/appengine/app.yaml")
+        .withContents(
+            "env: flex\n" +
+            "runtime: java\n" +
+            "runtime_config:\n" +
+            "  build_script: \"" + buildScript + "\"").build()
+        .build();
+
+    List<BuildStep> buildSteps = buildPipelineConfigurator.configurePipeline(workspace);
     assertEquals(2, buildSteps.size());
     assertEquals(scriptExecutionBuildStep, buildSteps.get(0));
     assertEquals(stageDockerArtifactBuildStep, buildSteps.get(1));
     verify(buildStepFactory, times(1))
-        .createScriptExecutionBuildStep(eq("bazel build //:all"));
+        .createScriptExecutionBuildStep(eq(buildScript));
   }
-
-  private List<BuildStep> runConfigurator(String workspaceName)
-      throws AppYamlNotFoundException, IOException {
-    Path workspace = getTestDataDir(workspaceName);
-    return buildPipelineConfigurator.configurePipeline(workspace);
-  }
-
 
 }

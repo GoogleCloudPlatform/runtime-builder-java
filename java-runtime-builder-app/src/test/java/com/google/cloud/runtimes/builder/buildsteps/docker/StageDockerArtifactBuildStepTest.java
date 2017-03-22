@@ -84,6 +84,19 @@ public class StageDockerArtifactBuildStepTest {
   }
 
   @Test
+  public void testDoBuild_withDockerIgnore() throws BuildStepException, IOException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("notignored.jar").build()
+        .file("ignored_artifact.war").build()
+        .file("ignored_other_artifact.jar").build()
+        .file(".dockerignore").withContents("ignored_*").build()
+        .build();
+
+    initBuildStep(null).doBuild(workspace, metadata);
+    assertTrue(Files.exists(getDockerStagingDir(workspace).resolve("notignored.jar")));
+  }
+
+  @Test
   public void testDoBuild_withBuildArtifactMetadata() throws IOException, BuildStepException {
     String buildOutputDir = "target";
     Path workspace = new TestWorkspaceBuilder()

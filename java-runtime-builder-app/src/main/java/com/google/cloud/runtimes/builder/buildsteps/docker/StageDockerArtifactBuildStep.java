@@ -26,16 +26,23 @@ import com.google.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
+import java.nio.file.PathMatcher;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class StageDockerArtifactBuildStep extends BuildStep {
+
+  private static final String DOCKER_STAGING_DIR = ".docker_staging";
 
   private final Logger logger = LoggerFactory.getLogger(StageDockerArtifactBuildStep.class);
   private final DockerfileGenerator dockerfileGenerator;
@@ -59,7 +66,7 @@ public class StageDockerArtifactBuildStep extends BuildStep {
 
       // make staging dir
       // TODO delete dir if exists
-      Path stagingDir = Files.createDirectory(directory.resolve(".docker_staging"));
+      Path stagingDir = Files.createDirectory(directory.resolve(DOCKER_STAGING_DIR));
       metadata.put(BuildStepMetadataConstants.DOCKER_STAGING_PATH, stagingDir.toString());
 
       logger.info("Preparing docker files in {}", stagingDir);
@@ -109,15 +116,22 @@ public class StageDockerArtifactBuildStep extends BuildStep {
       throw new IllegalArgumentException(String.format("%s is not a valid directory.", directory));
     }
 
-    List<Path> validArtifacts = new ArrayList<>();
-    Files.list(directory)
+    Stream<Path> fileStream = Files.list(directory)
         // filter out files that don't end in .war or .jar
         .filter((path) -> {
           String extension = com.google.common.io.Files.getFileExtension(path.toString());
           return extension.equals("war") || extension.equals("jar");
-        })
-        .forEach(validArtifacts::add);
+        });
 
+    // if a dockerignore file exists, filter based on its contents
+    Path dockerIgnoreFile = directory.resolve(".dockerignore");
+    if (Files.exists(dockerIgnoreFile)) {
+      PathMatcher dockerIgnoreMatcher = getDockerIgnoreFileMatcher(dockerIgnoreFile);
+      fileStream = fileStream
+          .filter(dockerIgnoreMatcher::matches);
+    }
+
+    List<Path> validArtifacts = fileStream.collect(Collectors.toList());
     if (validArtifacts.size() < 1) {
       throw new ArtifactNotFoundException();
     } else if (validArtifacts.size() > 1) {
@@ -127,5 +141,30 @@ public class StageDockerArtifactBuildStep extends BuildStep {
     }
   }
 
+  private PathMatcher getDockerIgnoreFileMatcher(Path file) throws IOException {
+    try (BufferedReader in = Files.newBufferedReader(file)) {
+      StringBuilder pathMatcherExpression = new StringBuilder("glob:");
+      in.lines()
+          // TODO strip leading and trailing whitespace
+          .map((line) -> line)
+          .map((line) -> {
+            // clean "." and ".." elements from the path, etc.
+            try {
+              return new File(line).getCanonicalPath().toString();
+            } catch (IOException e) {
+              // assume that IOExceptions here are due to invalid filenames
+              return line;
+            }
+          })
+          .filter((line) -> {
+            // remove comments and blank lines
+            return line.isEmpty() || line.charAt(0) == '#';
+          })
+          .forEach(pathMatcherExpression::append); // TODO delimiter required between elements?
+
+      // TODO identify explicit includes (lines starting with !) and do something different with
+      return FileSystems.getDefault().getPathMatcher(pathMatcherExpression.toString());
+    }
+  }
 
 }

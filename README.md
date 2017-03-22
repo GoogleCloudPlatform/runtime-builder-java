@@ -7,16 +7,47 @@ packaging Java applications into supported Google Cloud Runtime containers. It c
 of docker containers, used as build steps, and a [cloudbuild.yaml](cloudbuild.yaml) configuration 
 file.
 
+## Building Locally
+The pipeline can be built using maven:
+```bash
+mvn clean install
+```
+
 ## Running via Google Cloud Container Builder (recommended)
-To run via Google Cloud Container Builder, first install the 
+To run via Google Cloud Container Builder, first install the
 [Google Cloud SDK](https://cloud.google.com/sdk/). Then, initiate a Cloud Container Build using the 
 provided [cloudbuild.yaml](cloudbuild.yaml) file:
 ```bash
-gcloud container builds submit /path/to/my/java/app --config cloudbuild.yaml
+# first, build locally using maven
+mvn clean install
+
+# then, push built images to GCR
+docker tag java-runtime-builder gcr.io/my-project-id/java-runtime-builder
+gcloud docker -- push gcr.io/my-project-id/java-runtime-builder
+
+# finally, initiate the cloud container build
+gcloud container builds submit /path/to/my/java/app \ 
+    --config cloudbuild.yaml \
+    --substitutions _OUTPUT_IMAGE=gcr.io/my-project-id/my-application-container
 ```
 After the build completes, the built application container will appear in the [gcr.io container 
 registry](https://cloud.google.com/container-registry/) for the GCP project configured in the Cloud 
 SDK.
+
+## Running locally
+Locally assembled build steps can also be run locally, one at a time, using docker:
+```bash
+# build locally
+mvn clean install
+
+# compile my application's source and generate a dockerfile
+docker run -v /path/to/my/java/app:/workspace -w /workspace java-runtime-builder \
+    --jar-runtime=gcr.io/google-appengine/openjdk \
+    --server-runtime=gcr.io/google-appengine/jetty
+    
+# package my application into a docker container
+docker build -t my-java-app /path/to/my/java/app/.docker_staging
+```
 
 ## Configuration
 An [app.yaml](https://cloud.google.com/appengine/docs/flexible/java/configuring-your-app-with-app-yaml) 
@@ -40,21 +71,6 @@ runtime_config:
   build_script: "mvn clean install -Pcloud-build-profile"
 ```
 
-## Building and Running locally
-The build pipeline can be built using maven:
-```bash
-$ mvn clean install
-```
-Build steps can then be run individually using docker:
-```bash
-# compile my application's source and generate a dockerfile
-$ docker run -v /path/to/my/java/app:/workspace -w /workspace java-runtime-builder \
-    --jar-runtime=gcr.io/google-appengine/openjdk \
-    --server-runtime=gcr.io/google-appengine/jetty
-    
-# package my application into a docker container
-$ docker build -t my-java-app /path/to/my/java/app/.docker_staging
-```
 
 ## Contributing changes
 

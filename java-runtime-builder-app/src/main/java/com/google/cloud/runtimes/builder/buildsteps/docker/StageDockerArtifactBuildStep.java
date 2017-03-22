@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 public class StageDockerArtifactBuildStep extends BuildStep {
 
   private static final String DOCKER_STAGING_DIR = ".docker_staging";
+  private static final String DOCKER_IGNORE_FILE = ".dockerignore";
 
   private final Logger logger = LoggerFactory.getLogger(StageDockerArtifactBuildStep.class);
   private final DockerfileGenerator dockerfileGenerator;
@@ -70,9 +71,9 @@ public class StageDockerArtifactBuildStep extends BuildStep {
       Files.copy(artifact, stagingDir.resolve(artifact.getFileName()));
 
       // copy the .dockerignore file into staging dir, if it exists
-      Path dockerIgnoreFile = directory.resolve(".dockerignore");
+      Path dockerIgnoreFile = directory.resolve(DOCKER_IGNORE_FILE);
       if (Files.exists(dockerIgnoreFile)) {
-        Files.copy(dockerIgnoreFile, stagingDir.resolve(".dockerignore"));
+        Files.copy(dockerIgnoreFile, stagingDir.resolve(DOCKER_IGNORE_FILE));
       }
 
       // Generate dockerfile

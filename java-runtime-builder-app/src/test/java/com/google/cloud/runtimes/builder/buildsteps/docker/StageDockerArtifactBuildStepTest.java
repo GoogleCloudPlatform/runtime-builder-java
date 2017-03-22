@@ -57,10 +57,9 @@ public class StageDockerArtifactBuildStepTest {
 
   @Test
   public void testDoBuild_withAmbiguousArtifacts() throws BuildStepException, IOException {
-    String secondArtifactPath = "my_artifact.jar";
     Path workspace = new TestWorkspaceBuilder()
         .file("default.jar").build()
-        .file(secondArtifactPath).build()
+        .file("default2.war").build()
         .build();
 
     try {
@@ -96,6 +95,16 @@ public class StageDockerArtifactBuildStepTest {
 
     initBuildStep(null).doBuild(workspace, metadata);
     assertTrue(Files.exists(getDockerStagingDir(workspace).resolve("built_artifact.war")));
+  }
+
+  @Test
+  public void testDoBuild_withSingleArtifact() throws IOException, BuildStepException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("default.jar").build()
+        .build();
+
+    initBuildStep(null).doBuild(workspace, metadata);
+    assertTrue(Files.exists(getDockerStagingDir(workspace).resolve("default.jar")));
   }
 
   @Test

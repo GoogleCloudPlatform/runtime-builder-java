@@ -37,7 +37,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Unit tests for {@link StageDockerArtifactBuildStep}.
@@ -88,31 +87,13 @@ public class StageDockerArtifactBuildStepTest {
     String dockerIgoreContents = "# ignore files that start with 'ignored_*'\n"
         + "ignored_*\n";
     Path workspace = new TestWorkspaceBuilder()
-        .file("notignored.jar").build()
-        .file("ignored_artifact.war").build()
-        .file("ignored_other_artifact.jar").build()
+        .file("default.jar").build()
         .file(".dockerignore").withContents(dockerIgoreContents).build()
         .build();
 
     initBuildStep(null).doBuild(workspace, metadata);
-    assertTrue(Files.exists(getDockerStagingDir(workspace).resolve("notignored.jar")));
-  }
-
-  @Test(expected = BuildStepException.class)
-  public void testDoBuild_withDockerIgnoreAndArtifactPathOverride() throws BuildStepException,
-      IOException {
-    String artifactPathOverridden = "some_dir/my_artifact.jar";
-    String dockerIgnoreContents = "# comment \n"
-        + "some_dir/**";
-
-    Path workspace = new TestWorkspaceBuilder()
-        .file("default.jar").build()
-        .file(artifactPathOverridden).build()
-        .file(".dockerignore").withContents(dockerIgnoreContents).build()
-        .build();
-
-    // should fail, since the config is pointing to an artifact that's being explicitly ignored
-    initBuildStep(null).doBuild(workspace, metadata);
+    assertTrue(Files.exists(getDockerStagingDir(workspace).resolve("default.jar")));
+    assertTrue(Files.exists(getDockerStagingDir(workspace).resolve(".dockerignore")));
   }
 
   @Test

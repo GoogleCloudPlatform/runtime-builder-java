@@ -22,13 +22,14 @@ provided [cloudbuild.yaml](cloudbuild.yaml) file:
 mvn clean install
 
 # then, push built images to GCR
-docker tag java-runtime-builder gcr.io/my-project-id/java-runtime-builder
-gcloud docker -- push gcr.io/my-project-id/java-runtime-builder
+GCP_PROJECT_ID=my-project-id
+docker tag java-runtime-builder gcr.io/$GCP_PROJECT_ID/java-runtime-builder
+gcloud docker -- push gcr.io/$GCP_PROJECT_ID/java-runtime-builder
 
 # finally, initiate the cloud container build
 gcloud container builds submit /path/to/my/java/app \ 
     --config cloudbuild.yaml \
-    --substitutions _OUTPUT_IMAGE=gcr.io/my-project-id/my-application-container
+    --substitutions _OUTPUT_IMAGE=gcr.io/$GCP_PROJECT_ID/my-application-container
 ```
 After the build completes, the built application container will appear in the [gcr.io container 
 registry](https://cloud.google.com/container-registry/) for the GCP project configured in the Cloud 

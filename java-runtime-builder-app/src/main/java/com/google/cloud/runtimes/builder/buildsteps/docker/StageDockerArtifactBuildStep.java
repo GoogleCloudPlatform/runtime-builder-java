@@ -31,11 +31,14 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class StageDockerArtifactBuildStep extends BuildStep {
+
+  private static final String DOCKER_STAGING_DIR = ".docker_staging";
+  private static final String DOCKER_IGNORE_FILE = ".dockerignore";
 
   private final Logger logger = LoggerFactory.getLogger(StageDockerArtifactBuildStep.class);
   private final DockerfileGenerator dockerfileGenerator;
@@ -59,13 +62,19 @@ public class StageDockerArtifactBuildStep extends BuildStep {
 
       // make staging dir
       // TODO delete dir if exists
-      Path stagingDir = Files.createDirectory(directory.resolve(".docker_staging"));
+      Path stagingDir = Files.createDirectory(directory.resolve(DOCKER_STAGING_DIR));
       metadata.put(BuildStepMetadataConstants.DOCKER_STAGING_PATH, stagingDir.toString());
 
       logger.info("Preparing docker files in {}", stagingDir);
 
       // copy the artifact into the staging dir
       Files.copy(artifact, stagingDir.resolve(artifact.getFileName()));
+
+      // copy the .dockerignore file into staging dir, if it exists
+      Path dockerIgnoreFile = directory.resolve(DOCKER_IGNORE_FILE);
+      if (Files.isRegularFile(dockerIgnoreFile)) {
+        Files.copy(dockerIgnoreFile, stagingDir.resolve(DOCKER_IGNORE_FILE));
+      }
 
       // Generate dockerfile
       String dockerfile = dockerfileGenerator.generateDockerfile(artifact.getFileName());
@@ -109,14 +118,13 @@ public class StageDockerArtifactBuildStep extends BuildStep {
       throw new IllegalArgumentException(String.format("%s is not a valid directory.", directory));
     }
 
-    List<Path> validArtifacts = new ArrayList<>();
-    Files.list(directory)
+    List<Path> validArtifacts = Files.list(directory)
         // filter out files that don't end in .war or .jar
         .filter((path) -> {
           String extension = com.google.common.io.Files.getFileExtension(path.toString());
           return extension.equals("war") || extension.equals("jar");
         })
-        .forEach(validArtifacts::add);
+        .collect(Collectors.toList());
 
     if (validArtifacts.size() < 1) {
       throw new ArtifactNotFoundException();
@@ -126,6 +134,5 @@ public class StageDockerArtifactBuildStep extends BuildStep {
       return validArtifacts.get(0);
     }
   }
-
 
 }

@@ -37,7 +37,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Unit tests for {@link StageDockerArtifactBuildStep}.
@@ -81,6 +80,20 @@ public class StageDockerArtifactBuildStepTest {
 
     initBuildStep(secondArtifactPath).doBuild(workspace, metadata);
     assertTrue(Files.exists(getDockerStagingDir(workspace).resolve("my_artifact.jar")));
+  }
+
+  @Test
+  public void testDoBuild_withDockerIgnore() throws BuildStepException, IOException {
+    String dockerIgoreContents = "# ignore files that start with 'ignored_*'\n"
+        + "ignored_*\n";
+    Path workspace = new TestWorkspaceBuilder()
+        .file("default.jar").build()
+        .file(".dockerignore").withContents(dockerIgoreContents).build()
+        .build();
+
+    initBuildStep(null).doBuild(workspace, metadata);
+    assertTrue(Files.exists(getDockerStagingDir(workspace).resolve("default.jar")));
+    assertTrue(Files.exists(getDockerStagingDir(workspace).resolve(".dockerignore")));
   }
 
   @Test

@@ -134,6 +134,19 @@ public class StageDockerArtifactBuildStepTest {
     fail();
   }
 
+  @Test
+  public void testDoBuild_withExistingDockerStagingDir() throws IOException, BuildStepException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("default.jar").build()
+        .file(".docker_staging/dir1/artifact.jar").build()
+        .file(".docker_staging/dir1/dir2/artifact2.jar").build()
+        .file(".docker_staging/.dockerignore").build()
+        .build();
+
+    initBuildStep(null).doBuild(workspace, metadata);
+    assertTrue(Files.exists(getDockerStagingDir(workspace).resolve("default.jar")));
+  }
+
   private StageDockerArtifactBuildStep initBuildStep(String pathToArtifact) {
     StageDockerArtifactBuildStep buildStep = new StageDockerArtifactBuildStep(dockerfileGenerator);
     buildStep.setArtifactPathOverride(pathToArtifact);

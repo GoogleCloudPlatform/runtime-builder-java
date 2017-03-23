@@ -27,6 +27,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -61,8 +63,11 @@ public class StageDockerArtifactBuildStep extends BuildStep {
       logger.info("Found artifact {}", artifact);
 
       // make staging dir
-      // TODO delete dir if exists
-      Path stagingDir = Files.createDirectory(directory.resolve(DOCKER_STAGING_DIR));
+      Path stagingDir = directory.resolve(DOCKER_STAGING_DIR);
+      if (Files.exists(stagingDir)) {
+        deleteDirectoryRecursive(stagingDir);
+      }
+      Files.createDirectory(stagingDir);
       metadata.put(BuildStepMetadataConstants.DOCKER_STAGING_PATH, stagingDir.toString());
 
       logger.info("Preparing docker files in {}", stagingDir);
@@ -87,6 +92,23 @@ public class StageDockerArtifactBuildStep extends BuildStep {
     } catch (IOException | ArtifactNotFoundException | TooManyArtifactsException e) {
       throw new BuildStepException(e);
     }
+  }
+
+  /*
+   * Deletes a directory and all of its contents.
+   */
+  private void deleteDirectoryRecursive(Path path) throws IOException {
+    if (!Files.exists(path)) {
+      throw new FileNotFoundException(
+          String.format("Could not delete directory %s because it doesn't exist", path));
+    }
+    if (Files.isDirectory(path)) {
+      File[] files = path.toFile().listFiles();
+      for (File f : files) {
+        deleteDirectoryRecursive(f.toPath());
+      }
+    }
+    Files.delete(path);
   }
 
   /*

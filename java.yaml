@@ -6,6 +6,7 @@ steps:
 - name: 'gcr.io/gcp-runtimes/java/runtime-builder:latest'
   args: ['--server-runtime', 'gcr.io/google_appengine/jetty:latest',
   '--jar-runtime', 'gcr.io/google_appengine/openjdk:latest']
+  env: "GCP_RUNTIME_BUILDER_CONFIG=$_GCP_RUNTIME_BUILDER_CONFIG"
 
 # execute the docker build to produce the resulting image
 - name: 'gcr.io/cloud-builders/docker:latest'

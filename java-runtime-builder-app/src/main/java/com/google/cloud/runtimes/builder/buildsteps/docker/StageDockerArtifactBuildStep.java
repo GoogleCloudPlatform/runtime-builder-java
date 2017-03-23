@@ -72,7 +72,7 @@ public class StageDockerArtifactBuildStep extends BuildStep {
 
       // copy the .dockerignore file into staging dir, if it exists
       Path dockerIgnoreFile = directory.resolve(DOCKER_IGNORE_FILE);
-      if (Files.exists(dockerIgnoreFile)) {
+      if (Files.isRegularFile(dockerIgnoreFile)) {
         Files.copy(dockerIgnoreFile, stagingDir.resolve(DOCKER_IGNORE_FILE));
       }
 

@@ -18,9 +18,14 @@ package com.google.cloud.runtimes.builder.config;
 
 
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -31,6 +36,8 @@ import java.io.InputStream;
  */
 public class ConfigParser {
 
+  private final Logger logger = LoggerFactory.getLogger(ConfigParser.class);
+
   // this is OK because ObjectMapper is thread-safe
   private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -39,12 +46,28 @@ public class ConfigParser {
   }
 
   /**
-   * Parse JSON configuration from a string.
+   * Parse JSON configuration from an environment variable.
    *
-   * @param jsonString the string to parse
-   * @throws IOException if there was a transient error while parsing the string
+   * @param envVarName the name of the environment variable
+   * @throws IOException if there was a transient exception while parsing
    */
-  public RuntimeConfig parse(String jsonString) throws IOException {
+  public RuntimeConfig parseFromEnvVar(String envVarName) throws IOException {
+    String jsonConfig = System.getenv(envVarName);
+    if (Strings.isNullOrEmpty(jsonConfig)) {
+      // if not specified, use the default configuration
+      return new RuntimeConfig();
+    }
+    try {
+      return parse(jsonConfig);
+    } catch (JsonMappingException e) {
+      logger.error("There was an error parsing json configuration from the environment variable "
+          + envVarName + ":\n" + jsonConfig + "\nPlease ensure it is valid json.", e);
+      throw e;
+    }
+  }
+
+  @VisibleForTesting
+  RuntimeConfig parse(String jsonString) throws IOException {
     try (InputStream in = new ByteArrayInputStream(jsonString.getBytes())) {
       return objectMapper.readValue(in, RuntimeConfig.class);
     }

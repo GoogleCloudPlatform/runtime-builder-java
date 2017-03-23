@@ -25,7 +25,6 @@ import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +60,7 @@ public class BuildPipelineConfigurator {
    */
   public List<BuildStep> configurePipeline(Path workspaceDir) throws IOException {
     // attempt to deserialize configuration
-    RuntimeConfig runtimeConfig = getConfig();
+    RuntimeConfig runtimeConfig = configParser.parseFromEnvVar(CONFIG_ENV_VARIABLE);
 
     // assemble the list of build steps
     List<BuildStep> steps = new ArrayList<>();
@@ -85,22 +84,6 @@ public class BuildPipelineConfigurator {
     stageDockerBuildStep.setArtifactPathOverride(runtimeConfig.getArtifact());
     steps.add(stageDockerBuildStep);
     return steps;
-  }
-
-  private RuntimeConfig getConfig() throws IOException {
-    String jsonConfig = System.getenv(CONFIG_ENV_VARIABLE);
-    if (Strings.isNullOrEmpty(jsonConfig)) {
-      // if not specified, use the default configuration
-      return new RuntimeConfig();
-    }
-
-    try {
-      return configParser.parse(jsonConfig);
-    } catch (JsonMappingException e) {
-      logger.error("There was an error parsing json configuration from the environment variable "
-          + CONFIG_ENV_VARIABLE + ":\n" + jsonConfig + "\nPlease ensure it is valid json.", e);
-      throw e;
-    }
   }
 
   /*

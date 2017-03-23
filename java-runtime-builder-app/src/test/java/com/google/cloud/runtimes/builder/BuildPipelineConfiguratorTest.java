@@ -17,6 +17,7 @@
 package com.google.cloud.runtimes.builder;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -31,6 +32,7 @@ import com.google.cloud.runtimes.builder.buildsteps.gradle.GradleBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.maven.MavenBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.script.ScriptExecutionBuildStep;
 import com.google.cloud.runtimes.builder.config.ConfigParser;
+import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -46,18 +48,20 @@ import java.util.List;
  */
 public class BuildPipelineConfiguratorTest {
 
+  private static final String CONFIG_ENV_VARIABLE = "GCP_RUNTIME_BUILDER_CONFIG";
+
   @Mock private BuildStepFactory buildStepFactory;
   @Mock private MavenBuildStep mavenBuildStep;
   @Mock private GradleBuildStep gradleBuildStep;
   @Mock private StageDockerArtifactBuildStep stageDockerArtifactBuildStep;
   @Mock private ScriptExecutionBuildStep scriptExecutionBuildStep;
+  @Mock private ConfigParser configParser;
 
-  // use the actual yaml parser instead of a mock.
-  private ConfigParser configParser = new ConfigParser();
+  private RuntimeConfig runtimeConfig;
   private BuildPipelineConfigurator buildPipelineConfigurator;
 
   @Before
-  public void setup() {
+  public void setup() throws IOException {
     MockitoAnnotations.initMocks(this);
 
     when(buildStepFactory.createMavenBuildStep()).thenReturn(mavenBuildStep);
@@ -67,6 +71,9 @@ public class BuildPipelineConfiguratorTest {
     when(buildStepFactory.createScriptExecutionBuildStep(anyString()))
         .thenReturn(scriptExecutionBuildStep);
 
+    runtimeConfig = new RuntimeConfig();
+    when(configParser.parseFromEnvVar(eq(CONFIG_ENV_VARIABLE))).thenReturn(runtimeConfig);
+
     buildPipelineConfigurator = new BuildPipelineConfigurator(configParser, buildStepFactory);
   }
 
@@ -74,7 +81,6 @@ public class BuildPipelineConfiguratorTest {
   public void test_simpleWorkspace() throws IOException {
     Path workspace = new TestWorkspaceBuilder()
         .file("foo.war").build()
-        .file("app.yaml").withContents("env: flex\nruntime: java").build()
         .build();
 
     List<BuildStep> buildSteps = buildPipelineConfigurator.configurePipeline(workspace);
@@ -86,7 +92,6 @@ public class BuildPipelineConfiguratorTest {
   public void test_mavenWorkspace() throws IOException {
     Path workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()
-        .file("src/main/appengine/app.yaml").withContents("env: flex\nruntime: java").build()
         .build();
 
     List<BuildStep> buildSteps = buildPipelineConfigurator.configurePipeline(workspace);
@@ -100,7 +105,6 @@ public class BuildPipelineConfiguratorTest {
     Path workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()
         .file("build.gradle").build()
-        .file("src/main/appengine/app.yaml").withContents("env: flex\nruntime: java").build()
         .build();
 
     List<BuildStep> buildSteps = buildPipelineConfigurator.configurePipeline(workspace);
@@ -114,13 +118,9 @@ public class BuildPipelineConfiguratorTest {
   public void test_mavenWorkspace_customArtifact() throws IOException {
     Path workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()
-        .file("src/main/appengine/app.yaml")
-            .withContents(
-                "runtime: java\n" +
-                "env: flex\n" +
-                "runtime_config:\n" +
-                "  artifact: my_output_dir/artifact.jar\n").build()
         .build();
+
+    runtimeConfig.setArtifact("my_output_dir/artifact.jar");
 
     List<BuildStep> buildSteps = buildPipelineConfigurator.configurePipeline(workspace);
     assertEquals(2, buildSteps.size());
@@ -135,13 +135,9 @@ public class BuildPipelineConfiguratorTest {
     String buildScript = "gradle clean test buildThing";
     Path workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()
-        .file("src/main/appengine/app.yaml")
-        .withContents(
-            "env: flex\n" +
-            "runtime: java\n" +
-            "runtime_config:\n" +
-            "  build_script: \"" + buildScript + "\"").build()
         .build();
+
+    runtimeConfig.setBuildScript(buildScript);
 
     List<BuildStep> buildSteps = buildPipelineConfigurator.configurePipeline(workspace);
     assertEquals(2, buildSteps.size());

@@ -17,7 +17,6 @@
 package com.google.cloud.runtimes.builder;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
-import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.cloud.runtimes.builder.injection.RootModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -51,7 +50,7 @@ public class Application {
    * Main method for invocation from the command line. Handles parsing of command line options.
    */
   public static void main(String[] args)
-      throws BuildStepException, IOException, AppYamlNotFoundException {
+      throws BuildStepException, IOException {
     CommandLine cmd = parse(args);
     String jarRuntime = cmd.getOptionValue("j");
     String serverRuntime = cmd.getOptionValue("s");
@@ -64,7 +63,7 @@ public class Application {
    * Invokes the builder.
    */
   public static void build(String jarRuntime, String serverRuntime, Path workspaceDir)
-      throws BuildStepException, IOException, AppYamlNotFoundException {
+      throws BuildStepException, IOException {
     // Perform dependency injection and run the application
     Injector injector = Guice.createInjector(new RootModule(jarRuntime, serverRuntime));
     injector.getInstance(BuildPipeline.class).build(workspaceDir);

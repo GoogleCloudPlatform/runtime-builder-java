@@ -19,11 +19,8 @@ package com.google.cloud.runtimes.builder.injection;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
 import com.google.cloud.runtimes.builder.buildsteps.docker.DefaultDockerfileGenerator;
 import com.google.cloud.runtimes.builder.buildsteps.docker.DockerfileGenerator;
-import com.google.cloud.runtimes.builder.config.AppYamlParser;
-import com.google.cloud.runtimes.builder.config.YamlParser;
-import com.google.cloud.runtimes.builder.config.domain.AppYaml;
+import com.google.cloud.runtimes.builder.config.ConfigParser;
 import com.google.inject.AbstractModule;
-import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 
 /**
@@ -41,8 +38,7 @@ public class RootModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(new TypeLiteral<YamlParser<AppYaml>>(){})
-        .to(AppYamlParser.class);
+    bind(ConfigParser.class);
     bind(DockerfileGenerator.class)
         .to(DefaultDockerfileGenerator.class);
     bind(String.class)

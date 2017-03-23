@@ -19,13 +19,10 @@ package com.google.cloud.runtimes.builder;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
 import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
-import com.google.cloud.runtimes.builder.config.YamlParser;
-import com.google.cloud.runtimes.builder.config.domain.AppYaml;
+import com.google.cloud.runtimes.builder.config.ConfigParser;
 import com.google.cloud.runtimes.builder.config.domain.BuildTool;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
-import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -45,42 +42,26 @@ import java.util.Optional;
  */
 public class BuildPipelineConfigurator {
 
-  private static final List<String> APP_YAML_LOCATIONS
-      = ImmutableList.of("app.yaml", "src/main/appengine/app.yaml");
+  private static final String CONFIG_ENV_VARIABLE = "GCP_RUNTIME_BUILDER_CONFIG";
 
   private final Logger logger = LoggerFactory.getLogger(BuildPipelineConfigurator.class);
-
-  private final YamlParser<AppYaml> appYamlParser;
+  private final ConfigParser configParser;
   private final BuildStepFactory buildStepFactory;
 
   @Inject
-  BuildPipelineConfigurator(YamlParser<AppYaml> appYamlParser, BuildStepFactory buildStepFactory) {
-    this.appYamlParser = appYamlParser;
+  BuildPipelineConfigurator(ConfigParser configParser, BuildStepFactory buildStepFactory) {
+    this.configParser = configParser;
     this.buildStepFactory = buildStepFactory;
   }
 
   /**
    * Examines a directory and returns a list of build steps that should be executed on it.
    *
-   * @throws AppYamlNotFoundException if an app.yaml config file is not found
    * @throws IOException if a transient file system error is encountered
    */
-  public List<BuildStep> configurePipeline(Path workspaceDir)
-      throws AppYamlNotFoundException, IOException {
-    // locate and deserialize configuration files
-    Path pathToAppYaml = findAppYaml(workspaceDir);
-    AppYaml appYaml;
-    try {
-      appYaml = appYamlParser.parse(pathToAppYaml);
-    } catch (JsonMappingException e) {
-      logger.error("There was an error parsing app.yaml file located at {}. Please make sure it is "
-          + "a valid yaml file.", pathToAppYaml, e);
-      throw e;
-    }
-
-    RuntimeConfig runtimeConfig = appYaml.getRuntimeConfig() != null
-        ? appYaml.getRuntimeConfig()
-        : new RuntimeConfig();
+  public List<BuildStep> configurePipeline(Path workspaceDir) throws IOException {
+    // attempt to deserialize configuration
+    RuntimeConfig runtimeConfig = getConfig();
 
     // assemble the list of build steps
     List<BuildStep> steps = new ArrayList<>();
@@ -106,6 +87,22 @@ public class BuildPipelineConfigurator {
     return steps;
   }
 
+  private RuntimeConfig getConfig() throws IOException {
+    String jsonConfig = System.getenv(CONFIG_ENV_VARIABLE);
+    if (Strings.isNullOrEmpty(jsonConfig)) {
+      // if not specified, use the default configuration
+      return new RuntimeConfig();
+    }
+
+    try {
+      return configParser.parse(jsonConfig);
+    } catch (JsonMappingException e) {
+      logger.error("There was an error parsing json configuration from the environment variable "
+          + CONFIG_ENV_VARIABLE + ":\n" + jsonConfig + "\nPlease ensure it is valid json.", e);
+      throw e;
+    }
+  }
+
   /*
    * Selects a build step for a build tool.
    */
@@ -119,18 +116,6 @@ public class BuildPipelineConfigurator {
         throw new IllegalArgumentException(
             String.format("No build step available for build tool %s", buildTool));
     }
-  }
-
-  /*
-   * Searches for app.yaml in a few expected paths within the workspace
-   */
-  private Path findAppYaml(Path workspaceDir) throws AppYamlNotFoundException {
-    return APP_YAML_LOCATIONS.stream()
-        .map(pathName -> workspaceDir.resolve(pathName))
-        .filter(path -> Files.exists(path) && Files.isRegularFile(path))
-        .findFirst()
-        .orElseThrow(() -> new AppYamlNotFoundException("An app.yaml configuration file is "
-            + "required, but was not found in the included sources."));
   }
 
   /*

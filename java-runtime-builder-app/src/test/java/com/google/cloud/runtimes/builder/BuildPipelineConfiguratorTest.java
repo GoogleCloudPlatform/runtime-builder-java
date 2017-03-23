@@ -17,7 +17,6 @@
 package com.google.cloud.runtimes.builder;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -31,10 +30,7 @@ import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBu
 import com.google.cloud.runtimes.builder.buildsteps.gradle.GradleBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.maven.MavenBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.script.ScriptExecutionBuildStep;
-import com.google.cloud.runtimes.builder.config.AppYamlParser;
-import com.google.cloud.runtimes.builder.config.YamlParser;
-import com.google.cloud.runtimes.builder.config.domain.AppYaml;
-import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
+import com.google.cloud.runtimes.builder.config.ConfigParser;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -44,7 +40,6 @@ import org.mockito.MockitoAnnotations;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Unit tests for {@link BuildPipelineConfigurator}
@@ -58,7 +53,7 @@ public class BuildPipelineConfiguratorTest {
   @Mock private ScriptExecutionBuildStep scriptExecutionBuildStep;
 
   // use the actual yaml parser instead of a mock.
-  private YamlParser<AppYaml> appYamlYamlParser = new AppYamlParser();
+  private ConfigParser configParser = new ConfigParser();
   private BuildPipelineConfigurator buildPipelineConfigurator;
 
   @Before
@@ -72,11 +67,11 @@ public class BuildPipelineConfiguratorTest {
     when(buildStepFactory.createScriptExecutionBuildStep(anyString()))
         .thenReturn(scriptExecutionBuildStep);
 
-    buildPipelineConfigurator = new BuildPipelineConfigurator(appYamlYamlParser, buildStepFactory);
+    buildPipelineConfigurator = new BuildPipelineConfigurator(configParser, buildStepFactory);
   }
 
   @Test
-  public void test_simpleWorkspace() throws AppYamlNotFoundException, IOException {
+  public void test_simpleWorkspace() throws IOException {
     Path workspace = new TestWorkspaceBuilder()
         .file("foo.war").build()
         .file("app.yaml").withContents("env: flex\nruntime: java").build()
@@ -88,7 +83,7 @@ public class BuildPipelineConfiguratorTest {
   }
 
   @Test
-  public void test_mavenWorkspace() throws AppYamlNotFoundException, IOException {
+  public void test_mavenWorkspace() throws IOException {
     Path workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()
         .file("src/main/appengine/app.yaml").withContents("env: flex\nruntime: java").build()
@@ -101,7 +96,7 @@ public class BuildPipelineConfiguratorTest {
   }
 
   @Test
-  public void test_mavenAndGradleWorkspace() throws AppYamlNotFoundException, IOException {
+  public void test_mavenAndGradleWorkspace() throws IOException {
     Path workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()
         .file("build.gradle").build()
@@ -116,7 +111,7 @@ public class BuildPipelineConfiguratorTest {
   }
 
   @Test
-  public void test_mavenWorkspace_customArtifact() throws AppYamlNotFoundException, IOException {
+  public void test_mavenWorkspace_customArtifact() throws IOException {
     Path workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()
         .file("src/main/appengine/app.yaml")
@@ -136,7 +131,7 @@ public class BuildPipelineConfiguratorTest {
   }
 
   @Test
-  public void test_customBuildWorkspace() throws AppYamlNotFoundException, IOException {
+  public void test_customBuildWorkspace() throws IOException {
     String buildScript = "gradle clean test buildThing";
     Path workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()

@@ -19,12 +19,32 @@ package com.google.cloud.runtimes.builder.config.domain;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RuntimeConfig {
 
   private String buildScript;
   private String artifact;
-  private String runtime;
+  private String entrypoint;
+  private List<String> packages = new ArrayList<>();
+
+  public String getEntrypoint() {
+    return entrypoint;
+  }
+
+  public void setEntrypoint(String entrypoint) {
+    this.entrypoint = entrypoint;
+  }
+
+  public List<String> getPackages() {
+    return packages;
+  }
+
+  public void setPackages(List<String> packages) {
+    this.packages = packages;
+  }
 
   public String getArtifact() {
     return artifact;
@@ -32,16 +52,6 @@ public class RuntimeConfig {
 
   public void setArtifact(String artifact) {
     this.artifact = artifact;
-  }
-
-
-  public String getRuntime() {
-    return this.runtime;
-  }
-
-  public void setRuntime(String runtime) {
-    this.runtime = runtime;
-
   }
 
   public String getBuildScript() {

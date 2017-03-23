@@ -18,7 +18,6 @@ package com.google.cloud.runtimes.builder;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
-import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.inject.Inject;
 
 import org.slf4j.Logger;
@@ -48,11 +47,10 @@ public class BuildPipeline {
    * Examines the workspace directory and executes the required set of build steps based on its
    * contents.
    *
-   * @throws AppYamlNotFoundException if an app.yaml config file is not found in the directory
    * @throws IOException if a transient file system error was encountered
    * @throws BuildStepException if one of the build steps encountered an error
    */
-  public void build(Path workspaceDir) throws AppYamlNotFoundException, IOException,
+  public void build(Path workspaceDir) throws IOException,
       BuildStepException {
     List<BuildStep> buildSteps = buildPipelineConfigurator.configurePipeline(workspaceDir);
     logger.info("Beginning build pipeline {}", buildSteps);

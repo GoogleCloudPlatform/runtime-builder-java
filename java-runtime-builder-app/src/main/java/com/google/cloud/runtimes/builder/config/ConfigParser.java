@@ -21,6 +21,7 @@ import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -59,7 +60,7 @@ public class ConfigParser {
     }
     try {
       return parse(jsonConfig);
-    } catch (JsonMappingException e) {
+    } catch (JsonParseException | JsonMappingException e) {
       logger.error("There was an error parsing json configuration from the environment variable "
           + envVarName + ":\n" + jsonConfig + "\nPlease ensure it is valid json.", e);
       throw e;

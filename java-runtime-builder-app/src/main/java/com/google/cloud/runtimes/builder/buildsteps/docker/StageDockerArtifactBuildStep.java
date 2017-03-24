@@ -23,6 +23,7 @@ import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
 import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import com.google.inject.Inject;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,8 +62,13 @@ public class StageDockerArtifactBuildStep extends BuildStep {
       logger.info("Found artifact {}", artifact);
 
       // make staging dir
-      // TODO delete dir if exists
-      Path stagingDir = Files.createDirectory(directory.resolve(DOCKER_STAGING_DIR));
+      Path stagingDir = directory.resolve(DOCKER_STAGING_DIR);
+      if (Files.exists(stagingDir)) {
+        logger.info("Found a docker staging directory in provided sources. Cleaning {}",
+            stagingDir.toString());
+        FileUtils.deleteDirectory(stagingDir.toFile());
+      }
+      Files.createDirectory(stagingDir);
       metadata.put(BuildStepMetadataConstants.DOCKER_STAGING_PATH, stagingDir.toString());
 
       logger.info("Preparing docker files in {}", stagingDir);

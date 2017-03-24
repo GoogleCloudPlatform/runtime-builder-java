@@ -65,6 +65,8 @@ public class StageDockerArtifactBuildStep extends BuildStep {
       // make staging dir
       Path stagingDir = directory.resolve(DOCKER_STAGING_DIR);
       if (Files.exists(stagingDir)) {
+        logger.info("Found a docker staging directory in provided sources. Cleaning {}",
+            stagingDir.toString());
         deleteDirectoryRecursive(stagingDir);
       }
       Files.createDirectory(stagingDir);

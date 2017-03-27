@@ -41,25 +41,33 @@ docker build -t my-java-app /path/to/my/java/app/.docker_staging
 ```
 
 ## Configuration
-An [app.yaml](https://cloud.google.com/appengine/docs/flexible/java/configuring-your-app-with-app-yaml) 
-file must be included in the sources passed to the Java Runtime Builder. The `runtime_config`
-section of this file tells the builder how to build and package your source. In most cases, 
-`runtime_config` can be omitted.
+Configuration must be provided to the builder via a json-encoded environment variable named 
+`$_GCP_RUNTIME_BUILDER_CONFIG`. This is optional, and only required for customizing default behavior.
 
 | Option Name | Type | Default | Description |
 |----------|------|---------|-------------|
 | artifact | string |  Discovered based on the content of your build output | The path where the builder should expect to find the artifact to package in the resulting docker container. This setting will be required if your build produces more than one artifact. 
 | build_script | string | `mvn -B -DskipTests clean package` if a maven project is detected, or `gradle build` if a gradle project is detected | The build command that is executed to build your source |
+| entrypoint | string | Auto-generated depending on the base runtime and artifact being deployed | The docker entrypoint used when starting your application container.
+| packages | list of strings | N/A | A list of the extra debian packages to be installed while building the application container
 
-### Sample app.yaml
-```yaml
-runtime: java
-env: flex
+### Example Configuration
+```bash
+# create config json object
+BUILDER_CONFIG='{
+  "artifact": "path/to/my/custom/artifact",
+  "build_script": "gradle build test",
+  "entrypoint": "java -jar /path/to/myapp.jar",
+  "packages": [
+    "ffmpeg", 
+    "imagemagick=1.1.2"
+  ]
+}'
 
-# all parameters specified below in the runtime_config block are optional
-runtime_config:
-  artifact: "target/my-artifact.jar"
-  build_script: "mvn clean install -Pcloud-build-profile"
+# pass the configuration when invoking the container build
+gcloud container builds submit /path/to/my/java/app \ 
+    --config cloudbuild.yaml \
+    --substitutions "_OUTPUT_IMAGE=gcr.io/$GCP_PROJECT_ID/my-application-container,_GCP_RUNTIME_BUILDER_CONFIG=$BUILDER_CONFIG"
 ```
 
 ## Development guide

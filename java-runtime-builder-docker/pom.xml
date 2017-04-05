@@ -17,6 +17,45 @@
     <runtime.builder.artifact>java-runtime-builder.jar</runtime.builder.artifact>
   </properties>
 
+  <profiles>
+    <profile>
+      <id>local-docker-build</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>io.fabric8</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
+            <version>0.20.0</version>
+            <configuration>
+              <verbose>true</verbose>
+              <autoPull>always</autoPull>
+              <images>
+                <image>
+                  <name>java-runtime-builder</name>
+                  <build>
+                    <dockerFileDir>${project.build.outputDirectory}/docker</dockerFileDir>
+                    <nocache>true</nocache>
+                  </build>
+                </image>
+              </images>
+            </configuration>
+            <executions>
+              <execution>
+                <id>docker-build</id>
+                <goals>
+                  <goal>build</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
   <build>
     <resources>
       <resource>
@@ -47,32 +86,6 @@
                 </artifactItem>
               </artifactItems>
             </configuration>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>io.fabric8</groupId>
-        <artifactId>docker-maven-plugin</artifactId>
-        <version>0.20.0</version>
-        <configuration>
-          <verbose>true</verbose>
-          <autoPull>always</autoPull>
-          <images>
-            <image>
-              <name>java-runtime-builder</name>
-              <build>
-                <dockerFileDir>${project.build.outputDirectory}/docker</dockerFileDir>
-                <nocache>true</nocache>
-              </build>
-            </image>
-          </images>
-        </configuration>
-        <executions>
-          <execution>
-            <id>docker-build</id>
-            <goals>
-              <goal>build</goal>
-            </goals>
           </execution>
         </executions>
       </plugin>

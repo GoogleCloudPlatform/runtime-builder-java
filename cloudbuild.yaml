@@ -1,7 +1,7 @@
 # Java runtime builder pipeline.
 
 steps:
-- name: 'gcr.io/$PROJECT_ID/java-runtime-builder'
+- name: 'gcr.io/gcp-runtimes/java/runtime-builder'
   args: ['--server-runtime', 'gcr.io/google_appengine/jetty:latest',
   '--jar-runtime', 'gcr.io/google_appengine/openjdk:latest']
 - name: 'gcr.io/cloud-builders/docker'

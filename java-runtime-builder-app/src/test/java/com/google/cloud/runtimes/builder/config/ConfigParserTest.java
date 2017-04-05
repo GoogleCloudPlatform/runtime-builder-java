@@ -41,22 +41,12 @@ public class ConfigParserTest {
   @Test
   public void testParse_allFields() throws IOException {
     String config = "{"
-        + "\"entrypoint\": \"java -jar my-app.jar\","
-        + "\"packages\": ["
-        + "  \"ffmpeg\","
-        + "  \"imagemagick=1.1.2\""
-        + "],"
         + "\"build_script\": \"./gradlew build myThing\","
         + "\"artifact\": \"my-app.jar\""
         + "}";
     RuntimeConfig result = configParser.parse(config);
     assertEquals("./gradlew build myThing", result.getBuildScript());
     assertEquals("my-app.jar", result.getArtifact());
-    assertEquals("java -jar my-app.jar", result.getEntrypoint());
-
-    assertEquals(2, result.getPackages().size());
-    assertEquals("ffmpeg", result.getPackages().get(0));
-    assertEquals("imagemagick=1.1.2", result.getPackages().get(1));
   }
 
   @Test

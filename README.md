@@ -47,27 +47,21 @@ Configuration must be provided to the builder via a json-encoded environment var
 | Option Name | Type | Default | Description |
 |----------|------|---------|-------------|
 | artifact | string |  Discovered based on the content of your build output | The path where the builder should expect to find the artifact to package in the resulting docker container. This setting will be required if your build produces more than one artifact. 
-| build_script | string | `mvn -B -DskipTests clean package` if a maven project is detected, or `gradle build` if a gradle project is detected | The build command that is executed to build your source |
-| entrypoint | string | Auto-generated depending on the base runtime and artifact being deployed | The docker entrypoint used when starting your application container.
-| packages | list of strings | N/A | A list of the extra debian packages to be installed while building the application container
+| build_script | string | `mvn -B -DskipTests clean package` if a maven project is detected, or `gradle build` if a gradle project is detected | The build command that is executed to build your source. Note that if this option is specified, `artifact` must also be specified. |
 
 ### Example Configuration
 ```bash
 # create config json object
 BUILDER_CONFIG='{
   "artifact": "path/to/my/custom/artifact",
-  "build_script": "gradle build test",
-  "entrypoint": "java -jar /path/to/myapp.jar",
-  "packages": [
-    "ffmpeg", 
-    "imagemagick=1.1.2"
-  ]
+  "build_script": "gradle build test"
 }'
 
 # pass the configuration when invoking the container build
 gcloud container builds submit /path/to/my/java/app \ 
     --config cloudbuild.yaml \
-    --substitutions "_OUTPUT_IMAGE=gcr.io/$GCP_PROJECT_ID/my-application-container,_GCP_RUNTIME_BUILDER_CONFIG=$BUILDER_CONFIG"
+    --substitutions "_OUTPUT_IMAGE=gcr.io/$GCP_PROJECT_ID/my-application-container,
+                     _GCP_RUNTIME_BUILDER_CONFIG=$BUILDER_CONFIG"
 ```
 
 ## Development guide

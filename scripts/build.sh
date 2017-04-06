@@ -19,7 +19,7 @@ set -e
 dir=$(dirname $0)
 projectRoot=$dir/..
 
-RUNTIME_NAME="java-runtime-builder"
+RUNTIME_NAME="runtime-builder"
 DOCKER_NAMESPACE=$1
 DOCKER_TAG=$2
 

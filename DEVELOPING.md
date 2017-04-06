@@ -5,7 +5,7 @@ This document contains instructions on how to build and test this pipeline.
 ## Local Build
 To build all images for this pipeline locally, you need docker and maven installed. Running 
 `mvn install` will compile all java sources and build all docker images. After the build is complete, 
-resulting images will be present in your local docker repository.
+all resulting images will be present in your local docker repository.
 
 ## Cloud Build
 Google Cloud Container Builder can also be used to build images in the pipeline. The 
@@ -13,7 +13,7 @@ Google Cloud Container Builder can also be used to build images in the pipeline.
 Cloud Container Builder. We provide a script to make it easy to build using Container Builder:
 
 ```bash
-# the following commands will build and push an image named "gcr.io/my-gcp-project/java-runtime-builder:tag"
+# the following commands will build and push an image named "gcr.io/my-gcp-project/runtime-builder:tag"
 PROJECT_ID=my-gcp-project
 TAG_NAME=tag
 ./scripts/build.sh gcr.io/$PROJECT_ID $TAG
@@ -25,7 +25,7 @@ commands effectively mirror the steps in the [java.yaml](java.yaml) pipeline con
 
 ```bash
 # compile my application's source and generate a dockerfile
-docker run -v /path/to/my/java/app:/workspace -w /workspace java-runtime-builder \
+docker run -v /path/to/my/java/app:/workspace -w /workspace runtime-builder \
     --jar-runtime=gcr.io/google-appengine/openjdk \
     --server-runtime=gcr.io/google-appengine/jetty
     

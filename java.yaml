@@ -1,10 +1,14 @@
 # Java runtime builder pipeline.
 
 steps:
-- name: 'gcr.io/gcp-runtimes/java/runtime-builder'
+
+# build the user's source and generate artifacts for docker
+- name: 'gcr.io/gcp-runtimes/java/runtime-builder:latest'
   args: ['--server-runtime', 'gcr.io/google_appengine/jetty:latest',
   '--jar-runtime', 'gcr.io/google_appengine/openjdk:latest']
-- name: 'gcr.io/cloud-builders/docker'
+
+# execute the docker build to produce the resulting image
+- name: 'gcr.io/cloud-builders/docker:latest'
   args: ['build', '--tag=$_OUTPUT_IMAGE', '.docker_staging']
 
 images: ['$_OUTPUT_IMAGE']

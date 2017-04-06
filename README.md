@@ -7,13 +7,7 @@ A [Google Cloud Container Builder](https://cloud.google.com/container-builder/do
 packaging Java applications into supported Google Cloud Runtime containers. It consists of a series
 of docker containers, used as build steps, and a build pipeline configuration file.
 
-## Building Locally
-The pipeline can be built using maven:
-```bash
-mvn clean install
-```
-
-## Running via Google Cloud Container Builder (recommended)
+## Running via Google Cloud Container Builder
 To run via Google Cloud Container Builder, first install the
 [Google Cloud SDK](https://cloud.google.com/sdk/). Then, initiate a Cloud Container Build using the 
 provided [java.yaml](java.yaml) file:
@@ -52,6 +46,8 @@ runtime_config:
   build_script: "mvn clean install -Pcloud-build-profile"
 ```
 
+## Development guide
+* See [DEVELOPING.md](DEVELOPING.md) for instructions on how to build and test this pipeline.
 
 ## Contributing changes
 

@@ -29,7 +29,7 @@ if [ -z "${DOCKER_NAMESPACE}" ]; then
 fi
 
 if [ -z "${DOCKER_TAG}" ]; then
-  DOCKER_TAG=$(date +%Y-%m-%d-%H_%M_%S)
+  DOCKER_TAG=$(date -u +%Y-%m-%d_%H_%M)
 fi
 
 IMAGE="${DOCKER_NAMESPACE}/${RUNTIME_NAME}:${DOCKER_TAG}"

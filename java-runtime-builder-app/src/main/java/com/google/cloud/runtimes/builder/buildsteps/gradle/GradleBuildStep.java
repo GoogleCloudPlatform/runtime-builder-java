@@ -40,11 +40,16 @@ public class GradleBuildStep extends BuildStep {
   @Override
   protected void doBuild(Path directory, Map<String, String> metadata) throws BuildStepException {
     try {
-      new ProcessBuilder()
+      int exitCode = new ProcessBuilder()
           .command(getGradleExecutable(directory), "build")
           .directory(directory.toFile())
           .inheritIO()
           .start().waitFor();
+
+      if (exitCode != 0) {
+        throw new BuildStepException(
+            String.format("Child process exited with non-zero exit code: %s", exitCode));
+      }
 
       metadata.put(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH, "build/libs");
 

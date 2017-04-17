@@ -22,4 +22,8 @@ public class BuildStepException extends Exception {
     super(throwable);
   }
 
+  public BuildStepException(String message) {
+    super(message);
+  }
+
 }

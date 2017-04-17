@@ -30,6 +30,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
+/**
+ * Build step that invokes maven.
+ */
 public class MavenBuildStep extends BuildStep {
 
   private static final Logger logger = LoggerFactory.getLogger(MavenBuildStep.class);
@@ -37,11 +40,16 @@ public class MavenBuildStep extends BuildStep {
   @Override
   protected void doBuild(Path directory, Map<String, String> metadata) throws BuildStepException {
     try {
-      new ProcessBuilder()
+      int exitCode = new ProcessBuilder()
           .command(getMavenExecutable(directory), "-B", "-DskipTests=true", "clean", "package")
           .directory(directory.toFile())
           .inheritIO()
           .start().waitFor();
+
+      if (exitCode != 0) {
+        throw new BuildStepException(
+            String.format("Child process exited with non-zero exit code: %s", exitCode));
+      }
 
       metadata.put(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH, "target/");
 

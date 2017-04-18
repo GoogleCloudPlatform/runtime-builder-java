@@ -35,10 +35,11 @@ fi
 
 mvn install
 
-docker tag runtime-builder gcr.io/$GCLOUD_PROJECT/runtime-builder
-gcloud docker -- push gcr.io/$GCLOUD_PROJECT/runtime-builder
+BUILDER_IMAGE="gcr.io/$GCLOUD_PROJECT/runtime-builder:$(date -u +%Y-%m-%d_%H_%M)"
+docker tag runtime-builder $BUILDER_IMAGE
+gcloud docker -- push $BUILDER_IMAGE
 
 gcloud container builds submit $SOURCE_DIR \
   --config $PROJECT_ROOT/builder-config/builder-template.yaml \
-  --substitutions _OUTPUT_IMAGE=$OUTPUT_IMAGE
+  --substitutions "_OUTPUT_IMAGE=$OUTPUT_IMAGE,_BUILDER_IMAGE=$BUILDER_IMAGE"
 

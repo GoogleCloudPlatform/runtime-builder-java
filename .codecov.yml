@@ -8,3 +8,7 @@ coverage:
         paths: "java-runtime-builder-app/"
         target: auto
         base: auto
+    patch:
+      default:
+        target: auto
+        base: auto

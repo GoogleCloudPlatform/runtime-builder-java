@@ -1,0 +1,11 @@
+coverage:
+
+  status:
+    project:
+     default: off
+     runtime_builder_app:
+       paths: "java-runtime-builder-app/"
+    patch: true
+    changes: false
+
+comment: off

@@ -1,14 +1,11 @@
-comment: off
-notify: false
 coverage:
+
   status:
     project:
-      default: false
-      java-runtime-builder-app:
-        paths: "java-runtime-builder-app/"
-        target: auto
-        base: auto
-    patch:
-      default:
-        target: auto
-        base: auto
+     default: off
+     runtime_builder_app:
+       paths: "java-runtime-builder-app/"
+    patch: true
+    changes: false
+
+comment: off

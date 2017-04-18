@@ -10,7 +10,7 @@ of docker containers, used as build steps, and a build pipeline configuration fi
 ## Running via Google Cloud Container Builder (recommended)
 To run via Google Cloud Container Builder, first install the
 [Google Cloud SDK](https://cloud.google.com/sdk/). Then, initiate a Cloud Container Build using the 
-provided [java.yaml](builder-config/java.yaml) file:
+provided [java.yaml](java.yaml) file:
 ```bash
 # Determine the name of your desired output image. Note that it must be a path to a Google Container
 # Registry bucket to which your Cloud SDK installation has push access.
@@ -27,7 +27,7 @@ registry](https://cloud.google.com/container-registry/) at the specified path.
 ## Running via Docker (without Cloud Container Builder)
 Build steps can be run locally, one at a time, using docker. (This requires that the `runtime-builder`
 image is available locally.) Note that these commands effectively mirror the steps in the
-[java.yaml](builder-config/java.yaml) pipeline config file.
+[java.yaml](java.yaml) pipeline config file.
 
 ```bash
 # compile my application's source and generate a dockerfile

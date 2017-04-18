@@ -21,10 +21,10 @@ TAG=tag
 ```
 
 ## Running
-The [run_pipeline](scripts/run_pipeline.sh) script can be used to build and run the pipeline. It 
+The [run-pipeline](scripts/run-pipeline.sh) script can be used to build and run the pipeline. It 
 builds all build steps locally, pushes to GCR, and executes the build pipeline via Google Cloud 
 Container Builder. The script uses the default GCP project that is configured in your Cloud SDK
 settings.
 ```bash
-./scripts/run_pipeline.sh /path/to/some/source/to/build
+./scripts/run-pipeline.sh /path/to/some/source/to/build
 ```

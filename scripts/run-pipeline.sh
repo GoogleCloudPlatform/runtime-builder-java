@@ -35,11 +35,19 @@ fi
 
 mvn install
 
+# retag and push the built image
 BUILDER_IMAGE="gcr.io/$GCLOUD_PROJECT/runtime-builder:$(date -u +%Y-%m-%d_%H_%M)"
 docker tag runtime-builder $BUILDER_IMAGE
 gcloud docker -- push $BUILDER_IMAGE
 
+# escape special characters in the builder image string so we can use it as a sed substitution below
+ESCAPED_BUILDER_IMAGE=$(echo $BUILDER_IMAGE | sed -e 's/[\/&]/\\&/g')
+
+# prepare the build pipeline config file, pointing to the built image
+PIPELINE_CONFIG=$PROJECT_ROOT/target/java_temlated.yaml
+sed -e "s/gcr.io\/gcp-runtimes\/java\/runtime-builder\:latest/$ESCAPED_BUILDER_IMAGE/" $PROJECT_ROOT/java.yaml > $PIPELINE_CONFIG
+
 gcloud container builds submit $SOURCE_DIR \
-  --config $PROJECT_ROOT/builder-config/builder-template.yaml \
-  --substitutions "_OUTPUT_IMAGE=$OUTPUT_IMAGE,_BUILDER_IMAGE=$BUILDER_IMAGE"
+  --config $PIPELINE_CONFIG \
+  --substitutions "_OUTPUT_IMAGE=$OUTPUT_IMAGE"
 

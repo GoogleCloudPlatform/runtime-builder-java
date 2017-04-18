@@ -1,0 +1,8 @@
+schemaVersion: 1.0.0
+
+fileExistenceTests:
+- name: 'the application is installed'
+  path: '/app.jar'
+  isDirectory: false
+  shouldExist: true
+

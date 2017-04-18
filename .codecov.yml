@@ -1,0 +1,10 @@
+comment: off
+notify: false
+coverage:
+  status:
+    project:
+      default: false
+      java-runtime-builder-app:
+        paths: "java-runtime-builder-app/"
+        target: auto
+        base: auto

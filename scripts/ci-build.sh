@@ -29,3 +29,6 @@ export TAG=$(git rev-parse --short HEAD)
 echo "Invoking build.sh with DOCKER_NAMESPACE=$DOCKER_NAMESPACE, TAG=$TAG"
 ./scripts/build.sh $DOCKER_NAMESPACE $TAG
 
+IMAGE=$DOCKER_NAMESPACE/runtime-builder:$TAG
+echo "Running integration tests on image: $IMAGE"
+./scripts/test-suite.sh $IMAGE

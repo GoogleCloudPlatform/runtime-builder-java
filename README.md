@@ -1,7 +1,8 @@
 # Java Runtime Builder
 
-[![unstable](http://badges.github.io/stability-badges/dist/unstable.svg)](http://github.com/badges/stability-badges)
 [![Build Status](https://travis-ci.org/GoogleCloudPlatform/runtime-builder-java.svg?branch=master)](https://travis-ci.org/GoogleCloudPlatform/runtime-builder-java)
+[![codecov](https://codecov.io/gh/GoogleCloudPlatform/runtime-builder-java/branch/master/graph/badge.svg)](https://codecov.io/gh/GoogleCloudPlatform/runtime-builder-java)
+[![unstable](http://badges.github.io/stability-badges/dist/unstable.svg)](http://github.com/badges/stability-badges)
 
 A [Google Cloud Container Builder](https://cloud.google.com/container-builder/docs/) pipeline for 
 packaging Java applications into supported Google Cloud Runtime containers. It consists of a series

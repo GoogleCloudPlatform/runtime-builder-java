@@ -6,9 +6,6 @@ DIR=$(dirname $0)
 PROJECT_ROOT=$DIR/..
 TEST_CASES_DIR=$PROJECT_ROOT/test/integration/test_cases
 
-GCLOUD_PROJECT=$(gcloud config get-value project 2> /dev/null)
-DOCKER_NAMESPACE=gcr.io/$GCLOUD_PROJECT
-
 IMAGE_UNDER_TEST=$1
 if [ -z $IMAGE_UNDER_TEST ]; then
   echo "Usage: $0 <image_under_test>"

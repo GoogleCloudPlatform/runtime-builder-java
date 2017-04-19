@@ -72,6 +72,7 @@ fi
 ESCAPED_BUILDER_IMAGE=$(echo $BUILDER_IMAGE | sed -e 's/[\/&]/\\&/g')
 
 # prepare the build pipeline config file, pointing to the built image
+mkdir -p $PROJECT_ROOT/target
 PIPELINE_CONFIG=$PROJECT_ROOT/target/java_templated.yaml
 sed -e "s/gcr.io\/gcp-runtimes\/java\/runtime-builder\:latest/$ESCAPED_BUILDER_IMAGE/" $PROJECT_ROOT/java.yaml > $PIPELINE_CONFIG
 

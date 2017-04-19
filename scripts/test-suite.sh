@@ -26,6 +26,11 @@ do
   BUILDER_CONFIG=$TEST_CASE/app.yaml
   STRUCTURE_TEST_CONFIG=$TEST_CASE/structure.yaml
 
+  if [ -z $GIT_REPO -o -z $BUILDER_CONFIG -o -z $STRUCTURE_TEST_CONFIG ]; then
+    echo "Integration test configuration files are missing from directory $TEST_CASE"
+    exit 1
+  fi
+
   # clone a git repo, invoke the build pipeline under test on it, then perform verifications on the
   # resulting built image.
   echo "Cloning from git repo $GIT_REPO"

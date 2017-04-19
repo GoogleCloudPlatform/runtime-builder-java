@@ -1,10 +1,14 @@
 # Integration Testing
 This directory contains an integration testing framework for testing the java-runtime-builder 
-pipeline. Each test case is an immediate subdirectory of [`test_cases`](test_cases), and is expected
-to contain, at minimum, the following files:
+pipeline. Each immediate subdirectory of [`test_cases`](test_cases) is considered a distinct test 
+case. At minimum, each test case directory should contain the following files:
   * an app.yaml config file
   * a repo.txt file, containing a git remote url
   * a structure.yaml file to specify the structure test spec for the built image
+
+For each test case, the repo specified in repo.txt is cloned, and the pipeline is invoked on the 
+repo, using the provided app.yaml file as configuration. Once the application container is built, 
+structure tests are run on it using the provided structure.yaml file.
 
 ## Running
 To run the tests, you need to first have the Cloud SDK and git installed locally. The test suite

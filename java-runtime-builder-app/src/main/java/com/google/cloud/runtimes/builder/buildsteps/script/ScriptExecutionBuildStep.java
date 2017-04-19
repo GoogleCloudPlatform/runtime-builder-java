@@ -45,11 +45,17 @@ public class ScriptExecutionBuildStep extends BuildStep {
   protected void doBuild(Path directory, Map<String, String> metadata) throws BuildStepException {
     try {
       logger.info("Executing build command '{}' in directory {}", buildCommand, directory);
-      new ProcessBuilder()
-          .command(buildCommand.split("\\s+"))
+      int exitCode = new ProcessBuilder()
+          .command("/bin/bash", "-c", buildCommand)
           .directory(directory.toFile())
           .inheritIO()
           .start().waitFor();
+
+      if (exitCode != 0) {
+        throw new BuildStepException(
+            String.format("Child process exited with non-zero exit code: %s", exitCode));
+      }
+
     } catch (IOException | InterruptedException e) {
       throw new BuildStepException(e);
     }

@@ -39,7 +39,7 @@ if [ -z "${APP_DIR}" -o -z "${STRUCTURE_TEST_CONFIG}" -o -z "${IMAGE_UNDER_TEST}
 fi
 
 DIR=$(dirname $0)
-PROJECT_ROOT=$DIR/..
+PROJECT_ROOT=$DIR/../..
 GCLOUD_PROJECT=$(gcloud config get-value project 2> /dev/null)
 DOCKER_NAMESPACE=gcr.io/$GCLOUD_PROJECT
 

@@ -4,7 +4,7 @@
 
 DIR=$(dirname $0)
 PROJECT_ROOT=$DIR/..
-TEST_CASES_DIR=$PROJECT_ROOT/test/test_cases
+TEST_CASES_DIR=$PROJECT_ROOT/test/integration/test_cases
 
 GCLOUD_PROJECT=$(gcloud config get-value project 2> /dev/null)
 DOCKER_NAMESPACE=gcr.io/$GCLOUD_PROJECT
@@ -32,5 +32,5 @@ do
   APP_DIR=$(mktemp -d)
   git clone $GIT_REPO $APP_DIR --depth=10
   cp $BUILDER_CONFIG $APP_DIR
-  $PROJECT_ROOT/test/run-test.sh --app-dir "$APP_DIR" --test-config "$STRUCTURE_TEST_CONFIG" --builder "$IMAGE_UNDER_TEST"
+  $PROJECT_ROOT/test/integration/run-test.sh --app-dir "$APP_DIR" --test-config "$STRUCTURE_TEST_CONFIG" --builder "$IMAGE_UNDER_TEST"
 done

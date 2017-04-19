@@ -1,10 +1,10 @@
 # Integration Testing
 This directory contains an integration testing framework for testing the java-runtime-builder 
 pipeline. Each immediate subdirectory of [`test_cases`](test_cases) is considered a distinct test 
-case. At minimum, each test case directory should contain the following files:
-  * an app.yaml config file
+case. Each test case directory should contain the following files:
   * a repo.txt file, containing a git remote url
   * a structure.yaml file to specify the structure test spec for the built image
+  * (optionally) an app.yaml config file
 
 For each test case, the repo specified in repo.txt is cloned, and the pipeline is invoked on the 
 repo, using the provided app.yaml file as configuration. Once the application container is built, 

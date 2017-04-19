@@ -34,6 +34,8 @@ if [ -z "${TEST_DIR}" ]; then
   exit 1
 fi
 
+# TODO instead of doing these as separate Argo invocations, instead we should just create/generate ne massive argo build the builds and tests each image in parallel
+
 DIR=$(dirname $0)
 PROJECT_ROOT=$DIR/../..
 
@@ -48,7 +50,6 @@ fi
 
 # reset config variables
 GIT_REPO=
-GIT_PROJECT_PATH="."
 # read config from file
 source $GIT_CFG_FILE
 if [ -z $GIT_REPO ]; then
@@ -61,7 +62,6 @@ fi
 echo "Cloning from git repo $GIT_REPO"
 APP_DIR=$(mktemp -d)
 git clone $GIT_REPO $APP_DIR --quiet --depth=10
-APP_DIR=$APP_DIR/$GIT_PROJECT_PATH
 if [ -f $BUILDER_CONFIG ]; then
   cp $BUILDER_CONFIG $APP_DIR
 fi

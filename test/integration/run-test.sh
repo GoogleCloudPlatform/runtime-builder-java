@@ -67,8 +67,6 @@ cp $STRUCTURE_TEST_CONFIG $APP_DIR
 
 # escape special characters in the builder image string so we can use it as a sed substitution below
 ESCAPED_IMG_UNDER_TEST=$(echo $IMAGE_UNDER_TEST | sed -e 's/[\/&]/\\&/g')
-DOCKER_NAMESPACE=gcr.io/$(gcloud config get-value project 2> /dev/null)
-OUTPUT_IMAGE=$DOCKER_NAMESPACE/test-output-img:$(date -u +%Y-%m-%d_%H_%M)
 
 # prepare the build pipeline config file for the test
 mkdir -p $PROJECT_ROOT/target
@@ -81,7 +79,10 @@ sed -i -e "s/^images.*$//" $PIPELINE_CONFIG
 # append structure tests to the build
 cat $DIR/structure_test.yaml >> $PIPELINE_CONFIG
 
+echo 'Invoking container test build with configuration:'
+cat $PIPELINE_CONFIG
+
 gcloud container builds submit $APP_DIR \
   --config $PIPELINE_CONFIG \
-  --substitutions "_OUTPUT_IMAGE=$OUTPUT_IMAGE,_STRUCTURE_TEST_SPEC=structure.yaml"
+  --substitutions "_OUTPUT_IMAGE=output-image,_STRUCTURE_TEST_SPEC=structure.yaml"
 

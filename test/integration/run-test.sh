@@ -36,34 +36,35 @@ fi
 
 DIR=$(dirname $0)
 PROJECT_ROOT=$DIR/../..
+TEST_APPS_ROOT=$PROJECT_ROOT/test/integration/test_apps
 
 # locate test configuration files in the provided test directory
-GIT_CFG_FILE=$TEST_DIR/repo.cfg
+REPO_CFG_FILE=$TEST_DIR/repo.cfg
 STRUCTURE_TEST_CONFIG=$TEST_DIR/structure.yaml
 BUILDER_CONFIG=$TEST_DIR/app.yaml # this file is optional
-if [ ! -f $GIT_CFG_FILE -o ! -f $STRUCTURE_TEST_CONFIG ]; then
+if [ ! -f $REPO_CFG_FILE -o ! -f $STRUCTURE_TEST_CONFIG ]; then
   echo "Integration test configuration files are missing from directory $TEST_DIR"
   exit 1
 fi
 
 # read config from file
-source $GIT_CFG_FILE
-if [ -z $GIT_REPO ]; then
-  echo "Error: Git repo config file $GIT_CFG_FILE must specify the GIT_REPO field"
+source $REPO_CFG_FILE
+if [ -z $TEST_APP_DIR ]; then
+  echo "Error: Repo config file $REPO_CFG_FILE must specify the \$TEST_APP_DIR field"
   exit 1
 fi
 
-# clone the git repo, invoke the build pipeline under test on it, then perform verifications on the
-# resulting built image.
-echo "Cloning from git repo $GIT_REPO"
-APP_DIR=$(mktemp -d)
-git clone $GIT_REPO $APP_DIR --quiet --depth=10
+# use tmp directory to stage the test app dir
+TEST_STAGING_DIR=$(mktemp -d)
 
-# copy necessary config files into app directory
+# copy the test app to the staging directory
+cp -r $TEST_APPS_ROOT/$TEST_APP_DIR/* $TEST_STAGING_DIR
+
+# copy test config files into the staging directory
 if [ -f $BUILDER_CONFIG ]; then
-  cp $BUILDER_CONFIG $APP_DIR
+  cp $BUILDER_CONFIG $TEST_STAGING_DIR
 fi
-cp $STRUCTURE_TEST_CONFIG $APP_DIR
+cp $STRUCTURE_TEST_CONFIG $TEST_STAGING_DIR
 
 # escape special characters in the builder image string so we can use it as a sed substitution below
 ESCAPED_IMG_UNDER_TEST=$(echo $IMAGE_UNDER_TEST | sed -e 's/[\/&]/\\&/g')
@@ -82,7 +83,8 @@ cat $DIR/structure_test.yaml >> $PIPELINE_CONFIG
 echo 'Invoking container test build with configuration:'
 cat $PIPELINE_CONFIG
 
-gcloud container builds submit $APP_DIR \
+set -x
+gcloud container builds submit $TEST_STAGING_DIR \
   --config $PIPELINE_CONFIG \
   --substitutions "_OUTPUT_IMAGE=output-image,_STRUCTURE_TEST_SPEC=structure.yaml"
 

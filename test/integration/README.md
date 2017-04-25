@@ -12,8 +12,10 @@ structure tests are run on it using the provided structure.yaml file.
 
 ## Running
 To run the tests, you need to first have the Cloud SDK installed locally. The test suite invokes 
-each test in series.
+each test in series. NOTE: Integration tests rely on git submodules in this repository, so make sure
+to checkout submodules before running.
 ```bash
+git submodule update --init
 test-suite.sh gcr.io/my-gcp-project/my-builder-image
 ```
 

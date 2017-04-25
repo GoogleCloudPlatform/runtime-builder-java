@@ -78,7 +78,7 @@ sed -i -e "s/gcr.io\/gcp-runtimes\/java\/runtime-builder\:latest/$ESCAPED_IMG_UN
 # remove the image push step
 sed -i -e "s/^images.*$//" $PIPELINE_CONFIG
 # append structure tests to the build
-cat $DIR/structure_test.yaml >> $PIPELINE_CONFIG
+cat $DIR/structure_test_build_step.yaml.in >> $PIPELINE_CONFIG
 
 echo 'Invoking container test build with configuration:'
 cat $PIPELINE_CONFIG

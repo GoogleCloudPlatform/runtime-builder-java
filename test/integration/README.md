@@ -11,9 +11,10 @@ repo, using the provided app.yaml file as configuration. Once the application co
 structure tests are run on it using the provided structure.yaml file.
 
 ## Running
-To run the tests, you need to first have the Cloud SDK installed locally. The test suite invokes 
-each test in series. NOTE: Integration tests rely on git submodules in this repository, so make sure
-to checkout submodules before running.
+To run the tests, make sure that:
+* The Cloud SDK is installed locally
+* The image under test is avaialble in a gcr.io docker registry
+* Git submodules in this repo have been checked out
 ```bash
 git submodule update --init
 test-suite.sh gcr.io/my-gcp-project/my-builder-image

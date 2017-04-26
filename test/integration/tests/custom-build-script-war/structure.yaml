@@ -6,3 +6,8 @@ commandTests:
   expectedError: ['openjdk version "1\.8\.0_121"']
   exitCode: '0'
 
+fileExistenceTests:
+- name: 'test application exists'
+  path: '/var/lib/jetty/webapps/root.war'
+  isDirectory: false
+  shouldExist: true

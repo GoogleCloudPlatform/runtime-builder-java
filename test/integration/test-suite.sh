@@ -1,6 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Runs the full suite of integration tests for a builder pipeline.
+
+set -e
 
 DIR=$(dirname $0)
 TEST_CASES_DIR=$DIR/tests

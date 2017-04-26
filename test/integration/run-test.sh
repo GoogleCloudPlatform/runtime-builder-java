@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Invokes a builder pipeline on a given test application, producing a container in the desired
 # docker registry. Then, runs the provided structure test spec on the built image.

@@ -1,0 +1,2 @@
+- name: 'gcr.io/gcp-runtimes/structure_test'
+  args: ['--image', '$_OUTPUT_IMAGE', '-v', '--config', '/workspace/$_STRUCTURE_TEST_SPEC']

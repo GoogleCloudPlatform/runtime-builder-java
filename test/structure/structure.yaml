@@ -1,0 +1,23 @@
+# Runtimes-common structure test spec
+# See https://github.com/GoogleCloudPlatform/runtimes-common/tree/master/structure_tests
+
+schemaVersion: 1.0.0
+
+commandTests:
+- name: 'maven is installed'
+  command: ['mvn', '--version']
+  expectedOutput: 'Apache Maven 3.3.9'
+  exitCode: '0'
+- name: 'gradle is installed'
+  command: ['gradle', '--version']
+  expectedOutput: 'Gradle 1.4'
+  exitCode: '0'
+- name: 'correct java version is installed'
+  command: ['java', '-version']
+  expectedError: ['openjdk version "1\.8\.0_121"']
+  exitCode: '0'
+- name: 'correct javac version is installed'
+  command: ['javac', '-version']
+  expectedError: ['javac 1\.8\.0_121']
+  exitCode: '0'
+

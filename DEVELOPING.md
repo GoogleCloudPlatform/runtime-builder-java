@@ -28,3 +28,15 @@ settings.
 ```bash
 ./scripts/run-pipeline.sh /path/to/some/source/to/build
 ```
+
+## Running Integration Tests
+Integration tests can be run on an existing builder image using `test/integration/test-suite.sh`.
+Normally, this would be called from the `ci-build.sh` script (which is run by our CI system whenever
+new code is pushed to master).
+
+Each test is a subdirectory of `test/integration/tests/`. For each test case, the test framework 
+invokes the builder pipeline on the directory defined in the test's `repo.cfg` file, relative to
+`test/integration/test_resources`). A set of structure tests are then run on the resulting 
+application container.
+
+See [`tests/integration/README.md`](tests/integration/README.md) for more detail.

@@ -1,3 +1,3 @@
-[submodule "test/integration/test_apps/java-docs-samples"]
-	path = test/integration/test_apps/java-docs-samples
+[submodule "test/integration/test_resources/java-docs-samples"]
+	path = test/integration/test_resources/java-docs-samples
 	url = https://github.com/GoogleCloudPlatform/java-docs-samples.git

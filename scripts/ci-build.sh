@@ -31,4 +31,4 @@ echo "Invoking build.sh with DOCKER_NAMESPACE=$DOCKER_NAMESPACE, TAG=$TAG"
 
 IMAGE=$DOCKER_NAMESPACE/runtime-builder:$TAG
 echo "Running integration tests on image: $IMAGE"
-./scripts/test-suite.sh $IMAGE
+./test/integration/test-suite.sh $IMAGE

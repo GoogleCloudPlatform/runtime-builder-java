@@ -3,7 +3,7 @@
 # Runs the full suite of integration tests for a builder pipeline.
 
 DIR=$(dirname $0)
-TEST_CASES_DIR=$DIR/test_cases
+TEST_CASES_DIR=$DIR/tests
 
 IMAGE_UNDER_TEST=$1
 if [ -z $IMAGE_UNDER_TEST ]; then

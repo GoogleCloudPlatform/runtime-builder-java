@@ -36,7 +36,7 @@ fi
 
 DIR=$(dirname $0)
 PROJECT_ROOT=$DIR/../..
-TEST_APPS_ROOT=$PROJECT_ROOT/test/integration/test_apps
+TEST_APPS_ROOT=$PROJECT_ROOT/test/integration/test_resources
 
 # locate test configuration files in the provided test directory
 REPO_CFG_FILE=$TEST_DIR/repo.cfg

@@ -4,10 +4,10 @@ pipeline. Each immediate subdirectory of [`tests`](tests) is considered a distin
 case. Each test case directory should contain the following files:
   * a repo.cfg file, which must define a `TEST_APP_DIR` variable
   * a structure.yaml file to specify the structure test spec to be run on the built image
-  * (optionally) an app.yaml config file
+  * (optionally) a config.json config file
 
 For each test case, the builder pipeline is invoked on the `TEST_APP_DIR` directory specified in 
-repo relative to `test/integration/test_resources`, using the provided app.yaml file as configuration. Once the application container is built, 
+repo relative to `test/integration/test_resources`, using the provided config.json file as configuration. Once the application container is built, 
 structure tests are run on it using the provided structure.yaml file.
 
 ## Running

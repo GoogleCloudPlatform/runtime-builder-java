@@ -24,7 +24,6 @@ public class RuntimeConfig {
 
   private String buildScript;
   private String artifact;
-  private String runtime;
 
   public String getArtifact() {
     return artifact;
@@ -32,16 +31,6 @@ public class RuntimeConfig {
 
   public void setArtifact(String artifact) {
     this.artifact = artifact;
-  }
-
-
-  public String getRuntime() {
-    return this.runtime;
-  }
-
-  public void setRuntime(String runtime) {
-    this.runtime = runtime;
-
   }
 
   public String getBuildScript() {

@@ -13,6 +13,9 @@ if [ -z $IMAGE_UNDER_TEST ]; then
   exit 1;
 fi
 
+# make sure git submodules are initialized
+git submodule update --init
+
 # run the full pipeline on all test cases
 TEST_CASES=$(find $TEST_CASES_DIR -maxdepth 1 -mindepth 1 -type d)
 for TEST_CASE in $TEST_CASES

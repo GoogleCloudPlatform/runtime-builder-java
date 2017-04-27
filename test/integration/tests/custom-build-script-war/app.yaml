@@ -1,6 +1,0 @@
-runtime: java
-env: flex
-
-runtime_config:
-  build_script: "cd ./flexible/helloworld; mvn -DskipTests install"
-  artifact: "flexible/helloworld/target/flexible-helloworld-1.0-SNAPSHOT.war"

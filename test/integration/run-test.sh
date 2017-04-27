@@ -41,7 +41,7 @@ TEST_APPS_ROOT=$PROJECT_ROOT/test/integration/test_resources
 # locate test configuration files in the provided test directory
 REPO_CFG_FILE=$TEST_DIR/repo.cfg
 STRUCTURE_TEST_CONFIG=$TEST_DIR/structure.yaml
-BUILDER_CONFIG=$TEST_DIR/app.yaml # this file is optional
+BUILDER_CONFIG=$(<$TEST_DIR/config.json) # this file is optional
 if [ ! -f $REPO_CFG_FILE -o ! -f $STRUCTURE_TEST_CONFIG ]; then
   echo "Integration test configuration files are missing from directory $TEST_DIR"
   exit 1
@@ -61,9 +61,6 @@ TEST_STAGING_DIR=$(mktemp -d)
 cp -r $TEST_APPS_ROOT/$TEST_APP_DIR/* $TEST_STAGING_DIR
 
 # copy test config files into the staging directory
-if [ -f $BUILDER_CONFIG ]; then
-  cp $BUILDER_CONFIG $TEST_STAGING_DIR
-fi
 cp $STRUCTURE_TEST_CONFIG $TEST_STAGING_DIR
 
 # escape special characters in the builder image string so we can use it as a sed substitution below
@@ -86,5 +83,5 @@ cat $PIPELINE_CONFIG
 set -x
 gcloud container builds submit $TEST_STAGING_DIR \
   --config $PIPELINE_CONFIG \
-  --substitutions "_OUTPUT_IMAGE=output-image,_STRUCTURE_TEST_SPEC=structure.yaml"
+  --substitutions "^,,^_OUTPUT_IMAGE=output-image,,_STRUCTURE_TEST_SPEC=structure.yaml,,_GCP_RUNTIME_BUILDER_CONFIG=$BUILDER_CONFIG"
 

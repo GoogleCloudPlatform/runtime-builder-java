@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.cloud.runtimes.builder.buildsteps.gradle;
+package com.google.cloud.runtimes.builder.buildsteps;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.AbstractSubprocessBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;

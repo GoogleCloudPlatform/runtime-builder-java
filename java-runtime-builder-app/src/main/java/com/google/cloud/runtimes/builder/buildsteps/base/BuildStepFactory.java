@@ -16,10 +16,10 @@
 
 package com.google.cloud.runtimes.builder.buildsteps.base;
 
+import com.google.cloud.runtimes.builder.buildsteps.GradleBuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.MavenBuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.ScriptExecutionBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
-import com.google.cloud.runtimes.builder.buildsteps.gradle.GradleBuildStep;
-import com.google.cloud.runtimes.builder.buildsteps.maven.MavenBuildStep;
-import com.google.cloud.runtimes.builder.buildsteps.script.ScriptExecutionBuildStep;
 
 /**
  * Factory interface to simplify instantiation of objects with Guice-provided dependencies. See

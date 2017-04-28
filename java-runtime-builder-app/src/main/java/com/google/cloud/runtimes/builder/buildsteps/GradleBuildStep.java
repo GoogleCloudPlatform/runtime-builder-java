@@ -19,6 +19,7 @@ package com.google.cloud.runtimes.builder.buildsteps;
 import com.google.cloud.runtimes.builder.buildsteps.base.AbstractSubprocessBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepMetadataConstants;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 
 import org.slf4j.Logger;
@@ -49,6 +50,11 @@ public class GradleBuildStep extends AbstractSubprocessBuildStep {
     metadata.put(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH, "build/libs");
   }
 
+  @VisibleForTesting
+  String getGradleHome() {
+    return System.getenv("GRADLE_HOME");
+  }
+
   private String getGradleExecutable(Path directory) {
     Path wrapperPath = directory.resolve("gradlew");
     if (Files.isExecutable(wrapperPath)) {
@@ -57,7 +63,7 @@ public class GradleBuildStep extends AbstractSubprocessBuildStep {
       return wrapperPath.toString();
     }
 
-    String gradleHome = System.getenv("GRADLE_HOME");
+    String gradleHome = getGradleHome();
     if (Strings.isNullOrEmpty(gradleHome)) {
       throw new IllegalStateException("$GRADLE_HOME must be set.");
     }

@@ -19,6 +19,7 @@ package com.google.cloud.runtimes.builder.buildsteps;
 import com.google.cloud.runtimes.builder.buildsteps.base.AbstractSubprocessBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepMetadataConstants;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 
 import org.slf4j.Logger;
@@ -50,6 +51,11 @@ public class MavenBuildStep extends AbstractSubprocessBuildStep {
     metadata.put(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH, "target/");
   }
 
+  @VisibleForTesting
+  String getMavenHome() {
+    return System.getenv("M2_HOME");
+  }
+
   private String getMavenExecutable(Path directory) {
     Path wrapperPath = directory.resolve("mvnw");
     if (Files.isExecutable(wrapperPath)) {
@@ -58,7 +64,7 @@ public class MavenBuildStep extends AbstractSubprocessBuildStep {
       return wrapperPath.toString();
     }
 
-    String m2Home = System.getenv("M2_HOME");
+    String m2Home = getMavenHome();
     if (Strings.isNullOrEmpty(m2Home)) {
       throw new IllegalStateException("$M2_HOME must be set.");
     }

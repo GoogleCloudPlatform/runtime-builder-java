@@ -21,7 +21,7 @@ public class GradleBuildStepTest {
   private GradleBuildStep gradleBuildStep;
 
   @Before
-  public void setup() throws IOException {
+  public void before() throws IOException {
     gradleBuildStep = spy(new GradleBuildStep());
 
     testGradleHome = new TestWorkspaceBuilder()

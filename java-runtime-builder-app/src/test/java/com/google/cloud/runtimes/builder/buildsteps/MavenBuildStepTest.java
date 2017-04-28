@@ -21,7 +21,7 @@ public class MavenBuildStepTest {
   private MavenBuildStep mavenBuildStep;
 
   @Before
-  public void setup() throws IOException {
+  public void before() throws IOException {
     mavenBuildStep = spy(new MavenBuildStep());
 
     testMavenHomeDir = new TestWorkspaceBuilder()

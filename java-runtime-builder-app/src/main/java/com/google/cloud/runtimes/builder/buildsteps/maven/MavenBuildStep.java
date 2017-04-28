@@ -16,7 +16,7 @@
 
 package com.google.cloud.runtimes.builder.buildsteps.maven;
 
-import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.AbstractSubprocessBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepMetadataConstants;
 import com.google.common.base.Strings;
@@ -24,41 +24,32 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Build step that invokes maven.
  */
-public class MavenBuildStep extends BuildStep {
+public class MavenBuildStep extends AbstractSubprocessBuildStep {
 
   private static final Logger logger = LoggerFactory.getLogger(MavenBuildStep.class);
 
   @Override
-  protected void doBuild(Path directory, Map<String, String> metadata) throws BuildStepException {
-    try {
-      int exitCode = new ProcessBuilder()
-          .command(getMavenExecutable(directory), "-B", "-DskipTests=true", "clean", "package")
-          .directory(directory.toFile())
-          .inheritIO()
-          .start().waitFor();
-
-      if (exitCode != 0) {
-        throw new BuildStepException(
-            String.format("Child process exited with non-zero exit code: %s", exitCode));
-      }
-
-      metadata.put(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH, "target/");
-
-    } catch (IOException | InterruptedException e) {
-      throw new BuildStepException(e);
-    }
+  protected List<String> getBuildCommand(Path directory) {
+    return Arrays.asList(getMavenExecutable(directory),
+        "-B", "-DskipTests=true", "clean", "package");
   }
 
-  // TODO refactor - this code is repeated in gradle build step
+  @Override
+  protected void doBuild(Path directory, Map<String, String> metadata) throws BuildStepException {
+    super.doBuild(directory, metadata);
+    metadata.put(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH, "target/");
+  }
+
   private String getMavenExecutable(Path directory) {
     Path wrapperPath = directory.resolve("mvnw");
     if (Files.isExecutable(wrapperPath)) {
@@ -77,7 +68,7 @@ public class MavenBuildStep extends BuildStep {
     }
 
     throw new IllegalStateException(
-        String.format("The file at %s is not a valid gradle executable", systemMvn.toString()));
+        String.format("The file at %s is not a valid maven executable", systemMvn.toString()));
   }
 
 }

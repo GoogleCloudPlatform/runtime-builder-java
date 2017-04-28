@@ -16,24 +16,19 @@
 
 package com.google.cloud.runtimes.builder.buildsteps.script;
 
-import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
-import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+import com.google.cloud.runtimes.builder.buildsteps.base.AbstractSubprocessBuildStep;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Build step that invokes an arbitrary string as a shell command.
  */
-public class ScriptExecutionBuildStep extends BuildStep {
+public class ScriptExecutionBuildStep extends AbstractSubprocessBuildStep {
 
-  private final Logger logger = LoggerFactory.getLogger(ScriptExecutionBuildStep.class);
   private final String buildCommand;
 
   @Inject
@@ -42,23 +37,8 @@ public class ScriptExecutionBuildStep extends BuildStep {
   }
 
   @Override
-  protected void doBuild(Path directory, Map<String, String> metadata) throws BuildStepException {
-    try {
-      logger.info("Executing build command '{}' in directory {}", buildCommand, directory);
-      int exitCode = new ProcessBuilder()
-          .command("/bin/bash", "-c", buildCommand)
-          .directory(directory.toFile())
-          .inheritIO()
-          .start().waitFor();
-
-      if (exitCode != 0) {
-        throw new BuildStepException(
-            String.format("Child process exited with non-zero exit code: %s", exitCode));
-      }
-
-    } catch (IOException | InterruptedException e) {
-      throw new BuildStepException(e);
-    }
-
+  protected List<String> getBuildCommand(Path buildDirectory) {
+    return Arrays.asList("/bin/bash", "-c", buildCommand);
   }
+
 }

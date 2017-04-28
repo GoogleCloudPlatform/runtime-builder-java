@@ -16,11 +16,14 @@
 
 package com.google.cloud.runtimes.builder;
 
+import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.Set;
 
 public class TestUtils {
 
@@ -47,6 +50,7 @@ public class TestUtils {
       private final Path path;
       private final TestWorkspaceBuilder workspaceBuilder;
       private String contents = "";
+      private boolean isExecutable = false;
 
       private FileBuilder(TestWorkspaceBuilder workspaceBuilder, Path path) {
         this.workspaceBuilder = workspaceBuilder;
@@ -58,6 +62,11 @@ public class TestUtils {
         return this;
       }
 
+      public FileBuilder setIsExecutable(boolean isExecutable) {
+        this.isExecutable = isExecutable;
+        return this;
+      }
+
       public TestWorkspaceBuilder build() throws IOException {
         // mkdir -p
         Files.createDirectories(path.getParent());
@@ -65,6 +74,15 @@ public class TestUtils {
         try (Writer out = Files.newBufferedWriter(path, Charset.defaultCharset())) {
           out.write(contents);
         }
+
+        Set<PosixFilePermission> permissions = Sets.newHashSet(
+            PosixFilePermission.OWNER_READ,
+            PosixFilePermission.OWNER_WRITE);
+        if (isExecutable) {
+          permissions.add(PosixFilePermission.OWNER_EXECUTE);
+        }
+
+        Files.setPosixFilePermissions(path, permissions);
         return workspaceBuilder;
       }
     }

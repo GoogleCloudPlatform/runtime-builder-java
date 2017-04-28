@@ -14,39 +14,37 @@
  * limitations under the License.
  */
 
-package com.google.cloud.runtimes.builder.buildsteps.script;
-
-import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
-import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
-import com.google.inject.Inject;
-import com.google.inject.assistedinject.Assisted;
+package com.google.cloud.runtimes.builder.buildsteps.base;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Build step that invokes an arbitrary string as a shell command.
  */
-public class ScriptExecutionBuildStep extends BuildStep {
+public abstract class AbstractSubprocessBuildStep extends BuildStep {
 
-  private final Logger logger = LoggerFactory.getLogger(ScriptExecutionBuildStep.class);
-  private final String buildCommand;
+  private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-  @Inject
-  ScriptExecutionBuildStep(@Assisted String buildCommand) {
-    this.buildCommand = buildCommand;
-  }
+  /**
+   * Returns the build command that is executed by a subprocess in this build step.
+   */
+  protected abstract List<String> getBuildCommand(Path buildDirectory);
 
   @Override
   protected void doBuild(Path directory, Map<String, String> metadata) throws BuildStepException {
     try {
+      List<String> buildCommand = getBuildCommand(directory);
+
       logger.info("Executing build command '{}' in directory {}", buildCommand, directory);
+
       int exitCode = new ProcessBuilder()
-          .command("/bin/bash", "-c", buildCommand)
+          .command(buildCommand)
           .directory(directory.toFile())
           .inheritIO()
           .start().waitFor();

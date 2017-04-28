@@ -14,48 +14,45 @@
  * limitations under the License.
  */
 
-package com.google.cloud.runtimes.builder.buildsteps.gradle;
+package com.google.cloud.runtimes.builder.buildsteps;
 
-import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.AbstractSubprocessBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepMetadataConstants;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Build step that invokes gradle.
  */
-public class GradleBuildStep extends BuildStep {
+public class GradleBuildStep extends AbstractSubprocessBuildStep {
 
   private final Logger logger = LoggerFactory.getLogger(GradleBuildStep.class);
 
   @Override
+  protected List<String> getBuildCommand(Path buildDirectory) {
+    return Arrays.asList(getGradleExecutable(buildDirectory), "build");
+  }
+
+  @Override
   protected void doBuild(Path directory, Map<String, String> metadata) throws BuildStepException {
-    try {
-      int exitCode = new ProcessBuilder()
-          .command(getGradleExecutable(directory), "build")
-          .directory(directory.toFile())
-          .inheritIO()
-          .start().waitFor();
+    super.doBuild(directory, metadata);
+    metadata.put(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH, "build/libs");
+  }
 
-      if (exitCode != 0) {
-        throw new BuildStepException(
-            String.format("Child process exited with non-zero exit code: %s", exitCode));
-      }
-
-      metadata.put(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH, "build/libs");
-
-    } catch (IOException | InterruptedException e) {
-      throw new BuildStepException(e);
-    }
+  @VisibleForTesting
+  String getGradleHome() {
+    return System.getenv("GRADLE_HOME");
   }
 
   private String getGradleExecutable(Path directory) {
@@ -66,7 +63,7 @@ public class GradleBuildStep extends BuildStep {
       return wrapperPath.toString();
     }
 
-    String gradleHome = System.getenv("GRADLE_HOME");
+    String gradleHome = getGradleHome();
     if (Strings.isNullOrEmpty(gradleHome)) {
       throw new IllegalStateException("$GRADLE_HOME must be set.");
     }

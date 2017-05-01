@@ -17,7 +17,7 @@ ENV M2_HOME /usr/share/maven
 # install gradle
 ARG GRADLE_VERSION=3.4
 RUN mkdir -p /usr/share/gradle \
-  && curl -fsSLO https://services.gradle.org/distributions/gradle-3.4-bin.zip \
+  && curl -fsSLO https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip \
   && unzip -qq gradle-$GRADLE_VERSION-bin.zip \
   && rm gradle-$GRADLE_VERSION-bin.zip \
   && mkdir -p /usr/share/ \

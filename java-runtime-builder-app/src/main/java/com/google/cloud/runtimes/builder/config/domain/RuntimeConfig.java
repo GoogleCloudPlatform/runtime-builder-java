@@ -25,6 +25,7 @@ public class RuntimeConfig {
   private String buildScript;
   private String artifact;
   private String runtime;
+  private Boolean jettyQuickstart;
 
   public String getArtifact() {
     return artifact;
@@ -34,14 +35,12 @@ public class RuntimeConfig {
     this.artifact = artifact;
   }
 
-
   public String getRuntime() {
     return this.runtime;
   }
 
   public void setRuntime(String runtime) {
     this.runtime = runtime;
-
   }
 
   public String getBuildScript() {
@@ -51,5 +50,14 @@ public class RuntimeConfig {
   @JsonProperty("build_script")
   public void setBuildScript(String buildScript) {
     this.buildScript = buildScript;
+  }
+
+  public Boolean getJettyQuickstart() {
+    return jettyQuickstart;
+  }
+
+  @JsonProperty("jetty_quickstart")
+  public void setJettyQuickstart(Boolean jettyQuickstart) {
+    this.jettyQuickstart = jettyQuickstart;
   }
 }

@@ -17,10 +17,13 @@
 package com.google.cloud.runtimes.builder.config;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.IO;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -76,6 +79,21 @@ public class AppYamlParserTest {
         + "runtime_config:\n"
         + "  artifact: " + artifact);
     assertEquals(artifact, result.getRuntimeConfig().getArtifact());
+  }
+
+  @Test
+  public void testParse_jettyQuickstart() throws IOException {
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
+        + "runtime_config:\n"
+        + "  jetty_quickstart: true");
+    assertTrue(result.getRuntimeConfig().getJettyQuickstart());
+  }
+
+  @Test(expected = com.fasterxml.jackson.databind.exc.InvalidFormatException.class)
+  public void testParse_invalidJettyQuickstart() throws IOException {
+    parseFileWithContents(APP_YAML_PREAMBLE
+        + "runtime_config:\n"
+        + "  jetty_quickstart: invalid_quickstart_option");
   }
 
 }

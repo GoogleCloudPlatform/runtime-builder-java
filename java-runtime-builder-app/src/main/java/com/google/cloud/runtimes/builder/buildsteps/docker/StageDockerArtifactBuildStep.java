@@ -25,6 +25,7 @@ import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import com.google.inject.Inject;
 
 import com.google.inject.assistedinject.Assisted;
+
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +50,8 @@ public class StageDockerArtifactBuildStep extends BuildStep {
   private RuntimeConfig runtimeConfig;
 
   @Inject
-  StageDockerArtifactBuildStep(DockerfileGenerator dockerfileGenerator, @Assisted RuntimeConfig runtimeConfig) {
+  StageDockerArtifactBuildStep(DockerfileGenerator dockerfileGenerator,
+                               @Assisted RuntimeConfig runtimeConfig) {
     this.dockerfileGenerator = dockerfileGenerator;
     this.runtimeConfig = runtimeConfig;
   }

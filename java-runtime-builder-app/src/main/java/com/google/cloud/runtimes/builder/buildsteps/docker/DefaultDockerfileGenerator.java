@@ -66,7 +66,7 @@ public class DefaultDockerfileGenerator implements DockerfileGenerator {
     dockerfile.append(String.format(DOCKERFILE, baseImage, artifactToDeploy.toString(), appDest));
 
     if (baseImage.equals(serverRuntime) && runtimeConfig.getJettyQuickstart()) {
-      dockerfile.append("RUN /scripts/jetty/quickstart.sh");
+      dockerfile.append("RUN /scripts/jetty/quickstart.sh\n");
     }
 
     return dockerfile.toString();

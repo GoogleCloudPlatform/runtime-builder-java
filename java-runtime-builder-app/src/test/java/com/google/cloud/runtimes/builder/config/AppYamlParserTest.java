@@ -17,13 +17,11 @@
 package com.google.cloud.runtimes.builder.config;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.IO;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -82,7 +80,7 @@ public class AppYamlParserTest {
   }
 
   @Test
-  public void testParse_jettyQuickstart() throws IOException {
+  public void testParseJettyQuickstart() throws IOException {
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "runtime_config:\n"
         + "  jetty_quickstart: true");
@@ -90,7 +88,7 @@ public class AppYamlParserTest {
   }
 
   @Test(expected = com.fasterxml.jackson.databind.exc.InvalidFormatException.class)
-  public void testParse_invalidJettyQuickstart() throws IOException {
+  public void testParseInvalidJettyQuickstart() throws IOException {
     parseFileWithContents(APP_YAML_PREAMBLE
         + "runtime_config:\n"
         + "  jetty_quickstart: invalid_quickstart_option");

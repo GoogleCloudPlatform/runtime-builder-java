@@ -20,6 +20,7 @@ import com.google.cloud.runtimes.builder.buildsteps.GradleBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.MavenBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.ScriptExecutionBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
+import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 
 /**
  * Factory interface to simplify instantiation of objects with Guice-provided dependencies. See
@@ -32,7 +33,7 @@ public interface BuildStepFactory {
 
   GradleBuildStep createGradleBuildStep();
 
-  StageDockerArtifactBuildStep createStageDockerArtifactBuildStep();
+  StageDockerArtifactBuildStep createStageDockerArtifactBuildStep(RuntimeConfig runtimeConfig);
 
   ScriptExecutionBuildStep createScriptExecutionBuildStep(String buildCommand);
 

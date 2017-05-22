@@ -24,6 +24,7 @@ import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
 import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import com.google.inject.Inject;
 
+import com.google.inject.assistedinject.Assisted;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,16 +49,13 @@ public class StageDockerArtifactBuildStep extends BuildStep {
   private RuntimeConfig runtimeConfig;
 
   @Inject
-  StageDockerArtifactBuildStep(DockerfileGenerator dockerfileGenerator) {
+  StageDockerArtifactBuildStep(DockerfileGenerator dockerfileGenerator, @Assisted RuntimeConfig runtimeConfig) {
     this.dockerfileGenerator = dockerfileGenerator;
+    this.runtimeConfig = runtimeConfig;
   }
 
   public void setArtifactPathOverride(String artifactPathOverride) {
     this.artifactPathOverride = artifactPathOverride;
-  }
-
-  public void setRuntimeConfig(RuntimeConfig runtimeConfig) {
-    this.runtimeConfig = runtimeConfig;
   }
 
   @Override
@@ -90,7 +88,7 @@ public class StageDockerArtifactBuildStep extends BuildStep {
 
       // Generate dockerfile
       String dockerfile = dockerfileGenerator.generateDockerfile(artifact.getFileName(),
-                                                                 getRuntimeConfig());
+                                                                 runtimeConfig);
       Path dockerFileDest = stagingDir.resolve("Dockerfile");
 
       try (BufferedWriter writer
@@ -119,14 +117,6 @@ public class StageDockerArtifactBuildStep extends BuildStep {
       // otherwise, search for an artifact in the workspace root
       return searchForArtifactInDir(directory);
     }
-  }
-
-  private RuntimeConfig getRuntimeConfig() {
-    if (this.runtimeConfig == null) {
-      this.runtimeConfig = new RuntimeConfig();
-    }
-
-    return this.runtimeConfig;
   }
 
   /*

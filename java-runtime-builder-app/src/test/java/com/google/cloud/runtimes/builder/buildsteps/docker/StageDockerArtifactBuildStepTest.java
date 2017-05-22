@@ -149,9 +149,8 @@ public class StageDockerArtifactBuildStepTest {
   }
 
   private StageDockerArtifactBuildStep initBuildStep(String pathToArtifact) {
-    StageDockerArtifactBuildStep buildStep = new StageDockerArtifactBuildStep(dockerfileGenerator);
+    StageDockerArtifactBuildStep buildStep = new StageDockerArtifactBuildStep(dockerfileGenerator, new RuntimeConfig());
     buildStep.setArtifactPathOverride(pathToArtifact);
-    buildStep.setRuntimeConfig(new RuntimeConfig());
     return buildStep;
   }
 

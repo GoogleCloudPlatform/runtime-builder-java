@@ -34,6 +34,7 @@ import com.google.cloud.runtimes.builder.buildsteps.ScriptExecutionBuildStep;
 import com.google.cloud.runtimes.builder.config.AppYamlParser;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
+import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 
 import org.junit.Before;
@@ -66,7 +67,7 @@ public class BuildPipelineConfiguratorTest {
 
     when(buildStepFactory.createMavenBuildStep()).thenReturn(mavenBuildStep);
     when(buildStepFactory.createGradleBuildStep()).thenReturn(gradleBuildStep);
-    when(buildStepFactory.createStageDockerArtifactBuildStep())
+    when(buildStepFactory.createStageDockerArtifactBuildStep(any(RuntimeConfig.class)))
         .thenReturn(stageDockerArtifactBuildStep);
     when(buildStepFactory.createScriptExecutionBuildStep(anyString()))
         .thenReturn(scriptExecutionBuildStep);

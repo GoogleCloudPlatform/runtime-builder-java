@@ -19,6 +19,7 @@ package com.google.cloud.runtimes.builder.buildsteps.docker;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepMetadataConstants;
+import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
 import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import com.google.inject.Inject;
@@ -44,6 +45,7 @@ public class StageDockerArtifactBuildStep extends BuildStep {
   private final Logger logger = LoggerFactory.getLogger(StageDockerArtifactBuildStep.class);
   private final DockerfileGenerator dockerfileGenerator;
   private String artifactPathOverride;
+  private RuntimeConfig runtimeConfig;
 
   @Inject
   StageDockerArtifactBuildStep(DockerfileGenerator dockerfileGenerator) {
@@ -52,6 +54,10 @@ public class StageDockerArtifactBuildStep extends BuildStep {
 
   public void setArtifactPathOverride(String artifactPathOverride) {
     this.artifactPathOverride = artifactPathOverride;
+  }
+
+  public void setRuntimeConfig(RuntimeConfig runtimeConfig) {
+    this.runtimeConfig = runtimeConfig;
   }
 
   @Override
@@ -83,7 +89,8 @@ public class StageDockerArtifactBuildStep extends BuildStep {
       }
 
       // Generate dockerfile
-      String dockerfile = dockerfileGenerator.generateDockerfile(artifact.getFileName());
+      String dockerfile = dockerfileGenerator.generateDockerfile(artifact.getFileName(),
+                                                                 getRuntimeConfig());
       Path dockerFileDest = stagingDir.resolve("Dockerfile");
 
       try (BufferedWriter writer
@@ -112,6 +119,14 @@ public class StageDockerArtifactBuildStep extends BuildStep {
       // otherwise, search for an artifact in the workspace root
       return searchForArtifactInDir(directory);
     }
+  }
+
+  private RuntimeConfig getRuntimeConfig() {
+    if (this.runtimeConfig == null) {
+      this.runtimeConfig = new RuntimeConfig();
+    }
+
+    return this.runtimeConfig;
   }
 
   /*

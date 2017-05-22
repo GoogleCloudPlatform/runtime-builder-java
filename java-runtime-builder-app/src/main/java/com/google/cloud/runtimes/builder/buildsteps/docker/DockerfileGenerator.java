@@ -16,6 +16,8 @@
 
 package com.google.cloud.runtimes.builder.buildsteps.docker;
 
+import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
+
 import java.nio.file.Path;
 
 public interface DockerfileGenerator {
@@ -23,6 +25,6 @@ public interface DockerfileGenerator {
   /**
    * Generate a Dockerfile for an artifact file at the given path.
    */
-  String generateDockerfile(Path artifact);
+  String generateDockerfile(Path artifact, RuntimeConfig runtimeConfig);
 
 }

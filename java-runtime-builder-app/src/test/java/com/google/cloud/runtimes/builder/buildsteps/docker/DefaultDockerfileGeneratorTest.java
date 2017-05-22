@@ -16,8 +16,10 @@
 
 package com.google.cloud.runtimes.builder.buildsteps.docker;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,7 +46,7 @@ public class DefaultDockerfileGeneratorTest {
   @Test
   public void testGenerateOpenjdk() throws IOException {
     Path jar = Files.createTempFile( null, ".jar").toAbsolutePath();
-    String result = generator.generateDockerfile(jar);
+    String result = generator.generateDockerfile(jar, new RuntimeConfig());
     assertTrue(result.contains("FROM " + jarRuntime));
     assertTrue(result.contains("ADD " + jar.toString()));
   }
@@ -52,9 +54,31 @@ public class DefaultDockerfileGeneratorTest {
   @Test
   public void testGenerateJetty() throws IOException {
     Path war = Files.createTempFile( null, ".war").toAbsolutePath();
-    String result = generator.generateDockerfile(war);
+    String result = generator.generateDockerfile(war, new RuntimeConfig());
     assertTrue(result.contains("FROM " + serverRuntime));
     assertTrue(result.contains("ADD " + war.toString()));
+  }
+
+  @Test
+  public void testGenerateQuickstart() throws IOException {
+    Path war = Files.createTempFile(null, ".war").toAbsolutePath();
+    RuntimeConfig runtimeConfig = new RuntimeConfig();
+    runtimeConfig.setJettyQuickstart(true);
+    String dockerfile = generator.generateDockerfile(war, runtimeConfig);
+    assertTrue(dockerfile.contains("RUN /scripts/jetty/quickstart.sh"));
+  }
+
+  /**
+   * When Jetty quickstart is enabled but jetty runtime is not selected then the quickstart
+   * script must not be run.
+   */
+  @Test
+  public void testGenerateQuickstartWithoutJetty() throws IOException {
+    Path jar = Files.createTempFile( null, ".jar").toAbsolutePath();
+    RuntimeConfig runtimeConfig = new RuntimeConfig();
+    runtimeConfig.setJettyQuickstart(true);
+    String dockerfile = generator.generateDockerfile(jar, runtimeConfig);
+    assertFalse(dockerfile.contains("RUN /scripts/jetty/quickstart.sh"));
   }
 
 }

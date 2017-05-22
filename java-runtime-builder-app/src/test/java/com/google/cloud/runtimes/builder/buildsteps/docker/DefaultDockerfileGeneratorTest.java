@@ -60,12 +60,14 @@ public class DefaultDockerfileGeneratorTest {
   }
 
   @Test
-  public void testGenerateQuickstart() throws IOException {
+  public void testGenerateQuickstartJetty() throws IOException {
     Path war = Files.createTempFile(null, ".war").toAbsolutePath();
     RuntimeConfig runtimeConfig = new RuntimeConfig();
     runtimeConfig.setJettyQuickstart(true);
     String dockerfile = generator.generateDockerfile(war, runtimeConfig);
     assertTrue(dockerfile.contains("RUN /scripts/jetty/quickstart.sh"));
+    // The quickstart script must always be executed after adding the war
+    assertTrue(dockerfile.indexOf("ADD " + war.toString()) < dockerfile.indexOf("RUN /scripts/jetty/quickstart.sh"));
   }
 
   /**
@@ -73,7 +75,7 @@ public class DefaultDockerfileGeneratorTest {
    * script must not be run.
    */
   @Test
-  public void testGenerateQuickstartWithoutJetty() throws IOException {
+  public void testGenerateQuickstartOpenJdk() throws IOException {
     Path jar = Files.createTempFile( null, ".jar").toAbsolutePath();
     RuntimeConfig runtimeConfig = new RuntimeConfig();
     runtimeConfig.setJettyQuickstart(true);

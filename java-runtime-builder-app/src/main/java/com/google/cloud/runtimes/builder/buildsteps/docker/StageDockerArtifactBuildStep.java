@@ -19,9 +19,12 @@ package com.google.cloud.runtimes.builder.buildsteps.docker;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepMetadataConstants;
+import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
 import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import com.google.inject.Inject;
+
+import com.google.inject.assistedinject.Assisted;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -44,10 +47,13 @@ public class StageDockerArtifactBuildStep extends BuildStep {
   private final Logger logger = LoggerFactory.getLogger(StageDockerArtifactBuildStep.class);
   private final DockerfileGenerator dockerfileGenerator;
   private String artifactPathOverride;
+  private RuntimeConfig runtimeConfig;
 
   @Inject
-  StageDockerArtifactBuildStep(DockerfileGenerator dockerfileGenerator) {
+  StageDockerArtifactBuildStep(DockerfileGenerator dockerfileGenerator,
+                               @Assisted RuntimeConfig runtimeConfig) {
     this.dockerfileGenerator = dockerfileGenerator;
+    this.runtimeConfig = runtimeConfig;
   }
 
   public void setArtifactPathOverride(String artifactPathOverride) {
@@ -83,7 +89,8 @@ public class StageDockerArtifactBuildStep extends BuildStep {
       }
 
       // Generate dockerfile
-      String dockerfile = dockerfileGenerator.generateDockerfile(artifact.getFileName());
+      String dockerfile = dockerfileGenerator.generateDockerfile(artifact.getFileName(),
+                                                                 runtimeConfig);
       Path dockerFileDest = stagingDir.resolve("Dockerfile");
 
       try (BufferedWriter writer

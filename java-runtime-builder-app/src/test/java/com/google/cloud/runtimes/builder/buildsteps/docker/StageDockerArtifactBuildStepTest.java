@@ -24,6 +24,7 @@ import static org.mockito.Mockito.when;
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepMetadataConstants;
+import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
 import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 
@@ -50,7 +51,7 @@ public class StageDockerArtifactBuildStepTest {
   @Before
   public void setup() throws IOException {
     MockitoAnnotations.initMocks(this);
-    when(dockerfileGenerator.generateDockerfile(any(Path.class))).thenReturn("");
+    when(dockerfileGenerator.generateDockerfile(any(Path.class), any(RuntimeConfig.class))).thenReturn("");
     metadata = new HashMap<>();
   }
 
@@ -148,7 +149,7 @@ public class StageDockerArtifactBuildStepTest {
   }
 
   private StageDockerArtifactBuildStep initBuildStep(String pathToArtifact) {
-    StageDockerArtifactBuildStep buildStep = new StageDockerArtifactBuildStep(dockerfileGenerator);
+    StageDockerArtifactBuildStep buildStep = new StageDockerArtifactBuildStep(dockerfileGenerator, new RuntimeConfig());
     buildStep.setArtifactPathOverride(pathToArtifact);
     return buildStep;
   }

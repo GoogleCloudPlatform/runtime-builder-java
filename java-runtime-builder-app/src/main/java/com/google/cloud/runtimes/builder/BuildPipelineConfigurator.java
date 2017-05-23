@@ -100,7 +100,7 @@ public class BuildPipelineConfigurator {
     }
 
     StageDockerArtifactBuildStep stageDockerBuildStep
-        = buildStepFactory.createStageDockerArtifactBuildStep();
+        = buildStepFactory.createStageDockerArtifactBuildStep(runtimeConfig);
     stageDockerBuildStep.setArtifactPathOverride(runtimeConfig.getArtifact());
     steps.add(stageDockerBuildStep);
     return steps;

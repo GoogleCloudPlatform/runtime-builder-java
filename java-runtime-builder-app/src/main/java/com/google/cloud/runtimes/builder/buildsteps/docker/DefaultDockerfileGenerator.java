@@ -16,6 +16,7 @@
 
 package com.google.cloud.runtimes.builder.buildsteps.docker;
 
+import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.injection.JarRuntimeImage;
 import com.google.cloud.runtimes.builder.injection.ServerRuntimeImage;
 import com.google.common.io.Files;
@@ -45,7 +46,8 @@ public class DefaultDockerfileGenerator implements DockerfileGenerator {
   }
 
   @Override
-  public String generateDockerfile(Path artifactToDeploy) {
+  public String generateDockerfile(Path artifactToDeploy, RuntimeConfig runtimeConfig) {
+    StringBuilder dockerfile = new StringBuilder();
     String fileType = Files.getFileExtension(artifactToDeploy.toString());
     String baseImage;
     String appDest;
@@ -61,7 +63,13 @@ public class DefaultDockerfileGenerator implements DockerfileGenerator {
           String.format("Unable to determine the runtime for artifact %s.",
               artifactToDeploy.getFileName()));
     }
-    return String.format(DOCKERFILE, baseImage, artifactToDeploy.toString(), appDest);
+    dockerfile.append(String.format(DOCKERFILE, baseImage, artifactToDeploy.toString(), appDest));
+
+    if (baseImage.equals(serverRuntime) && runtimeConfig.getJettyQuickstart()) {
+      dockerfile.append("RUN /scripts/jetty/quickstart.sh\n");
+    }
+
+    return dockerfile.toString();
   }
 
 }

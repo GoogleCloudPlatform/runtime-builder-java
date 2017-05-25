@@ -1,4 +1,4 @@
-FROM gcr.io/google-appengine/openjdk
+FROM openjdk:8-jdk
 
 # install utilities
 RUN apt-get -q update \

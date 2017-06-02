@@ -53,7 +53,7 @@ public class MavenBuildStep extends AbstractSubprocessBuildStep {
 
   @VisibleForTesting
   String getMavenHome() {
-    return System.getenv("M2_HOME");
+    return System.getenv("MAVEN_HOME");
   }
 
   private String getMavenExecutable(Path directory) {
@@ -64,11 +64,11 @@ public class MavenBuildStep extends AbstractSubprocessBuildStep {
       return wrapperPath.toString();
     }
 
-    String m2Home = getMavenHome();
-    if (Strings.isNullOrEmpty(m2Home)) {
-      throw new IllegalStateException("$M2_HOME must be set.");
+    String mavenHome = getMavenHome();
+    if (Strings.isNullOrEmpty(mavenHome)) {
+      throw new IllegalStateException("$MAVEN_HOME must be set.");
     }
-    Path systemMvn = Paths.get(m2Home).resolve("bin").resolve("mvn");
+    Path systemMvn = Paths.get(mavenHome).resolve("bin").resolve("mvn");
     if (Files.isExecutable(systemMvn)) {
       return systemMvn.toString();
     }

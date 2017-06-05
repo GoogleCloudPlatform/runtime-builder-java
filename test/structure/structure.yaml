@@ -6,11 +6,11 @@ schemaVersion: 1.0.0
 commandTests:
 - name: 'maven is installed'
   command: ['mvn', '--version']
-  expectedOutput: 'Apache Maven 3.3.9'
+  expectedOutput: ['Apache Maven 3.5.0']
   exitCode: '0'
 - name: 'gradle is installed'
   command: ['gradle', '--version']
-  expectedOutput: 'Gradle 1.4'
+  expectedOutput: ['Gradle 3.4']
   exitCode: '0'
 - name: 'correct java version is installed'
   command: ['java', '-version']
@@ -20,4 +20,10 @@ commandTests:
   command: ['javac', '-version']
   expectedError: ['javac 1\.8\.0_121']
   exitCode: '0'
+- name: 'MAVEN_HOME is set'
+  command: ['env']
+  expectedOutput: ['MAVEN_HOME=/usr/share/maven']
+- name: 'GRADLE_HOME is set'
+  command: ['env']
+  expectedOutput: ['GRADLE_HOME=/usr/share/gradle-3.4']
 

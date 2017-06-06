@@ -16,6 +16,7 @@
 
 package com.google.cloud.runtimes.builder.buildsteps.base;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 
 import java.io.FileInputStream;
@@ -71,6 +72,11 @@ public abstract class BuildStep {
         new FileOutputStream(metaDataPath.toFile()))) {
       out.writeObject(metadata);
     }
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this).toString();
   }
 
 }

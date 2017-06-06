@@ -82,6 +82,14 @@ public class BuildPipelineConfigurator {
         ? appYaml.getRuntimeConfig()
         : new RuntimeConfig();
 
+    // custom Dockerfiles are not supported - fail loudly so there is no ambiguity about the image
+    // being built
+    if (findDockerfile(workspaceDir).isPresent()) {
+      throw new IllegalStateException("Custom Dockerfiles are not supported. If you wish to use a "
+          + "custom Dockerfile, consider using runtime: custom. Otherwise, remove the Dockerfile "
+          + "from the root of your sources to continue.");
+    }
+
     // assemble the list of build steps
     List<BuildStep> steps = new ArrayList<>();
 
@@ -143,5 +151,17 @@ public class BuildPipelineConfigurator {
         // sort based on natural ordering of BuildTool for each path
         .sorted(Comparator.comparing(BuildTool::getForBuildFile))
         .findFirst();
+  }
+
+  /*
+   * Search for a Dockerfile at the root of the workspace
+   */
+  private Optional<Path> findDockerfile(Path workspaceDir) {
+    Path dockerfilePath = workspaceDir.resolve("Dockerfile");
+    if (Files.exists(dockerfilePath) && Files.isRegularFile(dockerfilePath)) {
+      return Optional.of(dockerfilePath);
+    } else {
+      return Optional.empty();
+    }
   }
 }

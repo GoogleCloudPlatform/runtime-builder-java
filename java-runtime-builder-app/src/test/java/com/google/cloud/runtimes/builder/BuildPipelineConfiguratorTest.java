@@ -156,4 +156,14 @@ public class BuildPipelineConfiguratorTest {
         .createScriptExecutionBuildStep(eq(buildScript));
   }
 
+  @Test(expected = IllegalStateException.class)
+  public void test_providedDockerfile() throws AppYamlNotFoundException, IOException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("app.yaml").withContents("env: flex\nruntime: java").build()
+        .file("Dockerfile").build()
+        .build();
+
+    buildPipelineConfigurator.configurePipeline(workspace);
+  }
+
 }

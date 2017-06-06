@@ -17,6 +17,7 @@
 package com.google.cloud.runtimes.builder.buildsteps;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.AbstractSubprocessBuildStep;
+import com.google.common.base.MoreObjects;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
@@ -39,6 +40,13 @@ public class ScriptExecutionBuildStep extends AbstractSubprocessBuildStep {
   @Override
   protected List<String> getBuildCommand(Path buildDirectory) {
     return Arrays.asList("/bin/bash", "-c", buildCommand);
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+        .add("buildCommand", "\"" + buildCommand + "\"")
+        .toString();
   }
 
 }

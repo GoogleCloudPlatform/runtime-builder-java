@@ -14,11 +14,11 @@ commandTests:
   exitCode: '0'
 - name: 'correct java version is installed'
   command: ['java', '-version']
-  expectedError: ['openjdk version "1\.8\.0_121"']
+  expectedError: ['openjdk version "1\.8\.0_131"']
   exitCode: '0'
 - name: 'correct javac version is installed'
   command: ['javac', '-version']
-  expectedError: ['javac 1\.8\.0_121']
+  expectedError: ['javac 1\.8\.0_131']
   exitCode: '0'
 - name: 'MAVEN_HOME is set'
   command: ['env']

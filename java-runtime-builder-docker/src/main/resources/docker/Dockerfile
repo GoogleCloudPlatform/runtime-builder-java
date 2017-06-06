@@ -15,4 +15,4 @@ ENV GRADLE_HOME /usr/share/gradle-$GRADLE_VERSION
 # add the runtime builder application
 ADD ${runtime.builder.artifact} /${runtime.builder.artifact}
 
-ENTRYPOINT ["java", "-jar", "/${runtime.builder.artifact}"]
+ENTRYPOINT ["java", "-Djava.util.logging.config.file=logging.properties", "-jar", "/${runtime.builder.artifact}"]

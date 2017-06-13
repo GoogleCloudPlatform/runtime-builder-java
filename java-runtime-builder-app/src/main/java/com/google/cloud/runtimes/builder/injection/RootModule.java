@@ -33,10 +33,15 @@ public class RootModule extends AbstractModule {
 
   private final String jarRuntimeImage;
   private final String serverRuntimeImage;
+  private final String tomcatRuntimeImage;
 
-  public RootModule(String jarRuntimeImage, String serverRuntimeImage) {
+  /**
+   * Constructs a new {@link RootModule} for Guice.
+   */
+  public RootModule(String jarRuntimeImage, String serverRuntimeImage, String tomcatRuntimeImage) {
     this.jarRuntimeImage = jarRuntimeImage;
     this.serverRuntimeImage = serverRuntimeImage;
+    this.tomcatRuntimeImage = tomcatRuntimeImage;
   }
 
   @Override
@@ -51,6 +56,9 @@ public class RootModule extends AbstractModule {
     bind(String.class)
         .annotatedWith(ServerRuntimeImage.class)
         .toInstance(serverRuntimeImage);
+    bind(String.class)
+        .annotatedWith(TomcatRuntimeImage.class)
+        .toInstance(tomcatRuntimeImage);
 
     install(new FactoryModuleBuilder()
         .build(BuildStepFactory.class));

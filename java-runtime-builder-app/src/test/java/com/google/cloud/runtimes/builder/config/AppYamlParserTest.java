@@ -22,7 +22,6 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 
-import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.IO;
 import org.junit.Before;
 import org.junit.Test;
 

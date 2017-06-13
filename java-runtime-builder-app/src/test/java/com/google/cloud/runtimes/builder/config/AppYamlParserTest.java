@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils.IO;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -92,6 +93,14 @@ public class AppYamlParserTest {
     parseFileWithContents(APP_YAML_PREAMBLE
         + "runtime_config:\n"
         + "  jetty_quickstart: invalid_quickstart_option");
+  }
+
+  @Test
+  public void testParseServer() throws IOException {
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
+      + "runtime_config:\n"
+      + "  server: \"tomcat\"");
+    assertTrue(result.getRuntimeConfig().getServer().equals("tomcat"));
   }
 
 }

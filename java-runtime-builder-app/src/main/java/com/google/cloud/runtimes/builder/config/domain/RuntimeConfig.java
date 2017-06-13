@@ -24,7 +24,6 @@ public class RuntimeConfig {
 
   private String buildScript;
   private String artifact;
-  private String runtime;
   private String server;
   private boolean jettyQuickstart;
 
@@ -34,14 +33,6 @@ public class RuntimeConfig {
 
   public void setArtifact(String artifact) {
     this.artifact = artifact;
-  }
-
-  public String getRuntime() {
-    return this.runtime;
-  }
-
-  public void setRuntime(String runtime) {
-    this.runtime = runtime;
   }
 
   public String getServer() {

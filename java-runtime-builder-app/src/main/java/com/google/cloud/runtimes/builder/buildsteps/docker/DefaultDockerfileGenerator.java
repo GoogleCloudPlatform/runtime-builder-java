@@ -19,6 +19,7 @@ package com.google.cloud.runtimes.builder.buildsteps.docker;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.injection.JarRuntimeImage;
 import com.google.cloud.runtimes.builder.injection.ServerRuntimeImage;
+import com.google.cloud.runtimes.builder.injection.TomcatRuntimeImage;
 import com.google.common.io.Files;
 import com.google.inject.Inject;
 
@@ -34,15 +35,18 @@ public class DefaultDockerfileGenerator implements DockerfileGenerator {
 
   private final String jarRuntime;
   private final String serverRuntime;
+  private final String tomcatRuntime;
 
   /**
    * Constructs a new {@link DefaultDockerfileGenerator}.
    */
   @Inject
   DefaultDockerfileGenerator(@JarRuntimeImage String jarRuntime,
-      @ServerRuntimeImage String serverRuntime) {
+      @ServerRuntimeImage String serverRuntime,
+      @TomcatRuntimeImage String tomcatRuntime) {
     this.jarRuntime = jarRuntime;
     this.serverRuntime = serverRuntime;
+    this.tomcatRuntime = tomcatRuntime;
   }
 
   @Override
@@ -56,8 +60,14 @@ public class DefaultDockerfileGenerator implements DockerfileGenerator {
       baseImage = jarRuntime;
       appDest = "app.jar";
     } else if (fileType.equals("war")) {
-      baseImage = serverRuntime;
-      appDest = "$JETTY_BASE/webapps/root.war";
+      if (runtimeConfig.getServer() != null
+          && runtimeConfig.getServer().equals("tomcat")) {
+        baseImage = tomcatRuntime;
+        appDest = "ROOT.war";
+      } else {
+        baseImage = serverRuntime;
+        appDest = "$JETTY_BASE/webapps/root.war";
+      }
     } else {
       throw new IllegalArgumentException(
           String.format("Unable to determine the runtime for artifact %s.",

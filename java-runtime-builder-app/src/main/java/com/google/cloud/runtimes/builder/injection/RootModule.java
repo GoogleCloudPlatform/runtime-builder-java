@@ -33,10 +33,21 @@ public class RootModule extends AbstractModule {
 
   private final String jarRuntimeImage;
   private final String serverRuntimeImage;
+  private final String tomcatRuntimeImage;
 
-  public RootModule(String jarRuntimeImage, String serverRuntimeImage) {
+  /**
+   * Constructs a new {@link RootModule} for Guice.
+   *
+   * @param jarRuntimeImage Url of the OpenJDK Docker image for GCP
+   *                        (gcr.io/google-appengine/openjdk:tag).
+   * @param serverRuntimeImage Url of the default Docker image for web application
+   *                           in Java on GCP (Jetty).
+   * @param tomcatRuntimeImage Url of the Tomcat Docker image for GCP.
+   */
+  public RootModule(String jarRuntimeImage, String serverRuntimeImage, String tomcatRuntimeImage) {
     this.jarRuntimeImage = jarRuntimeImage;
     this.serverRuntimeImage = serverRuntimeImage;
+    this.tomcatRuntimeImage = tomcatRuntimeImage;
   }
 
   @Override
@@ -51,6 +62,9 @@ public class RootModule extends AbstractModule {
     bind(String.class)
         .annotatedWith(ServerRuntimeImage.class)
         .toInstance(serverRuntimeImage);
+    bind(String.class)
+        .annotatedWith(TomcatRuntimeImage.class)
+        .toInstance(tomcatRuntimeImage);
 
     install(new FactoryModuleBuilder()
         .build(BuildStepFactory.class));

@@ -36,11 +36,12 @@ public class DefaultDockerfileGeneratorTest {
   private DefaultDockerfileGenerator generator;
   private String jarRuntime = "gcr.io/google-appengine/openjdk@sha256:12345";
   private String serverRuntime = "gcr.io/google-appengine/server@sha256:12345";
+  private String tomcatRuntime = "gcr.io/google-appengine/tomcat@sha256:12345";
 
   @Before
   public void setup() throws IOException {
     MockitoAnnotations.initMocks(this);
-    generator = new DefaultDockerfileGenerator(jarRuntime, serverRuntime);
+    generator = new DefaultDockerfileGenerator(jarRuntime, serverRuntime, tomcatRuntime);
   }
 
   @Test
@@ -56,6 +57,16 @@ public class DefaultDockerfileGeneratorTest {
     Path war = Files.createTempFile( null, ".war").toAbsolutePath();
     String result = generator.generateDockerfile(war, new RuntimeConfig());
     assertTrue(result.contains("FROM " + serverRuntime));
+    assertTrue(result.contains("ADD " + war.toString()));
+  }
+
+  @Test
+  public void testGenerateTomcat() throws IOException {
+    Path war = Files.createTempFile(null, ".war").toAbsolutePath();
+    RuntimeConfig config = new RuntimeConfig();
+    config.setServer("tomcat");
+    String result = generator.generateDockerfile(war, config);
+    assertTrue(result.contains("FROM " + tomcatRuntime));
     assertTrue(result.contains("ADD " + war.toString()));
   }
 

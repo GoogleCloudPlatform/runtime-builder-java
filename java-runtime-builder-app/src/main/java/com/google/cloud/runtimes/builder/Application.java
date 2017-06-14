@@ -43,8 +43,10 @@ public class Application {
 
   static {
     CLI_OPTIONS.addRequiredOption("j", "jar-runtime", true, "base runtime to use for jars");
+    // TODO: The server-runtime might be refactored to jetty runtime
     CLI_OPTIONS.addRequiredOption("s", "server-runtime", true, "base runtime to use for web server "
         + "deployments");
+    CLI_OPTIONS.addRequiredOption("t", "tomcat-runtime", true, "tomcat runtime for web server");
   }
 
   /**
@@ -55,18 +57,21 @@ public class Application {
     CommandLine cmd = parse(args);
     String jarRuntime = cmd.getOptionValue("j");
     String serverRuntime = cmd.getOptionValue("s");
+    String tomcatRuntime = cmd.getOptionValue("t");
 
     Path workspaceDir  = Paths.get(System.getProperty("user.dir"));
-    build(jarRuntime, serverRuntime, workspaceDir);
+    build(jarRuntime, serverRuntime, tomcatRuntime, workspaceDir);
   }
 
   /**
    * Invokes the builder.
    */
-  public static void build(String jarRuntime, String serverRuntime, Path workspaceDir)
+  public static void build(String jarRuntime, String serverRuntime, String tomcatRuntime,
+                           Path workspaceDir)
       throws BuildStepException, IOException, AppYamlNotFoundException {
     // Perform dependency injection and run the application
-    Injector injector = Guice.createInjector(new RootModule(jarRuntime, serverRuntime));
+    Injector injector = Guice.createInjector(
+          new RootModule(jarRuntime, serverRuntime, tomcatRuntime));
     injector.getInstance(BuildPipeline.class).build(workspaceDir);
   }
 

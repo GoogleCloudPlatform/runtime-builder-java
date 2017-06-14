@@ -94,4 +94,12 @@ public class AppYamlParserTest {
         + "  jetty_quickstart: invalid_quickstart_option");
   }
 
+  @Test
+  public void testParseServer() throws IOException {
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
+      + "runtime_config:\n"
+      + "  server: \"tomcat\"");
+    assertTrue(result.getRuntimeConfig().getServer().equals("tomcat"));
+  }
+
 }

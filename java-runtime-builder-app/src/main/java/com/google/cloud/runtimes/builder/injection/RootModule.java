@@ -37,6 +37,12 @@ public class RootModule extends AbstractModule {
 
   /**
    * Constructs a new {@link RootModule} for Guice.
+   *
+   * @param jarRuntimeImage Url of the OpenJDK Docker image for GCP
+   *                        (gcr.io/google-appengine/openjdk:tag).
+   * @param serverRuntimeImage Url of the default Docker image for web application
+   *                           in Java on GCP (Jetty).
+   * @param tomcatRuntimeImage Url of the Tomcat Docker image for GCP.
    */
   public RootModule(String jarRuntimeImage, String serverRuntimeImage, String tomcatRuntimeImage) {
     this.jarRuntimeImage = jarRuntimeImage;

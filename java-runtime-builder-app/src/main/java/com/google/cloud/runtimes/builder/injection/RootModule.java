@@ -16,38 +16,42 @@
 
 package com.google.cloud.runtimes.builder.injection;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
 import com.google.cloud.runtimes.builder.buildsteps.docker.DefaultDockerfileGenerator;
 import com.google.cloud.runtimes.builder.buildsteps.docker.DockerfileGenerator;
 import com.google.cloud.runtimes.builder.config.AppYamlParser;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
+import com.google.cloud.runtimes.builder.config.domain.JdkServerMap;
+
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * Module class for configuring Guice bindings.
  */
 public class RootModule extends AbstractModule {
 
-  private final String jarRuntimeImage;
-  private final String serverRuntimeImage;
-  private final String tomcatRuntimeImage;
+  private final String jdkServerMapArg;
+  private final String defaultServerType;
+  private final String defaultJdk;
 
   /**
    * Constructs a new {@link RootModule} for Guice.
-   *
-   * @param jarRuntimeImage Url of the OpenJDK Docker image for GCP
-   *                        (gcr.io/google-appengine/openjdk:tag).
-   * @param serverRuntimeImage Url of the default Docker image for web application
-   *                           in Java on GCP (Jetty).
-   * @param tomcatRuntimeImage Url of the Tomcat Docker image for GCP.
    */
-  public RootModule(String jarRuntimeImage, String serverRuntimeImage, String tomcatRuntimeImage) {
-    this.jarRuntimeImage = jarRuntimeImage;
-    this.serverRuntimeImage = serverRuntimeImage;
-    this.tomcatRuntimeImage = tomcatRuntimeImage;
+  public RootModule(String jdkServerMapArg, String defaultJdk, String defaultServerType) {
+    // TODO @param documentation for this method
+    this.jdkServerMapArg = jdkServerMapArg;
+    this.defaultServerType = defaultServerType;
+    this.defaultJdk = defaultJdk;
   }
 
   @Override
@@ -57,17 +61,34 @@ public class RootModule extends AbstractModule {
     bind(DockerfileGenerator.class)
         .to(DefaultDockerfileGenerator.class);
     bind(String.class)
-        .annotatedWith(JarRuntimeImage.class)
-        .toInstance(jarRuntimeImage);
+        .annotatedWith(JdkServerMapArg.class)
+        .toInstance(jdkServerMapArg);
     bind(String.class)
-        .annotatedWith(ServerRuntimeImage.class)
-        .toInstance(serverRuntimeImage);
+        .annotatedWith(DefaultServerType.class)
+        .toInstance(defaultServerType);
     bind(String.class)
-        .annotatedWith(TomcatRuntimeImage.class)
-        .toInstance(tomcatRuntimeImage);
+        .annotatedWith(DefaultJdk.class)
+        .toInstance(defaultJdk);
 
     install(new FactoryModuleBuilder()
         .build(BuildStepFactory.class));
+  }
+
+  @Provides
+  JdkServerMap provideJdkServerMap(@JdkServerMapArg String jdkServerMapArg,
+      @DefaultJdk String defaultJdk, @DefaultServerType String defaultServerType) {
+    try {
+      ObjectMapper objectMapper = new ObjectMapper();
+      Map<String, Map<String, String>> deserializedMap
+          = objectMapper.readValue(jdkServerMapArg,
+          new TypeReference<Map<String, Map<String, String>>>(){});
+
+      return new JdkServerMap(deserializedMap, defaultJdk, defaultServerType);
+
+    } catch (IOException e) {
+      // TODO handle this better
+      throw new RuntimeException(e);
+    }
   }
 
 }

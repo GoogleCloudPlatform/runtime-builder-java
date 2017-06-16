@@ -19,6 +19,7 @@ package com.google.cloud.runtimes.builder;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.cloud.runtimes.builder.injection.RootModule;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -42,11 +43,12 @@ public class Application {
   private static final String EXECUTABLE_NAME = "<BUILDER_JAR>";
 
   static {
-    CLI_OPTIONS.addRequiredOption("j", "jar-runtime", true, "base runtime to use for jars");
-    // TODO: The server-runtime might be refactored to jetty runtime
-    CLI_OPTIONS.addRequiredOption("s", "server-runtime", true, "base runtime to use for web server "
-        + "deployments");
-    CLI_OPTIONS.addRequiredOption("t", "tomcat-runtime", true, "tomcat runtime for web server");
+    CLI_OPTIONS.addRequiredOption("m", "jdk-server-map", true,
+        "JSON object that contains mappings between supported jdk versions and docker images");
+    CLI_OPTIONS.addRequiredOption("j", "default-jdk", true, "the default jdk version to use if none"
+        + " is specified");
+    CLI_OPTIONS.addRequiredOption("s", "default-server-type", true, "the default server type to use"
+        + " if none is specified");
   }
 
   /**
@@ -55,23 +57,22 @@ public class Application {
   public static void main(String[] args)
       throws BuildStepException, IOException, AppYamlNotFoundException {
     CommandLine cmd = parse(args);
-    String jarRuntime = cmd.getOptionValue("j");
-    String serverRuntime = cmd.getOptionValue("s");
-    String tomcatRuntime = cmd.getOptionValue("t");
+    String jdkServerMap = cmd.getOptionValue("m");
+    String defaultJdk = cmd.getOptionValue("j");
+    String defaultServerType = cmd.getOptionValue("s");
 
     Path workspaceDir  = Paths.get(System.getProperty("user.dir"));
-    build(jarRuntime, serverRuntime, tomcatRuntime, workspaceDir);
+    build(jdkServerMap, defaultJdk, defaultServerType, workspaceDir);
   }
 
   /**
    * Invokes the builder.
    */
-  public static void build(String jarRuntime, String serverRuntime, String tomcatRuntime,
-                           Path workspaceDir)
-      throws BuildStepException, IOException, AppYamlNotFoundException {
+  public static void build(String jdkServerMap, String defaultJdk, String defaultServerType,
+      Path workspaceDir) throws BuildStepException, IOException, AppYamlNotFoundException {
     // Perform dependency injection and run the application
     Injector injector = Guice.createInjector(
-          new RootModule(jarRuntime, serverRuntime, tomcatRuntime));
+          new RootModule(jdkServerMap, defaultJdk, defaultServerType));
     injector.getInstance(BuildPipeline.class).build(workspaceDir);
   }
 

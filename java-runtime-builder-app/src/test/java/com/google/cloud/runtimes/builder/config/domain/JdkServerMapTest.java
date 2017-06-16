@@ -1,7 +1,6 @@
 package com.google.cloud.runtimes.builder.config.domain;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.google.common.collect.ImmutableMap;
@@ -25,6 +24,7 @@ public class JdkServerMapTest {
   private final static String NO_SERVER = "no-server";
   private final static String DEFAULT_SERVER_TYPE = SERVER_A;
 
+  private Map<String, Map<String, String>> jdkMap;
   private JdkServerMap jdkServerMap;
 
   @Before
@@ -50,7 +50,7 @@ public class JdkServerMapTest {
         NO_SERVER, IMAGE_PREFIX + JDK_ONLY_RUNTIME + ":" + BETA_JDK
     );
 
-    Map<String, Map<String, String>> jdkMap = ImmutableMap.of(
+    jdkMap = ImmutableMap.of(
         OLD_JDK,     oldJdkServerImagesRuntimes,
         CURRENT_JDK, currentJdkServerImagesRuntimes,
         BETA_JDK,    betaJdkServerImagesRuntimes
@@ -115,6 +115,33 @@ public class JdkServerMapTest {
   public void testLookupServerImageInvalidServer() {
     try {
       jdkServerMap.lookupServerImage(null, "invalid_server");
+      fail();
+    } catch (IllegalArgumentException e) { }
+  }
+
+  @Test
+  public void testConstructorDefaultJdkNotPresent() {
+    try {
+      new JdkServerMap(jdkMap, "invalidJdk", DEFAULT_SERVER_TYPE);
+      fail();
+    } catch (IllegalArgumentException e) { }
+  }
+
+  @Test
+  public void testConstructorDefaultServerNotPresent() {
+    String defaultServer = "different_defaultServer";
+    Map<String, Map<String, String>> map = ImmutableMap.of(
+      DEFAULT_JDK, ImmutableMap.of(
+        SERVER_A, "some_runtime",
+        defaultServer, "some_runtime"
+      ),
+      "other_jdk", ImmutableMap.of(
+         SERVER_A, "some_runtime"
+      )
+    );
+
+    try {
+      new JdkServerMap(map, DEFAULT_JDK, defaultServer);
       fail();
     } catch (IllegalArgumentException e) { }
   }

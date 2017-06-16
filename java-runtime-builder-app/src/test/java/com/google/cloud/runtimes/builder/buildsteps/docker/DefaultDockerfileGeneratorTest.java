@@ -18,14 +18,22 @@ package com.google.cloud.runtimes.builder.buildsteps.docker;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.when;
 
+import com.google.cloud.runtimes.builder.config.domain.JdkServerMap;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 /**
@@ -33,15 +41,24 @@ import org.mockito.MockitoAnnotations;
  */
 public class DefaultDockerfileGeneratorTest {
 
+  @Mock private JdkServerMap jdkServerMap;
+
   private DefaultDockerfileGenerator generator;
+
   private String jarRuntime = "gcr.io/google-appengine/openjdk@sha256:12345";
-  private String serverRuntime = "gcr.io/google-appengine/server@sha256:12345";
+  private String jettyRuntime = "gcr.io/google-appengine/server@sha256:12345";
   private String tomcatRuntime = "gcr.io/google-appengine/tomcat@sha256:12345";
 
   @Before
   public void setup() throws IOException {
     MockitoAnnotations.initMocks(this);
-    generator = new DefaultDockerfileGenerator(jarRuntime, serverRuntime, tomcatRuntime);
+
+    when(jdkServerMap.lookupJdkImage(any())).thenReturn(jarRuntime);
+    when(jdkServerMap.lookupServerImage(any(), eq("tomcat"))).thenReturn(tomcatRuntime);
+    when(jdkServerMap.lookupServerImage(any(), eq("jetty"))).thenReturn(tomcatRuntime);
+    when(jdkServerMap.lookupServerImage(any(), isNull())).thenReturn(jettyRuntime);
+
+    generator = new DefaultDockerfileGenerator(jdkServerMap);
   }
 
   @Test
@@ -56,7 +73,7 @@ public class DefaultDockerfileGeneratorTest {
   public void testGenerateJetty() throws IOException {
     Path war = Files.createTempFile( null, ".war").toAbsolutePath();
     String result = generator.generateDockerfile(war, new RuntimeConfig());
-    assertTrue(result.contains("FROM " + serverRuntime));
+    assertTrue(result.contains("FROM " + jettyRuntime));
     assertTrue(result.contains("ADD " + war.toString()));
   }
 

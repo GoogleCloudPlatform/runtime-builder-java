@@ -16,13 +16,12 @@
 
 package com.google.cloud.runtimes.builder.config.domain;
 
-import com.google.cloud.runtimes.builder.injection.DefaultJdk;
-import com.google.cloud.runtimes.builder.injection.DefaultServerType;
-import com.google.cloud.runtimes.builder.injection.JdkServerMapArg;
-import com.google.inject.Inject;
-import java.util.Map;
+import com.google.common.base.Preconditions;
+import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 public class JdkServerMap {
 
@@ -34,18 +33,54 @@ public class JdkServerMap {
   private final String defaultJdk;
   private final String defaultServerType;
 
-  @Inject
-  JdkServerMap(@JdkServerMapArg Map<String, Map<String, String>> jdkServerMap,
-      @DefaultJdk String defaultJdk, @DefaultServerType String defaultServerType) {
+  /**
+   * Constructs a new {@link JdkServerMap}.
+   *
+   * @param jdkServerMap encodes the mappings between jdk, server and runtime names
+   * @param defaultJdk the jdk to use for lookups if none is provided. It must be a key in the
+   *     {@code jdkServerMap}.
+   * @param defaultServerType the server type to use for lookups if none is provided. It must be a
+   *     key in all of the sub-maps of {@code jdkServerMap}.
+   */
+  public JdkServerMap(Map<String, Map<String, String>> jdkServerMap, String defaultJdk,
+      String defaultServerType) {
     this.jdkServerMap = jdkServerMap;
     this.defaultJdk = defaultJdk;
     this.defaultServerType = defaultServerType;
+
+    validate();
   }
 
+  /*
+   * Ensure defaults are present in the lookup map
+   */
+  private void validate() {
+    Preconditions.checkArgument(jdkServerMap.containsKey(defaultJdk));
+
+    for (Map<String, String> runtimeMap : jdkServerMap.values()) {
+      Preconditions.checkArgument(runtimeMap.containsKey(defaultServerType));
+    }
+  }
+
+  /**
+   * Lookup a JDK image for the given JDK name.
+   *
+   * @param jdk the key for the JDK. If {@code null}, the {@code defaultJdk} will be used. If no
+   *     valid JDK image is found, an {@link IllegalArgumentException} will be thrown.
+   */
   public String lookupJdkImage(String jdk) {
     return getRuntimeMapForJdk(jdk).get(NO_SERVER_KEY);
   }
 
+  /**
+   * Lookup a server image for the given JDK name and server type.
+   *
+   * @param jdk the key for the JDK. If {@code null}, the {@code defaultJdk} will be used. If no
+   *     valid JDK image is found, an {@link IllegalArgumentException} will be thrown.
+   * @param serverType the type of the server. If {@code null}, the {@code defaultServerType} will
+   *     be used. If no valid server image is found, an {@link IllegalArgumentException} will be
+   *     thrown.
+   */
   public String lookupServerImage(String jdk, String serverType) {
     Map<String, String> runtimeMap = getRuntimeMapForJdk(jdk);
     if (serverType == null) {
@@ -64,7 +99,8 @@ public class JdkServerMap {
       jdk = defaultJdk;
     }
     if (!jdkServerMap.containsKey(jdk)) {
-      log.error("JDK '{}' not recognized. Supported JDK values are: {}", jdk, jdkServerMap.keySet());
+      log.error("JDK '{}' not recognized. Supported JDK values are: {}", jdk,
+          jdkServerMap.keySet());
       throw new IllegalArgumentException(String.format("Invalid jdk: %s", jdk));
     }
     return jdkServerMap.get(jdk);

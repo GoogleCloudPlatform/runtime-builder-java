@@ -22,10 +22,19 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RuntimeConfig {
 
+  private String jdk;
+  private String server;
   private String buildScript;
   private String artifact;
-  private String server;
   private boolean jettyQuickstart;
+
+  public String getJdk() {
+    return jdk;
+  }
+
+  public void setJdk(String jdk) {
+    this.jdk = jdk;
+  }
 
   public String getArtifact() {
     return artifact;

@@ -16,7 +16,6 @@
 
 package com.google.cloud.runtimes.builder.injection;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
 import com.google.cloud.runtimes.builder.buildsteps.docker.DefaultDockerfileGenerator;
 import com.google.cloud.runtimes.builder.buildsteps.docker.DockerfileGenerator;
@@ -24,12 +23,12 @@ import com.google.cloud.runtimes.builder.config.AppYamlParser;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerMap;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -60,27 +59,16 @@ public class RootModule extends AbstractModule {
         .to(AppYamlParser.class);
     bind(DockerfileGenerator.class)
         .to(DefaultDockerfileGenerator.class);
-    bind(String.class)
-        .annotatedWith(JdkServerMapArg.class)
-        .toInstance(jdkServerMapArg);
-    bind(String.class)
-        .annotatedWith(DefaultServerType.class)
-        .toInstance(defaultServerType);
-    bind(String.class)
-        .annotatedWith(DefaultJdk.class)
-        .toInstance(defaultJdk);
 
     install(new FactoryModuleBuilder()
         .build(BuildStepFactory.class));
   }
 
   @Provides
-  JdkServerMap provideJdkServerMap(@JdkServerMapArg String jdkServerMapArg,
-      @DefaultJdk String defaultJdk, @DefaultServerType String defaultServerType) {
+  JdkServerMap provideJdkServerMap() {
     try {
       ObjectMapper objectMapper = new ObjectMapper();
-      Map<String, Map<String, String>> deserializedMap
-          = objectMapper.readValue(jdkServerMapArg,
+      Map<String, Map<String, String>> deserializedMap = objectMapper.readValue(jdkServerMapArg,
           new TypeReference<Map<String, Map<String, String>>>(){});
 
       return new JdkServerMap(deserializedMap, defaultJdk, defaultServerType);

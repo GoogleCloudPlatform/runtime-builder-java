@@ -17,7 +17,7 @@
 package com.google.cloud.runtimes.builder.config.domain;
 
 import com.google.common.base.Preconditions;
-import java.util.Map.Entry;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

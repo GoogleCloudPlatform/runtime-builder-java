@@ -23,14 +23,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 
-import com.google.cloud.runtimes.builder.config.domain.JdkServerMap;
+import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import java.util.HashMap;
-import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -41,7 +39,7 @@ import org.mockito.MockitoAnnotations;
  */
 public class DefaultDockerfileGeneratorTest {
 
-  @Mock private JdkServerMap jdkServerMap;
+  @Mock private JdkServerLookup runtimeLookupTool;
 
   private DefaultDockerfileGenerator generator;
 
@@ -53,12 +51,12 @@ public class DefaultDockerfileGeneratorTest {
   public void setup() throws IOException {
     MockitoAnnotations.initMocks(this);
 
-    when(jdkServerMap.lookupJdkImage(any())).thenReturn(jarRuntime);
-    when(jdkServerMap.lookupServerImage(any(), eq("tomcat"))).thenReturn(tomcatRuntime);
-    when(jdkServerMap.lookupServerImage(any(), eq("jetty"))).thenReturn(tomcatRuntime);
-    when(jdkServerMap.lookupServerImage(any(), isNull())).thenReturn(jettyRuntime);
+    when(runtimeLookupTool.lookupJdkImage(any())).thenReturn(jarRuntime);
+    when(runtimeLookupTool.lookupServerImage(any(), eq("tomcat"))).thenReturn(tomcatRuntime);
+    when(runtimeLookupTool.lookupServerImage(any(), eq("jetty"))).thenReturn(tomcatRuntime);
+    when(runtimeLookupTool.lookupServerImage(any(), isNull())).thenReturn(jettyRuntime);
 
-    generator = new DefaultDockerfileGenerator(jdkServerMap);
+    generator = new DefaultDockerfileGenerator(runtimeLookupTool);
   }
 
   @Test

@@ -9,14 +9,14 @@ steps:
   - '--jdk-server-map'
   - '{
        "openjdk8": {
-         "no-server": "gcr.io/google_appengine/openjdk:8",
-         "jetty": "gcr.io/google_appengine/jetty:8",
-         "tomcat": "gcr.io/google_appengine/tomcat:8"
+         "jdk_image": "gcr.io/google_appengine/openjdk:8",
+         "default_server": jetty9,
+         "server_images": {
+           "jetty9": "gcr.io/google_appengine/jetty:9",
+           "tomcat8.5": "gcr.io/google_appengine/tomcat:8.5"
+         }
        }
-     }'
-
-  # specifies which server type to use if none is specified
-  - '--default-server-type=jetty'
+    }'
 
   # specifies which jdk version to use if none is specified
   - '--default-jdk=openjdk8'

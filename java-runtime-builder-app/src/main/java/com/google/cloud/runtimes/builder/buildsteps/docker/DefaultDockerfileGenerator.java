@@ -16,7 +16,7 @@
 
 package com.google.cloud.runtimes.builder.buildsteps.docker;
 
-import com.google.cloud.runtimes.builder.config.domain.JdkServerMap;
+import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 
 import com.google.common.io.Files;
@@ -29,17 +29,20 @@ import java.nio.file.Path;
  */
 public class DefaultDockerfileGenerator implements DockerfileGenerator {
 
-  private static final String DOCKERFILE = "FROM %s\n"
-      + "ADD %s %s\n";
+  private static final String DOCKERFILE_FROM = "FROM %s\n";
+  private static final String DOCKERFILE_ADD_ARTIFACT = "ADD %s %s\n";
+  private static final String DOCKERFILE_JETTY_QUICKSTART = "RUN /scripts/jetty/quickstart.sh\n";
 
-  private final JdkServerMap jdkServerMap;
+  private static final String APP_DESTINATION = "$APP_DEST";
+
+  private final JdkServerLookup runtimeLookupTool;
 
   /**
    * Constructs a new {@link DefaultDockerfileGenerator}.
    */
   @Inject
-  DefaultDockerfileGenerator(JdkServerMap jdkServerMap) {
-    this.jdkServerMap = jdkServerMap;
+  DefaultDockerfileGenerator(JdkServerLookup runtimeLookupTool) {
+    this.runtimeLookupTool = runtimeLookupTool;
   }
 
   @Override
@@ -47,25 +50,26 @@ public class DefaultDockerfileGenerator implements DockerfileGenerator {
     StringBuilder dockerfile = new StringBuilder();
     String fileType = Files.getFileExtension(artifactToDeploy.toString());
     String baseImage;
-    String appDest = "$APP_DEST"; // TODO make sure all runtimes support this
 
     if (fileType.equalsIgnoreCase("jar")) {
-      baseImage = jdkServerMap.lookupJdkImage(runtimeConfig.getJdk());
+      baseImage = runtimeLookupTool.lookupJdkImage(runtimeConfig.getJdk());
     } else if (fileType.equalsIgnoreCase("war")) {
-      baseImage = jdkServerMap.lookupServerImage(runtimeConfig.getJdk(), runtimeConfig.getServer());
+      baseImage = runtimeLookupTool.lookupServerImage(runtimeConfig.getJdk(),
+          runtimeConfig.getServer());
     } else {
       throw new IllegalArgumentException(
           String.format("Unable to determine the runtime for artifact %s. Expected a .jar or .war "
                   + "file.",
               artifactToDeploy.getFileName()));
     }
+    dockerfile.append(String.format(DOCKERFILE_FROM, baseImage));
+    dockerfile.append(String.format(DOCKERFILE_ADD_ARTIFACT, artifactToDeploy.toString(),
+        APP_DESTINATION));
 
-    dockerfile.append(String.format(DOCKERFILE, baseImage, artifactToDeploy.toString(), appDest));
-
-    // TODO where does server-specific config like this go?
-    //    if (baseImage.equals(serverRuntime) && runtimeConfig.getJettyQuickstart()) {
-    //      dockerfile.append("RUN /scripts/jetty/quickstart.sh\n");
-    //    }
+    // apply jetty-specific configuration, if present
+    if (runtimeConfig.getJettyQuickstart()) {
+      dockerfile.append(DOCKERFILE_JETTY_QUICKSTART);
+    }
 
     return dockerfile.toString();
   }

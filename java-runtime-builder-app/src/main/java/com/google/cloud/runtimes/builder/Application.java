@@ -47,8 +47,6 @@ public class Application {
         "JSON object that contains mappings between supported jdk versions and docker images");
     CLI_OPTIONS.addRequiredOption("j", "default-jdk", true, "the default jdk version to use if none"
         + " is specified");
-    CLI_OPTIONS.addRequiredOption("s", "default-server-type", true, "the default server type to use"
-        + " if none is specified");
   }
 
   /**
@@ -59,20 +57,19 @@ public class Application {
     CommandLine cmd = parse(args);
     String jdkServerMap = cmd.getOptionValue("m");
     String defaultJdk = cmd.getOptionValue("j");
-    String defaultServerType = cmd.getOptionValue("s");
 
     Path workspaceDir  = Paths.get(System.getProperty("user.dir"));
-    build(jdkServerMap, defaultJdk, defaultServerType, workspaceDir);
+    build(jdkServerMap, defaultJdk, workspaceDir);
   }
 
   /**
    * Invokes the builder.
    */
-  public static void build(String jdkServerMap, String defaultJdk, String defaultServerType,
-      Path workspaceDir) throws BuildStepException, IOException, AppYamlNotFoundException {
+  public static void build(String jdkServerMap, String defaultJdk, Path workspaceDir)
+      throws BuildStepException, IOException, AppYamlNotFoundException {
     // Perform dependency injection and run the application
     Injector injector = Guice.createInjector(
-          new RootModule(jdkServerMap, defaultJdk, defaultServerType));
+          new RootModule(jdkServerMap, defaultJdk));
     injector.getInstance(BuildPipeline.class).build(workspaceDir);
   }
 

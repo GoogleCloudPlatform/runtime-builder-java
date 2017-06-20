@@ -22,7 +22,8 @@ import com.google.cloud.runtimes.builder.buildsteps.docker.DockerfileGenerator;
 import com.google.cloud.runtimes.builder.config.AppYamlParser;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
-import com.google.cloud.runtimes.builder.config.domain.JdkServerMap;
+import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
+import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup.JdkServerMapEntry;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
@@ -40,16 +41,17 @@ import java.util.Map;
 public class RootModule extends AbstractModule {
 
   private final String jdkServerMapArg;
-  private final String defaultServerType;
   private final String defaultJdk;
 
   /**
    * Constructs a new {@link RootModule} for Guice.
+   *
+   * @param jdkServerMapArg a string representation of a JSON map, which maps jdk and server names
+   *                        to docker images
+   * @param defaultJdk the default JDK to use if none is specified
    */
-  public RootModule(String jdkServerMapArg, String defaultJdk, String defaultServerType) {
-    // TODO @param documentation for this method
+  public RootModule(String jdkServerMapArg, String defaultJdk) {
     this.jdkServerMapArg = jdkServerMapArg;
-    this.defaultServerType = defaultServerType;
     this.defaultJdk = defaultJdk;
   }
 
@@ -65,16 +67,16 @@ public class RootModule extends AbstractModule {
   }
 
   @Provides
-  JdkServerMap provideJdkServerMap() {
+  JdkServerLookup provideJdkServerLookup() {
     try {
       ObjectMapper objectMapper = new ObjectMapper();
-      Map<String, Map<String, String>> deserializedMap = objectMapper.readValue(jdkServerMapArg,
-          new TypeReference<Map<String, Map<String, String>>>(){});
-
-      return new JdkServerMap(deserializedMap, defaultJdk, defaultServerType);
+      Map<String, JdkServerMapEntry> deserializedMap = objectMapper.readValue(jdkServerMapArg,
+          new TypeReference<Map<String, JdkServerMapEntry>>(){});
+      return new JdkServerLookup(deserializedMap, defaultJdk);
 
     } catch (IOException e) {
-      // TODO handle this better
+      // The jdkServerMap could not be parsed.
+      // Our configuration is invalid, so there's no way to recover.
       throw new RuntimeException(e);
     }
   }

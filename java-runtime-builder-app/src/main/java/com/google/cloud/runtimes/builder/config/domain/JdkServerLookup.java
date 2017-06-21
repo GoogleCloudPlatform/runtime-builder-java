@@ -66,7 +66,7 @@ public class JdkServerLookup {
   /**
    * Lookup a JDK image for the given JDK name.
    *
-   * @param jdk the key for the JDK. If {@code null}, the {@code defaultJdk} will be used. If no
+   * @param jdk the key for the JDK. If {@code null}, a default will be used. If no
    *     valid JDK image is found, an {@link IllegalArgumentException} will be thrown.
    */
   public String lookupJdkImage(String jdk) {
@@ -88,7 +88,6 @@ public class JdkServerLookup {
         .filter((key) -> !key.equals(KEY_WILDCARD))
         .collect(Collectors.toList());
   }
-
 
   private String buildServerMapKey(String jdk, String serverType) {
     jdk = jdk == null ? KEY_WILDCARD : jdk;

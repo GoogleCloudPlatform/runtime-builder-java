@@ -18,58 +18,48 @@ package com.google.cloud.runtimes.builder.config.domain;
 
 import com.google.common.base.Preconditions;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 public class JdkServerLookup {
 
+  private static final String KEY_DELIMITER = "#";
+  private static final String KEY_WILDCARD = "_";
   private static final Logger log = LoggerFactory.getLogger(JdkServerLookup.class);
 
-  private final Map<String, JdkServerMapEntry> jdkServerMap;
-  private final String defaultJdk;
   private final Map<String, String> serverRuntimeMap;
+  private final Map<String, String> jdkRuntimeMap;
 
   /**
    * Constructs a new {@link JdkServerLookup}.
    *
-   * @param jdkServerMap encodes the mappings between jdk, server and runtime names
-   * @param defaultJdk the jdk to use for lookups if none is provided. It must be a key in the
-   *     {@code jdkServerMap}.
+   * @param jdkRuntimeMap maps jdk config names to runtime images
+   * @param serverRuntimeMap maps server and jdk config names to runtime images
    */
-  public JdkServerLookup(Map<String, JdkServerMapEntry> jdkServerMap, String defaultJdk) {
-    this.jdkServerMap = jdkServerMap;
-    this.defaultJdk = defaultJdk;
+  public JdkServerLookup(Map<String, String> jdkRuntimeMap, Map<String, String> serverRuntimeMap) {
+    Preconditions.checkNotNull(jdkRuntimeMap);
+    Preconditions.checkNotNull(serverRuntimeMap);
 
-    // Build map of server name to runtimes
-    serverRuntimeMap = new HashMap<>();
-    for (JdkServerMapEntry jdkServerMapping : jdkServerMap.values()) {
-      for (Entry<String, String> serverImageEntry : jdkServerMapping.getServerImages().entrySet()) {
-        // Insert into global map of server names to runtimes. Each should be globally unique
-        if (serverRuntimeMap.containsKey(serverImageEntry.getKey())) {
-          throw new IllegalArgumentException("Found duplicate mapping for server name "
-              + serverImageEntry.getKey());
-        }
-        serverRuntimeMap.put(serverImageEntry.getKey(), serverImageEntry.getValue());
-      }
-    }
+    this.jdkRuntimeMap = jdkRuntimeMap;
+    this.serverRuntimeMap = serverRuntimeMap;
 
     validate();
   }
 
-  /*
-   * Ensure defaults are present in the lookup map
-   */
   private void validate() {
-    Preconditions.checkArgument(jdkServerMap.containsKey(defaultJdk));
-
-    for (JdkServerMapEntry entry : jdkServerMap.values()) {
-      Map<String, String> serverRuntimeMap = entry.getServerImages();
-      Preconditions.checkArgument(serverRuntimeMap.containsKey(entry.getDefaultServer()));
+    // make sure each map contains default keys
+    if (!jdkRuntimeMap.containsKey(KEY_WILDCARD)) {
+      throw new IllegalArgumentException("Expected to find default (" + KEY_WILDCARD + ") key in "
+          + "JDK runtime map.");
+    }
+    String serverMapKey = buildServerMapKey(null, null);
+    if (!serverRuntimeMap.containsKey(serverMapKey)) {
+      throw new IllegalArgumentException("Expected to find default (" + serverMapKey + ") key in "
+          + "server runtime map.");
     }
   }
 
@@ -80,81 +70,59 @@ public class JdkServerLookup {
    *     valid JDK image is found, an {@link IllegalArgumentException} will be thrown.
    */
   public String lookupJdkImage(String jdk) {
-    return getRuntimeMapEntryForJdk(jdk).getJdkImage();
+    if (jdk == null) {
+      return jdkRuntimeMap.get(KEY_WILDCARD);
+    }
+
+    if (!jdkRuntimeMap.containsKey(jdk)) {
+      log.error("JDK '{}' not recognized. Supported JDK values are: {}", jdk,
+          getAvailableJdks());
+      throw new IllegalArgumentException(String.format("Invalid jdk: %s", jdk));
+    }
+    return jdkRuntimeMap.get(jdk);
+  }
+
+  private List<String> getAvailableJdks() {
+    return jdkRuntimeMap.keySet()
+        .stream()
+        .filter((key) -> !key.equals(KEY_WILDCARD))
+        .collect(Collectors.toList());
+  }
+
+
+  private String buildServerMapKey(String jdk, String serverType) {
+    jdk = jdk == null ? KEY_WILDCARD : jdk;
+    serverType = serverType == null ? KEY_WILDCARD : serverType;
+
+    return jdk + KEY_DELIMITER + serverType;
   }
 
   /**
    * Lookup a server image for the given JDK name and server type.
    *
-   * @param jdk the key for the JDK. If {@code null}, the {@code defaultJdk} will be used. If no
+   * @param jdk the key for the JDK. If {@code null}, a default jdk will be used. If no
    *     valid JDK image is found, an {@link IllegalArgumentException} will be thrown.
-   * @param serverType the type of the server. If {@code null}, the {@code defaultServerType} will
-   *     be used. If no valid server image is found, an {@link IllegalArgumentException} will be
-   *     thrown.
+   * @param serverType the type of the server. If {@code null}, a default server type will be used.
+   *     If no valid server image is found, an {@link IllegalArgumentException} will be thrown.
    */
   public String lookupServerImage(String jdk, String serverType) {
-    if (jdk == null && serverType != null) {
-      // lookup image by server name only
-      if (!serverRuntimeMap.containsKey(serverType)) {
-        log.error("Server type '{}' not recognized. Supported server types for jdk {} are: {}",
-            serverType, jdk, serverRuntimeMap.keySet());
-        throw new IllegalArgumentException(String.format("Invalid server type: %s", serverType));
-      }
-      return serverRuntimeMap.get(serverType);
+    String key = buildServerMapKey(jdk, serverType);
 
-    } else {
-      // perform lookup with default jdk
-      JdkServerLookup.JdkServerMapEntry runtimeMap = getRuntimeMapEntryForJdk(jdk);
-      if (serverType == null) {
-        serverType = runtimeMap.getDefaultServer();
-      }
-      return runtimeMap.getServerImages().get(serverType);
+    if (!serverRuntimeMap.containsKey(key)) {
+      log.error("An invalid server and/or jdk was configured. Supported jdk/server combinations "
+          + "are: {}.", getAvailableJdkServerPairs());
+      throw new IllegalArgumentException(String.format("Invalid jdk/server combination: %s", key));
     }
+    return serverRuntimeMap.get(key);
   }
 
-  private JdkServerLookup.JdkServerMapEntry getRuntimeMapEntryForJdk(String jdk) {
-    if (jdk == null) {
-      jdk = defaultJdk;
-    }
-    if (!jdkServerMap.containsKey(jdk)) {
-      log.error("JDK '{}' not recognized. Supported JDK values are: {}", jdk,
-          jdkServerMap.keySet());
-      throw new IllegalArgumentException(String.format("Invalid jdk: %s", jdk));
-    }
-    return jdkServerMap.get(jdk);
-  }
-
-  public static class JdkServerMapEntry {
-    private String jdkImage;
-    private String defaultServer;
-    private Map<String, String> serverImages;
-
-    public String getJdkImage() {
-      return jdkImage;
-    }
-
-    @JsonProperty("jdk_image")
-    public void setJdkImage(String jdkImage) {
-      this.jdkImage = jdkImage;
-    }
-
-    public String getDefaultServer() {
-      return defaultServer;
-    }
-
-    @JsonProperty("default_server")
-    public void setDefaultServer(String defaultServer) {
-      this.defaultServer = defaultServer;
-    }
-
-    public Map<String, String> getServerImages() {
-      return serverImages;
-    }
-
-    @JsonProperty("server_images")
-    public void setServerImages(Map<String, String> serverImages) {
-      this.serverImages = serverImages;
-    }
+  private List<String> getAvailableJdkServerPairs() {
+    return serverRuntimeMap.keySet()
+        .stream()
+        .filter((key) -> !key.contains(KEY_WILDCARD))
+        .map((key) -> key.split(KEY_DELIMITER))
+        .map((split) -> "(" + split[0] + ", " + split[1] + ")")
+        .collect(Collectors.toList());
   }
 
 }

@@ -43,10 +43,10 @@ public class Application {
   private static final String EXECUTABLE_NAME = "<BUILDER_JAR>";
 
   static {
-    CLI_OPTIONS.addRequiredOption("m", "jdk-server-map", true,
+    CLI_OPTIONS.addRequiredOption("j", "jdk-runtimes-map", true,
         "JSON object that contains mappings between supported jdk versions and docker images");
-    CLI_OPTIONS.addRequiredOption("j", "default-jdk", true, "the default jdk version to use if none"
-        + " is specified");
+    CLI_OPTIONS.addRequiredOption("s", "server-runtimes-map", true,
+        "the default jdk version to use if none is specified");
   }
 
   /**
@@ -55,21 +55,21 @@ public class Application {
   public static void main(String[] args)
       throws BuildStepException, IOException, AppYamlNotFoundException {
     CommandLine cmd = parse(args);
-    String jdkServerMap = cmd.getOptionValue("m");
-    String defaultJdk = cmd.getOptionValue("j");
+    String jdkMap = cmd.getOptionValue("j");
+    String serverMap = cmd.getOptionValue("s");
 
     Path workspaceDir  = Paths.get(System.getProperty("user.dir"));
-    build(jdkServerMap, defaultJdk, workspaceDir);
+    build(jdkMap, serverMap, workspaceDir);
   }
 
   /**
    * Invokes the builder.
    */
-  public static void build(String jdkServerMap, String defaultJdk, Path workspaceDir)
+  public static void build(String jdkMap, String serverMap, Path workspaceDir)
       throws BuildStepException, IOException, AppYamlNotFoundException {
     // Perform dependency injection and run the application
     Injector injector = Guice.createInjector(
-          new RootModule(jdkServerMap, defaultJdk));
+          new RootModule(jdkMap, serverMap));
     injector.getInstance(BuildPipeline.class).build(workspaceDir);
   }
 

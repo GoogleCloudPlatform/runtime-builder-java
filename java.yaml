@@ -5,21 +5,23 @@ steps:
 # build the user's source and generate artifacts for docker
 - name: 'gcr.io/gcp-runtimes/java/runtime-builder:latest'
   args:
-  # mapping of server type to docker image, for each supported jdk
-  - '--jdk-server-map'
+  # Mapping of server and JDK config names to runtime images. Underscores represent wildcards.
+  - '--server-runtimes-map'
   - '{
-       "openjdk8": {
-         "jdk_image": "gcr.io/google_appengine/openjdk:8",
-         "default_server": jetty9,
-         "server_images": {
-           "jetty9": "gcr.io/google_appengine/jetty:9",
-           "tomcat8.5": "gcr.io/google_appengine/tomcat:8.5"
-         }
-       }
+      "_#_"               : "gcr.io/google_appengine/jetty:9"
+      "openjdk8#_"        : "gcr.io/google_appengine/jetty:9"
+      "openjdk8#jetty9"   : "gcr.io/google_appengine/jetty:9"
+      "openjdk8#tomcat8.5": "gcr.io/google_appengine/tomcat:8.5"
+      "_#jetty9"          : "gcr.io/google_appengine/jetty:9"
+      "_#tomcat8.5"       : "gcr.io/google_appengine/tomcat:8.5"
     }'
 
-  # specifies which jdk version to use if none is specified
-  - '--default-jdk=openjdk8'
+  # Mapping of JDK config names to images. Underscores represent wildcards.
+  - 'jdk-runtimes-map'
+  - '{
+       "_": "gcr.io/google_appengine/openjdk:8"
+       "openjdk8": "gcr.io/google_appengine/openjdk:8"
+    }'
 
 # execute the docker build to produce the resulting image
 - name: 'gcr.io/cloud-builders/docker:latest'

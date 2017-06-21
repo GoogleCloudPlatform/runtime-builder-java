@@ -13,84 +13,58 @@ import static org.junit.Assert.*;
  */
 public class JdkServerLookupTest {
 
-  private final static String IMAGE_PREFIX = "gcr.io/bucket/";
-  private final static String JDK_ONLY_RUNTIME = "jdk-only";
+  private Map<String, String> jdkMap;
+  private Map<String, String> serverMap;
 
-  private final static String OLD_JDK = "oldJdk";
-  private final static String CURRENT_JDK = "currentJdk";
-  private final static String DEFAULT_JDK = CURRENT_JDK;
-
-  private final static String SERVER_A = "serverA";
-  private final static String SERVER_B = "serverB";
-  private final static String SERVER_C = "serverC";
-
-  private Map<String, JdkServerLookup.JdkServerMapEntry> jdkMap;
   private JdkServerLookup jdkServerLookup;
 
   @Before
   public void setup() {
-    JdkServerLookup.JdkServerMapEntry oldJdkRuntimes = new JdkServerLookup.JdkServerMapEntry();
-    oldJdkRuntimes.setDefaultServer(SERVER_A);
-    oldJdkRuntimes.setServerImages(ImmutableMap.of(
-        SERVER_A, IMAGE_PREFIX + SERVER_A + ":" + OLD_JDK,
-        SERVER_B, IMAGE_PREFIX + SERVER_B + ":" + OLD_JDK,
-        SERVER_C, IMAGE_PREFIX + SERVER_C + ":" + OLD_JDK
-    ));
-    oldJdkRuntimes.setJdkImage(IMAGE_PREFIX + JDK_ONLY_RUNTIME + ":" + OLD_JDK);
-
-    JdkServerLookup.JdkServerMapEntry currentJdkRuntimes = new JdkServerLookup.JdkServerMapEntry();
-    currentJdkRuntimes.setDefaultServer(SERVER_B);
-    currentJdkRuntimes.setServerImages(ImmutableMap.of(
-        SERVER_A, IMAGE_PREFIX + SERVER_A + ":" + CURRENT_JDK,
-        SERVER_B, IMAGE_PREFIX + SERVER_B + ":" + CURRENT_JDK,
-        SERVER_C, IMAGE_PREFIX + SERVER_C + ":" + CURRENT_JDK
-    ));
-    currentJdkRuntimes.setJdkImage(IMAGE_PREFIX + JDK_ONLY_RUNTIME + ":" + CURRENT_JDK);
     jdkMap = ImmutableMap.of(
-        OLD_JDK,     oldJdkRuntimes,
-        CURRENT_JDK, currentJdkRuntimes
+        "oldjdk", "jdk:old",
+        "currentjdk", "jdk:current",
+        "_", "defaultjdk"
     );
 
-    jdkServerLookup = new JdkServerLookup(jdkMap, DEFAULT_JDK);
-  }
+    serverMap = ImmutableMap.of(
+       "newjdk#server1", "server1:new",
+       "newjdk#_", "newjdk:defaultserver",
+       "oldjdk#server1", "server1:old",
+       "_#server1", "defaultjdk:server1",
+       "_#_", "bothdefaults"
+    );
 
+    jdkServerLookup = new JdkServerLookup(jdkMap, serverMap);
+  }
 
   @Test
   public void testLookupJdkImageDefault() {
-    String expectedRuntime = IMAGE_PREFIX + JDK_ONLY_RUNTIME + ":" + DEFAULT_JDK;
-    assertEquals(expectedRuntime, jdkServerLookup.lookupJdkImage(null));
+    assertEquals("defaultjdk", jdkServerLookup.lookupJdkImage(null));
   }
 
   @Test
   public void testLookupJdkImageNonDefault() {
-    String expectedRuntime = IMAGE_PREFIX + JDK_ONLY_RUNTIME + ":" + OLD_JDK;
-    // sanity check, to make sure we're testing what we think we're testing
-    assertNotEquals(OLD_JDK, DEFAULT_JDK);
-    assertEquals(expectedRuntime, jdkServerLookup.lookupJdkImage(OLD_JDK));
+    assertEquals("jdk:old", jdkServerLookup.lookupJdkImage("oldjdk"));
   }
 
   @Test
   public void testLookupServerImageDefaultServerAndJdk() {
-    String expectedRuntime = IMAGE_PREFIX + SERVER_B + ":" + DEFAULT_JDK;
-    assertEquals(expectedRuntime, jdkServerLookup.lookupServerImage(null, null));
+    assertEquals("bothdefaults", jdkServerLookup.lookupServerImage(null, null));
   }
 
   @Test
   public void testLookupServerImageDefaultServerAndNonDefaultJdk() {
-    String expectedRuntime = IMAGE_PREFIX + SERVER_A + ":" + OLD_JDK;
-    assertEquals(expectedRuntime, jdkServerLookup.lookupServerImage(OLD_JDK, null));
+    assertEquals("newjdk:defaultserver", jdkServerLookup.lookupServerImage("newjdk", null));
   }
 
   @Test
   public void testLookupServerImageNonDefaultServerDefaultJdk() {
-    String expectedRuntime = IMAGE_PREFIX + SERVER_C + ":" + DEFAULT_JDK;
-    assertEquals(expectedRuntime, jdkServerLookup.lookupServerImage(null, SERVER_C));
+    assertEquals("defaultjdk:server1", jdkServerLookup.lookupServerImage(null, "server1"));
   }
 
   @Test
   public void testLookupServerImageNonDefaultServerAndNonDefaultJdk() {
-    String expectedRuntime = IMAGE_PREFIX + SERVER_C + ":" + OLD_JDK;
-    assertEquals(expectedRuntime, jdkServerLookup.lookupServerImage(OLD_JDK, SERVER_C));
+    assertEquals("server1:old", jdkServerLookup.lookupServerImage("oldjdk", "server1"));
   }
 
   @Test
@@ -117,28 +91,33 @@ public class JdkServerLookupTest {
     } catch (IllegalArgumentException e) { }
   }
 
+
   @Test
-  public void testConstructorDefaultJdkNotPresent() {
+  public void testConstructorNoJdkDefaultPresent() {
+    Map<String, String> jdkMap = ImmutableMap.of(
+        "jdk", "value"
+    );
+    Map<String, String> serverMap = ImmutableMap.of(
+        "jdk#server", "value",
+        "_#_", "value"
+    );
     try {
-      new JdkServerLookup(jdkMap, "invalidJdk");
+      new JdkServerLookup(jdkMap, serverMap);
       fail();
     } catch (IllegalArgumentException e) { }
   }
 
   @Test
-  public void testConstructorDefaultServerNotPresent() {
-    JdkServerLookup.JdkServerMapEntry entry1 = new JdkServerLookup.JdkServerMapEntry();
-    entry1.setServerImages(ImmutableMap.of(
-        SERVER_A, "some_runtime"
-    ));
-    entry1.setDefaultServer("default_not_in_map");
-    entry1.setJdkImage("some_jdk_image");
-
-    Map<String, JdkServerLookup.JdkServerMapEntry> map = ImmutableMap.of(
-        CURRENT_JDK, entry1
+  public void testConstructorNoServerDefaultPresent() {
+    Map<String, String> jdkMap = ImmutableMap.of(
+        "jdk", "value",
+        "_", "value"
+    );
+    Map<String, String> serverMap = ImmutableMap.of(
+        "jdk#server", "value"
     );
     try {
-      new JdkServerLookup(map, CURRENT_JDK);
+      new JdkServerLookup(jdkMap, serverMap);
       fail();
     } catch (IllegalArgumentException e) { }
   }

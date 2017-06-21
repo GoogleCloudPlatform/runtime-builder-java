@@ -44,7 +44,7 @@ public class DefaultDockerfileGeneratorTest {
   private DefaultDockerfileGenerator generator;
 
   private String jarRuntime = "gcr.io/google-appengine/openjdk@sha256:12345";
-  private String jettyRuntime = "gcr.io/google-appengine/server@sha256:12345";
+  private String jettyRuntime = "gcr.io/google-appengine/jetty@sha256:12345";
   private String tomcatRuntime = "gcr.io/google-appengine/tomcat@sha256:12345";
 
   @Before

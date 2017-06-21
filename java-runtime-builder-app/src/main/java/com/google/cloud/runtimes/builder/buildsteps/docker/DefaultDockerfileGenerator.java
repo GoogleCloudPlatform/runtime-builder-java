@@ -66,12 +66,18 @@ public class DefaultDockerfileGenerator implements DockerfileGenerator {
     dockerfile.append(String.format(DOCKERFILE_ADD_ARTIFACT, artifactToDeploy.toString(),
         APP_DESTINATION));
 
+    if (baseImage.contains("jetty")) {
+      addJettyConfiguration(runtimeConfig, dockerfile);
+    }
+
+    return dockerfile.toString();
+  }
+
+  private void addJettyConfiguration(RuntimeConfig runtimeConfig, StringBuilder dockerfile) {
     // apply jetty-specific configuration, if present
     if (runtimeConfig.getJettyQuickstart()) {
       dockerfile.append(DOCKERFILE_JETTY_QUICKSTART);
     }
-
-    return dockerfile.toString();
   }
 
 }

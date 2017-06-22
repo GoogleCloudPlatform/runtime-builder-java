@@ -68,8 +68,7 @@ public class Application {
   public static void build(String jdkMap, String serverMap, Path workspaceDir)
       throws BuildStepException, IOException, AppYamlNotFoundException {
     // Perform dependency injection and run the application
-    Injector injector = Guice.createInjector(
-          new RootModule(jdkMap, serverMap));
+    Injector injector = Guice.createInjector(new RootModule(jdkMap, serverMap));
     injector.getInstance(BuildPipeline.class).build(workspaceDir);
   }
 

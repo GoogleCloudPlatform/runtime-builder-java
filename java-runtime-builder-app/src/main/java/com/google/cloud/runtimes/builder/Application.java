@@ -45,8 +45,8 @@ public class Application {
   static {
     CLI_OPTIONS.addRequiredOption("j", "jdk-runtimes-map", true,
         "JSON object that contains mappings between supported jdk versions and docker images");
-    CLI_OPTIONS.addRequiredOption("s", "server-runtimes-map", true,
-        "the default jdk version to use if none is specified");
+    CLI_OPTIONS.addRequiredOption("s", "server-runtimes-map", true, "JSON object that contains" +
+        "mappings between supported jdk versions, server types, and docker images");
   }
 
   /**

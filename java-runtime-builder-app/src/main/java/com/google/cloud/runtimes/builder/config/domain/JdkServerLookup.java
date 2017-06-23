@@ -90,10 +90,10 @@ public class JdkServerLookup {
   }
 
   private String buildServerMapKey(String jdk, String serverType) {
-    jdk = jdk == null ? KEY_WILDCARD : jdk;
-    serverType = serverType == null ? KEY_WILDCARD : serverType;
+    String jdkKey = jdk == null ? KEY_WILDCARD : jdk;
+    String serverTypeKey = serverType == null ? KEY_WILDCARD : serverType;
 
-    return jdk + KEY_DELIMITER + serverType;
+    return jdkKey + KEY_DELIMITER + serverTypeKey;
   }
 
   /**

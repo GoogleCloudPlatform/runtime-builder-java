@@ -65,21 +65,14 @@ public class RootModule extends AbstractModule {
   }
 
   @Provides
-  JdkServerLookup provideJdkServerLookup() {
-    try {
-      ObjectMapper objectMapper = new ObjectMapper();
-      Map<String, String> jdkMap  = objectMapper.readValue(jdkMapArg,
-          new TypeReference<Map<String, String>>(){});
-      Map<String, String> serverMap  = objectMapper.readValue(serverMapArg,
-          new TypeReference<Map<String, String>>(){});
+  protected JdkServerLookup provideJdkServerLookup() throws IOException {
+    ObjectMapper objectMapper = new ObjectMapper();
+    Map<String, String> jdkMap  = objectMapper.readValue(jdkMapArg,
+        new TypeReference<Map<String, String>>(){});
+    Map<String, String> serverMap  = objectMapper.readValue(serverMapArg,
+        new TypeReference<Map<String, String>>(){});
 
-      return new JdkServerLookup(jdkMap, serverMap);
-
-    } catch (IOException e) {
-      // The JSON maps could not be parsed.
-      // Our configuration is invalid, so there's no way to recover.
-      throw new RuntimeException(e);
-    }
+    return new JdkServerLookup(jdkMap, serverMap);
   }
 
 }

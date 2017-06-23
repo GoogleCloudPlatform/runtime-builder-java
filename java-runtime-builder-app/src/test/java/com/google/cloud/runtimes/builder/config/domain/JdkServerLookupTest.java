@@ -13,20 +13,17 @@ import static org.junit.Assert.*;
  */
 public class JdkServerLookupTest {
 
-  private Map<String, String> jdkMap;
-  private Map<String, String> serverMap;
-
   private JdkServerLookup jdkServerLookup;
 
   @Before
-  public void setup() {
-    jdkMap = ImmutableMap.of(
+  public void before() {
+    Map<String, String> jdkMap = ImmutableMap.of(
         "oldjdk", "jdk:old",
         "currentjdk", "jdk:current",
         "_", "defaultjdk"
     );
 
-    serverMap = ImmutableMap.of(
+    Map<String, String> serverMap = ImmutableMap.of(
        "newjdk#server1", "server1:new",
        "newjdk#_", "newjdk:defaultserver",
        "oldjdk#server1", "server1:old",

@@ -33,7 +33,7 @@ public class DefaultDockerfileGenerator implements DockerfileGenerator {
   private static final String DOCKERFILE_ADD_ARTIFACT = "ADD %s %s\n";
   private static final String DOCKERFILE_JETTY_QUICKSTART = "RUN /scripts/jetty/quickstart.sh\n";
 
-  private static final String APP_DESTINATION = "$APP_DEST";
+  private static final String APP_DESTINATION = "$APP_DESTINATION";
 
   private final JdkServerLookup runtimeLookupTool;
 

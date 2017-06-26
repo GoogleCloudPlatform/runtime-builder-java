@@ -22,32 +22,35 @@ import com.google.cloud.runtimes.builder.buildsteps.docker.DockerfileGenerator;
 import com.google.cloud.runtimes.builder.config.AppYamlParser;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
+import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+import java.util.Map;
 
 /**
  * Module class for configuring Guice bindings.
  */
 public class RootModule extends AbstractModule {
 
-  private final String jarRuntimeImage;
-  private final String serverRuntimeImage;
-  private final String tomcatRuntimeImage;
+  private final String jdkMapArg;
+  private final String serverMapArg;
 
   /**
    * Constructs a new {@link RootModule} for Guice.
    *
-   * @param jarRuntimeImage Url of the OpenJDK Docker image for GCP
-   *                        (gcr.io/google-appengine/openjdk:tag).
-   * @param serverRuntimeImage Url of the default Docker image for web application
-   *                           in Java on GCP (Jetty).
-   * @param tomcatRuntimeImage Url of the Tomcat Docker image for GCP.
+   * @param jdkMapArg a JSON object that maps jdk names to docker images
+   * @param serverMapArg a JSON object that maps jdk and server names to docker images
    */
-  public RootModule(String jarRuntimeImage, String serverRuntimeImage, String tomcatRuntimeImage) {
-    this.jarRuntimeImage = jarRuntimeImage;
-    this.serverRuntimeImage = serverRuntimeImage;
-    this.tomcatRuntimeImage = tomcatRuntimeImage;
+  public RootModule(String jdkMapArg, String serverMapArg) {
+    this.jdkMapArg = jdkMapArg;
+    this.serverMapArg = serverMapArg;
   }
 
   @Override
@@ -56,18 +59,20 @@ public class RootModule extends AbstractModule {
         .to(AppYamlParser.class);
     bind(DockerfileGenerator.class)
         .to(DefaultDockerfileGenerator.class);
-    bind(String.class)
-        .annotatedWith(JarRuntimeImage.class)
-        .toInstance(jarRuntimeImage);
-    bind(String.class)
-        .annotatedWith(ServerRuntimeImage.class)
-        .toInstance(serverRuntimeImage);
-    bind(String.class)
-        .annotatedWith(TomcatRuntimeImage.class)
-        .toInstance(tomcatRuntimeImage);
 
     install(new FactoryModuleBuilder()
         .build(BuildStepFactory.class));
+  }
+
+  @Provides
+  protected JdkServerLookup provideJdkServerLookup() throws IOException {
+    ObjectMapper objectMapper = new ObjectMapper();
+    Map<String, String> jdkMap  = objectMapper.readValue(jdkMapArg,
+        new TypeReference<Map<String, String>>(){});
+    Map<String, String> serverMap  = objectMapper.readValue(serverMapArg,
+        new TypeReference<Map<String, String>>(){});
+
+    return new JdkServerLookup(jdkMap, serverMap);
   }
 
 }

@@ -27,8 +27,8 @@ import java.util.stream.Collectors;
 
 public class JdkServerLookup {
 
-  private static final String KEY_DELIMITER = "#";
-  private static final String KEY_WILDCARD = "_";
+  private static final String KEY_DELIMITER = "|";
+  private static final String KEY_WILDCARD = "*";
   private static final Logger log = LoggerFactory.getLogger(JdkServerLookup.class);
 
   private final Map<String, String> serverRuntimeMap;

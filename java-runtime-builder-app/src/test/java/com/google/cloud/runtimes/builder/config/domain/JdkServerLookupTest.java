@@ -64,32 +64,23 @@ public class JdkServerLookupTest {
     assertEquals("server1:old", jdkServerLookup.lookupServerImage("oldjdk", "server1"));
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void testLookupJdkImageNonexistent() {
-    try {
-      jdkServerLookup.lookupJdkImage("invalid_jdk");
-      fail();
-    } catch (IllegalArgumentException e) { }
+    jdkServerLookup.lookupJdkImage("invalid_jdk");
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void testLookupServerImageInvalidJdk() {
-    try {
-      jdkServerLookup.lookupServerImage("invalid_jdk", null);
-      fail();
-    } catch (IllegalArgumentException e) { }
+    jdkServerLookup.lookupServerImage("invalid_jdk", null);
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void testLookupServerImageInvalidServer() {
-    try {
-      jdkServerLookup.lookupServerImage(null, "invalid_server");
-      fail();
-    } catch (IllegalArgumentException e) { }
+    jdkServerLookup.lookupServerImage(null, "invalid_server");
   }
 
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void testConstructorNoJdkDefaultPresent() {
     Map<String, String> jdkMap = ImmutableMap.of(
         "jdk", "value"
@@ -98,13 +89,10 @@ public class JdkServerLookupTest {
         "jdk#server", "value",
         "_#_", "value"
     );
-    try {
-      new JdkServerLookup(jdkMap, serverMap);
-      fail();
-    } catch (IllegalArgumentException e) { }
+    new JdkServerLookup(jdkMap, serverMap);
   }
 
-  @Test
+  @Test(expected = IllegalArgumentException.class)
   public void testConstructorNoServerDefaultPresent() {
     Map<String, String> jdkMap = ImmutableMap.of(
         "jdk", "value",
@@ -113,9 +101,6 @@ public class JdkServerLookupTest {
     Map<String, String> serverMap = ImmutableMap.of(
         "jdk#server", "value"
     );
-    try {
-      new JdkServerLookup(jdkMap, serverMap);
-      fail();
-    } catch (IllegalArgumentException e) { }
+    new JdkServerLookup(jdkMap, serverMap);
   }
 }

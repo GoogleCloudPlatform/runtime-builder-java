@@ -50,7 +50,7 @@ section of this file tells the builder how to build and package your source. In 
 | Option Name | Type | Default | Description |
 |----------|------|---------|-------------|
 | jdk | string | openjdk8 | Select the JDK used in the generated image. The only supported value is `openjdk8`.
-| server | string | jetty | Select the web server to use in the generated image. Must be either `jetty9` or `tomcat8.5`
+| server | string | jetty | Select the web server to use in the generated image. Must be either `jetty9` or `tomcat8`
 | artifact | string |  Discovered based on the content of your build output | The path where the builder should expect to find the artifact to package in the resulting docker container. This setting will be required if your build produces more than one artifact. 
 | build_script | string | `mvn -B -DskipTests clean package` if a maven project is detected, or `gradle build` if a gradle project is detected | The build command that is executed to build your source |
 | jetty_quickstart | boolean | false | Enable the [Jetty quickstart module](http://www.eclipse.org/jetty/documentation/9.4.x/quickstart-webapp.html) to speed up the start time of the application (Only available if the jetty runtime is selected).

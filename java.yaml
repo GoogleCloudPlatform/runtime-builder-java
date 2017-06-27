@@ -8,12 +8,12 @@ steps:
   # Mapping of server and JDK config names to runtime images.
   - '--server-runtimes-map'
   - '{
-      "*|*"                : "gcr.io/google_appengine/jetty:9",
-      "openjdk8|*"         : "gcr.io/google_appengine/jetty:9",
-      "openjdk8|jetty9"    : "gcr.io/google_appengine/jetty:9",
-      "openjdk8|tomcat8.5" : "gcr.io/google_appengine/tomcat:8.5",
-      "*|jetty9"           : "gcr.io/google_appengine/jetty:9",
-      "*|tomcat8.5"        : "gcr.io/google_appengine/tomcat:8.5"
+      "*|*"              : "gcr.io/google_appengine/jetty:9",
+      "openjdk8|*"       : "gcr.io/google_appengine/jetty:9",
+      "openjdk8|jetty9"  : "gcr.io/google_appengine/jetty:9",
+      "openjdk8|tomcat8" : "gcr.io/google_appengine/tomcat:8",
+      "*|jetty9"         : "gcr.io/google_appengine/jetty:9",
+      "*|tomcat8"        : "gcr.io/google_appengine/tomcat:8"
     }'
   # Mapping of JDK config names to images.
   - '--jdk-runtimes-map'

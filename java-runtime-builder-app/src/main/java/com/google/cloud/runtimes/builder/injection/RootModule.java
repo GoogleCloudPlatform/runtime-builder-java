@@ -19,6 +19,7 @@ package com.google.cloud.runtimes.builder.injection;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
 import com.google.cloud.runtimes.builder.buildsteps.docker.DefaultDockerfileGenerator;
 import com.google.cloud.runtimes.builder.buildsteps.docker.DockerfileGenerator;
+import com.google.cloud.runtimes.builder.config.AppYamlFinder;
 import com.google.cloud.runtimes.builder.config.AppYamlParser;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
@@ -41,6 +42,7 @@ public class RootModule extends AbstractModule {
 
   private final String[] jdkMappings;
   private final String[] serverMappings;
+  private static final String CONFIG_YAML_ENV_VAR = "GAE_APPLICATION_YAML_PATH";
 
   /**
    * Constructs a new {@link RootModule} for Guice.
@@ -58,10 +60,15 @@ public class RootModule extends AbstractModule {
 
   @Override
   protected void configure() {
+    bind(String.class)
+        .annotatedWith(ConfigYamlPath.class)
+        .toInstance(System.getenv(CONFIG_YAML_ENV_VAR));
+
     bind(new TypeLiteral<YamlParser<AppYaml>>(){})
         .to(AppYamlParser.class);
     bind(DockerfileGenerator.class)
         .to(DefaultDockerfileGenerator.class);
+    bind(AppYamlFinder.class);
 
     install(new FactoryModuleBuilder()
         .build(BuildStepFactory.class));

@@ -31,12 +31,14 @@ import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBu
 import com.google.cloud.runtimes.builder.buildsteps.GradleBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.MavenBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.ScriptExecutionBuildStep;
+import com.google.cloud.runtimes.builder.config.AppYamlFinder;
 import com.google.cloud.runtimes.builder.config.AppYamlParser;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -57,8 +59,9 @@ public class BuildPipelineConfiguratorTest {
   @Mock private StageDockerArtifactBuildStep stageDockerArtifactBuildStep;
   @Mock private ScriptExecutionBuildStep scriptExecutionBuildStep;
 
-  // use the actual yaml parser instead of a mock.
+  // use the actual yaml parser and yaml finders instead of mocks
   private YamlParser<AppYaml> appYamlYamlParser = new AppYamlParser();
+  private AppYamlFinder appYamlFinder = new AppYamlFinder(null);
   private BuildPipelineConfigurator buildPipelineConfigurator;
 
   @Before
@@ -72,7 +75,8 @@ public class BuildPipelineConfiguratorTest {
     when(buildStepFactory.createScriptExecutionBuildStep(anyString()))
         .thenReturn(scriptExecutionBuildStep);
 
-    buildPipelineConfigurator = new BuildPipelineConfigurator(appYamlYamlParser, buildStepFactory);
+    buildPipelineConfigurator
+        = new BuildPipelineConfigurator(appYamlYamlParser, appYamlFinder, buildStepFactory);
   }
 
   @Test

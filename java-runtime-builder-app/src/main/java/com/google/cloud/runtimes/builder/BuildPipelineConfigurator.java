@@ -19,13 +19,13 @@ package com.google.cloud.runtimes.builder;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
 import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
+import com.google.cloud.runtimes.builder.config.AppYamlFinder;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.BuildTool;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -45,17 +45,17 @@ import java.util.Optional;
  */
 public class BuildPipelineConfigurator {
 
-  private static final List<String> APP_YAML_LOCATIONS
-      = ImmutableList.of("app.yaml", "src/main/appengine/app.yaml");
-
   private final Logger logger = LoggerFactory.getLogger(BuildPipelineConfigurator.class);
 
   private final YamlParser<AppYaml> appYamlParser;
+  private final AppYamlFinder appYamlFinder;
   private final BuildStepFactory buildStepFactory;
 
   @Inject
-  BuildPipelineConfigurator(YamlParser<AppYaml> appYamlParser, BuildStepFactory buildStepFactory) {
+  BuildPipelineConfigurator(YamlParser<AppYaml> appYamlParser, AppYamlFinder appYamlFinder,
+      BuildStepFactory buildStepFactory) {
     this.appYamlParser = appYamlParser;
+    this.appYamlFinder = appYamlFinder;
     this.buildStepFactory = buildStepFactory;
   }
 
@@ -68,7 +68,7 @@ public class BuildPipelineConfigurator {
   public List<BuildStep> configurePipeline(Path workspaceDir)
       throws AppYamlNotFoundException, IOException {
     // locate and deserialize configuration files
-    Path pathToAppYaml = findAppYaml(workspaceDir);
+    Path pathToAppYaml = appYamlFinder.findAppYamlFile(workspaceDir);
     AppYaml appYaml;
     try {
       appYaml = appYamlParser.parse(pathToAppYaml);
@@ -127,18 +127,6 @@ public class BuildPipelineConfigurator {
         throw new IllegalArgumentException(
             String.format("No build step available for build tool %s", buildTool));
     }
-  }
-
-  /*
-   * Searches for app.yaml in a few expected paths within the workspace
-   */
-  private Path findAppYaml(Path workspaceDir) throws AppYamlNotFoundException {
-    return APP_YAML_LOCATIONS.stream()
-        .map(pathName -> workspaceDir.resolve(pathName))
-        .filter(path -> Files.exists(path) && Files.isRegularFile(path))
-        .findFirst()
-        .orElseThrow(() -> new AppYamlNotFoundException("An app.yaml configuration file is "
-            + "required, but was not found in the included sources."));
   }
 
   /*

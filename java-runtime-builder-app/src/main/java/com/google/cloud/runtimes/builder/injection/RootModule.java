@@ -29,6 +29,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.util.Providers;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -62,7 +63,7 @@ public class RootModule extends AbstractModule {
   protected void configure() {
     bind(String.class)
         .annotatedWith(ConfigYamlPath.class)
-        .toInstance(System.getenv(CONFIG_YAML_ENV_VAR));
+        .toProvider(Providers.of(System.getenv(CONFIG_YAML_ENV_VAR)));
 
     bind(new TypeLiteral<YamlParser<AppYaml>>(){})
         .to(AppYamlParser.class);

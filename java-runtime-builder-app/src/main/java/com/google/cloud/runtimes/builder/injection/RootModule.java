@@ -23,13 +23,11 @@ import com.google.cloud.runtimes.builder.config.AppYamlParser;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
-
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.Map;
@@ -39,18 +37,18 @@ import java.util.Map;
  */
 public class RootModule extends AbstractModule {
 
-  private final String jdkMapArg;
-  private final String serverMapArg;
+  private final Map<String, String> jdkMap;
+  private final Map<String, String> serverMap;
 
   /**
    * Constructs a new {@link RootModule} for Guice.
    *
-   * @param jdkMapArg a JSON object that maps jdk names to docker images
-   * @param serverMapArg a JSON object that maps jdk and server names to docker images
+   * @param jdkMap a {@code Map} of jdk names to docker images
+   * @param serverMap a {@code Map} of jdk and server names to docker images
    */
-  public RootModule(String jdkMapArg, String serverMapArg) {
-    this.jdkMapArg = jdkMapArg;
-    this.serverMapArg = serverMapArg;
+  public RootModule(Map<String, String> jdkMap, Map<String, String> serverMap) {
+    this.jdkMap = jdkMap;
+    this.serverMap = serverMap;
   }
 
   @Override
@@ -66,13 +64,17 @@ public class RootModule extends AbstractModule {
 
   @Provides
   protected JdkServerLookup provideJdkServerLookup() throws IOException {
-    ObjectMapper objectMapper = new ObjectMapper();
-    Map<String, String> jdkMap  = objectMapper.readValue(jdkMapArg,
-        new TypeReference<Map<String, String>>(){});
-    Map<String, String> serverMap  = objectMapper.readValue(serverMapArg,
-        new TypeReference<Map<String, String>>(){});
-
     return new JdkServerLookup(jdkMap, serverMap);
+  }
+
+  @VisibleForTesting
+  public Map<String, String> getJdkMap() {
+    return jdkMap;
+  }
+
+  @VisibleForTesting
+  public Map<String, String> getServerMap() {
+    return serverMap;
   }
 
 }

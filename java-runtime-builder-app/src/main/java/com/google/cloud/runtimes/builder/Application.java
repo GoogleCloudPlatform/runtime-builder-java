@@ -19,69 +19,122 @@ package com.google.cloud.runtimes.builder;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.cloud.runtimes.builder.injection.RootModule;
-
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Top-level class for executing from the command line.
  */
 public class Application {
 
-  private static final Options CLI_OPTIONS = new Options();
-  private static final String EXECUTABLE_NAME = "<BUILDER_JAR>";
-
-  static {
-    CLI_OPTIONS.addRequiredOption("j", "jdk-runtimes-map", true,
-        "JSON object that contains mappings between supported jdk versions and docker images");
-    CLI_OPTIONS.addRequiredOption("s", "server-runtimes-map", true, "JSON object that contains"
-        + "mappings between supported jdk versions, server types, and docker images");
-  }
+  private static final String JDK_RUNTIMES_MAPPINGS = "--jdk-runtimes-map";
+  private static final String SERVER_RUNTIMES_MAPPINGS = "--server-runtimes-map";
 
   /**
    * Main method for invocation from the command line. Handles parsing of command line options.
    */
   public static void main(String[] args)
       throws BuildStepException, IOException, AppYamlNotFoundException {
-    CommandLine cmd = parse(args);
-    String jdkMap = cmd.getOptionValue("j");
-    String serverMap = cmd.getOptionValue("s");
+    RootModule module;
+    try {
+      module = configureApplicationModule(args);
+    } catch (IllegalArgumentException e) {
+      printUsage();
+      throw e;
+    }
 
-    Path workspaceDir  = Paths.get(System.getProperty("user.dir"));
-    build(jdkMap, serverMap, workspaceDir);
-  }
-
-  /**
-   * Invokes the builder.
-   */
-  public static void build(String jdkMap, String serverMap, Path workspaceDir)
-      throws BuildStepException, IOException, AppYamlNotFoundException {
-    // Perform dependency injection and run the application
-    Injector injector = Guice.createInjector(new RootModule(jdkMap, serverMap));
+    Path workspaceDir = Paths.get(System.getProperty("user.dir"));
+    // perform dependency injection, initialize the application
+    Injector injector = Guice.createInjector(module);
     injector.getInstance(BuildPipeline.class).build(workspaceDir);
   }
 
-  private static CommandLine parse(String[] args) {
-    CommandLineParser parser = new DefaultParser();
-    try {
-      return parser.parse(CLI_OPTIONS, args);
-    } catch (ParseException e) {
-      // print instructions and exit
-      HelpFormatter formatter = new HelpFormatter();
-      formatter.printHelp(EXECUTABLE_NAME, CLI_OPTIONS, true);
-      System.exit(1);
+  /**
+   * Parses command-line arguments and configures a module for the application.
+   */
+  @VisibleForTesting
+  static RootModule configureApplicationModule(String[] args) {
+    Map<String, String> jdkMap = null;
+    Map<String, String> serverMap = null;
+
+    int index = 0;
+    while (index < args.length) {
+      String arg = args[index];
+
+      String currentMapFlag = arg;
+      if (!isMapFlag(currentMapFlag)) {
+        throw new IllegalArgumentException("Expected program argument '" + arg + "' to be one of: {"
+            + JDK_RUNTIMES_MAPPINGS + ", " + SERVER_RUNTIMES_MAPPINGS + "}");
+      }
+
+      // advance through all of the entries in the current map
+      int startMapEntries = index + 1;
+      while (++index < args.length && !isMapFlag(args[index])) {
+        // do nothing
+      }
+      int endMapEntries = index - 1;
+
+      if (endMapEntries - startMapEntries < 0) {
+        throw new IllegalArgumentException("Expected one or more map entry arguments following '"
+            + currentMapFlag + "'");
+      }
+
+      // build the map and assign to correct variable name
+      Map<String, String> map = readMapFromArgs(args, startMapEntries, endMapEntries);
+      if (isJdkMapFlag(currentMapFlag)) {
+        jdkMap = map;
+      } else {
+        serverMap = map;
+      }
     }
-    return null;
+
+    // verify that we have read in both required maps
+    if (jdkMap == null || serverMap == null) {
+      throw new IllegalArgumentException("Expected both " + JDK_RUNTIMES_MAPPINGS + " and "
+          + SERVER_RUNTIMES_MAPPINGS + " to be provided as program arguments.");
+    }
+
+    return new RootModule(jdkMap, serverMap);
+  }
+
+  private static Map<String, String> readMapFromArgs(String[] args, int startIndex, int endIndex) {
+    Map<String, String> map = new HashMap<>();
+
+    for (int i = startIndex; i <= endIndex; i++) {
+      String arg = args[i];
+      String[] split = arg.split("=");
+      if (split.length != 2) {
+        throw new IllegalArgumentException("Could not parse arg '" + arg + "'. "
+            + "Map entry arguments must be of the form: 'KEY=VAL'");
+      }
+      map.put(split[0], split[1]);
+    }
+
+    return map;
+  }
+
+  private static boolean isMapFlag(String arg) {
+    return isJdkMapFlag(arg) || isServerMapFlag(arg);
+  }
+
+  private static boolean isJdkMapFlag(String arg) {
+    return JDK_RUNTIMES_MAPPINGS.equals(arg);
+  }
+
+  private static boolean isServerMapFlag(String arg) {
+    return SERVER_RUNTIMES_MAPPINGS.equals(arg);
+  }
+
+  private static void printUsage() {
+    System.out.println("\tUsage: BUILDER_JAR\n"
+        + "\t\t--jdk-runtimes-map JDK_CONFIG_KEY=DOCKER_IMAGE [,...]\n"
+        + "\t\t--server-runtimes-map SERVER_CONFIG_KEY=DOCKER_IMAGE [,...]");
   }
 }

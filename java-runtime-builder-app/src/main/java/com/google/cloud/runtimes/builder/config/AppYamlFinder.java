@@ -19,6 +19,7 @@ package com.google.cloud.runtimes.builder.config;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.cloud.runtimes.builder.injection.ConfigYamlPath;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
@@ -49,20 +50,21 @@ public class AppYamlFinder {
   }
 
   /**
-   * Search for app.yaml in a few expected paths within the given path.
+   * Search for app.yaml in a few expected paths within a directory
    *
-   * @param searchPath a directory to search in
+   * @param searchDir a directory to search in
    * @return the path to the config file
    * @throws AppYamlNotFoundException if no valid config file is found
    */
-  public Path findAppYamlFile(Path searchPath) throws AppYamlNotFoundException {
-    // Check in expected locations
+  public Path findAppYamlFile(Path searchDir) throws AppYamlNotFoundException {
+    Preconditions.checkArgument(Files.isDirectory(searchDir));
+
     return appYamlSearchPaths.stream()
-        .map(pathName -> searchPath.resolve(pathName))
+        .map(pathName -> searchDir.resolve(pathName))
         .filter(path -> Files.exists(path) && Files.isRegularFile(path))
         .findFirst()
         .orElseThrow(() -> new AppYamlNotFoundException("An app.yaml configuration file is "
-            + "required, but was not found in the included sources."));
+            + "required, but was not found in the included files."));
   }
 
 }

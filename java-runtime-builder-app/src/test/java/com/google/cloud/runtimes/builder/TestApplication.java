@@ -4,15 +4,9 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.cloud.runtimes.builder.injection.RootModule;
 import java.util.Map;
-import org.junit.Before;
 import org.junit.Test;
 
 public class TestApplication {
-
-  @Before
-  public void before() {
-
-  }
 
   @Test(expected = IllegalArgumentException.class)
   public void testConstructPipelineNoMapArgs() {

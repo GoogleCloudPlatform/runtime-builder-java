@@ -19,7 +19,6 @@ package com.google.cloud.runtimes.builder;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.cloud.runtimes.builder.injection.RootModule;
-
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -27,6 +26,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
@@ -43,10 +43,19 @@ public class Application {
   private static final String EXECUTABLE_NAME = "<BUILDER_JAR>";
 
   static {
-    CLI_OPTIONS.addRequiredOption("j", "jdk-runtimes-map", true,
-        "JSON object that contains mappings between supported jdk versions and docker images");
-    CLI_OPTIONS.addRequiredOption("s", "server-runtimes-map", true, "JSON object that contains"
-        + "mappings between supported jdk versions, server types, and docker images");
+    CLI_OPTIONS.addOption(Option.builder("j")
+        .required()
+        .hasArgs()
+        .longOpt("jdk-runtimes-map")
+        .desc("Mappings between supported jdk versions and docker images")
+        .build());
+
+    CLI_OPTIONS.addOption(Option.builder("s")
+        .required()
+        .hasArgs()
+        .longOpt("server-runtimes-map")
+        .desc("Mappings between supported jdk versions, server types, and docker images")
+        .build());
   }
 
   /**
@@ -55,20 +64,20 @@ public class Application {
   public static void main(String[] args)
       throws BuildStepException, IOException, AppYamlNotFoundException {
     CommandLine cmd = parse(args);
-    String jdkMap = cmd.getOptionValue("j");
-    String serverMap = cmd.getOptionValue("s");
+    String[] jdkMappings = cmd.getOptionValues("j");
+    String[] serverMappings = cmd.getOptionValues("s");
 
     Path workspaceDir  = Paths.get(System.getProperty("user.dir"));
-    build(jdkMap, serverMap, workspaceDir);
+    build(jdkMappings, serverMappings, workspaceDir);
   }
 
   /**
    * Invokes the builder.
    */
-  public static void build(String jdkMap, String serverMap, Path workspaceDir)
+  public static void build(String[] jdkMappings, String[] serverMappings, Path workspaceDir)
       throws BuildStepException, IOException, AppYamlNotFoundException {
     // Perform dependency injection and run the application
-    Injector injector = Guice.createInjector(new RootModule(jdkMap, serverMap));
+    Injector injector = Guice.createInjector(new RootModule(jdkMappings, serverMappings));
     injector.getInstance(BuildPipeline.class).build(workspaceDir);
   }
 

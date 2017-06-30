@@ -20,20 +20,20 @@ import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.cloud.runtimes.builder.injection.ConfigYamlPath;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 public class AppYamlFinder {
 
-  private final List<String> appYamlSearchPaths = new LinkedList<>(
-      Arrays.asList("app.yaml", "src/main/appengine/app.yaml"));
+  private static final List<String> DEFAULT_APP_YAML_LOCATIONS
+      = ImmutableList.of("app.yaml", "src/main/appengine/app.yaml");
+  private final Optional<String> providedConfigPath;
 
   /**
    * Constructs a new {@link AppYamlFinder}.
@@ -43,10 +43,7 @@ public class AppYamlFinder {
   @Inject
   @VisibleForTesting
   public AppYamlFinder(@Nullable @ConfigYamlPath String configYamlPath) {
-    // this config location takes priority, so insert it at front of the search list
-    if (!Strings.isNullOrEmpty(configYamlPath)) {
-      appYamlSearchPaths.add(0, configYamlPath);
-    }
+    this.providedConfigPath = Optional.ofNullable(configYamlPath);
   }
 
   /**
@@ -56,15 +53,32 @@ public class AppYamlFinder {
    * @return the path to the config file
    * @throws AppYamlNotFoundException if no valid config file is found
    */
-  public Path findAppYamlFile(Path searchDir) throws AppYamlNotFoundException {
+  public Optional<Path> findAppYamlFile(Path searchDir) throws AppYamlNotFoundException {
     Preconditions.checkArgument(Files.isDirectory(searchDir));
 
-    return appYamlSearchPaths.stream()
-        .map(pathName -> searchDir.resolve(pathName))
-        .filter(path -> Files.exists(path) && Files.isRegularFile(path))
-        .findFirst()
-        .orElseThrow(() -> new AppYamlNotFoundException("An app.yaml configuration file is "
-            + "required, but was not found in the included files."));
+    if (providedConfigPath.isPresent()) {
+      // If a configYamlPath has been specified, don't look anywhere else for it. If it's not there,
+      // fail loudly.
+      Optional<Path> providedAppYaml = providedConfigPath
+          .map(searchDir::resolve)
+          .filter(this::isValidFilePath);
+
+      if (!providedAppYaml.isPresent()) {
+        throw new AppYamlNotFoundException("A yaml configuration file was expected, but none was"
+            + " found at the provided path : " + providedConfigPath.get());
+      }
+      return providedAppYaml;
+    } else {
+      // Search in the default locations for the config file. It's ok if we don't find anything.
+      return DEFAULT_APP_YAML_LOCATIONS.stream()
+          .map(pathName -> searchDir.resolve(pathName))
+          .filter(this::isValidFilePath)
+          .findFirst();
+    }
+  }
+
+  private boolean isValidFilePath(Path path) {
+    return Files.exists(path) && Files.isRegularFile(path);
   }
 
 }

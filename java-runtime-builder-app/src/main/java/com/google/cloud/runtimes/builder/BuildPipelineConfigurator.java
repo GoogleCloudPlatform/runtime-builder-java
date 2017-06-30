@@ -68,14 +68,13 @@ public class BuildPipelineConfigurator {
   public List<BuildStep> configurePipeline(Path workspaceDir)
       throws AppYamlNotFoundException, IOException {
     // locate and deserialize configuration files
-    Path pathToAppYaml = appYamlFinder.findAppYamlFile(workspaceDir);
+    Optional<Path> pathToAppYaml = appYamlFinder.findAppYamlFile(workspaceDir);
+
     AppYaml appYaml;
-    try {
-      appYaml = appYamlParser.parse(pathToAppYaml);
-    } catch (JsonMappingException e) {
-      logger.error("There was an error parsing app.yaml file located at {}. Please make sure it is "
-          + "a valid yaml file.", pathToAppYaml, e);
-      throw e;
+    if (pathToAppYaml.isPresent()) {
+      appYaml = parseAppYaml(pathToAppYaml.get());
+    } else {
+      appYaml = new AppYaml();
     }
 
     RuntimeConfig runtimeConfig = appYaml.getRuntimeConfig() != null
@@ -112,6 +111,16 @@ public class BuildPipelineConfigurator {
     stageDockerBuildStep.setArtifactPathOverride(runtimeConfig.getArtifact());
     steps.add(stageDockerBuildStep);
     return steps;
+  }
+
+  private AppYaml parseAppYaml(Path pathToAppYaml) throws IOException {
+    try {
+      return appYamlParser.parse(pathToAppYaml);
+    } catch (JsonMappingException e) {
+      logger.error("There was an error parsing the config file located at {}. Please make sure it "
+          + "is a valid yaml file.", pathToAppYaml, e);
+      throw e;
+    }
   }
 
   /*

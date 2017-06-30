@@ -1,6 +1,7 @@
 package com.google.cloud.runtimes.builder.config;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
@@ -8,8 +9,8 @@ import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 
 /**
  * Unit tests for {@link AppYamlFinder}
@@ -23,8 +24,8 @@ public class AppYamlFinderTest {
         .file(yamlPath).build()
         .build();
 
-    Path result = new AppYamlFinder(null).findAppYamlFile(workspace);
-    assertEquals(workspace.resolve(yamlPath), result);
+    Optional<Path> result = new AppYamlFinder(null).findAppYamlFile(workspace);
+    assertEquals(workspace.resolve(yamlPath), result.get());
   }
 
   @Test
@@ -34,8 +35,8 @@ public class AppYamlFinderTest {
         .file(yamlPath).build()
         .build();
 
-    Path result = new AppYamlFinder(null).findAppYamlFile(workspace);
-    assertEquals(workspace.resolve(yamlPath), result);
+    Optional<Path> result = new AppYamlFinder(null).findAppYamlFile(workspace);
+    assertEquals(workspace.resolve(yamlPath), result.get());
   }
 
   @Test
@@ -46,33 +47,34 @@ public class AppYamlFinderTest {
         .file(pathFromEnvVar).build()
         .build();
 
-    Path result = new AppYamlFinder(pathFromEnvVar).findAppYamlFile(workspace);
-    assertEquals(workspace.resolve(pathFromEnvVar), result);
+    Optional<Path> result = new AppYamlFinder(pathFromEnvVar).findAppYamlFile(workspace);
+    assertEquals(workspace.resolve(pathFromEnvVar), result.get());
   }
 
-  @Test
+  @Test(expected = AppYamlNotFoundException.class)
   public void testAppYamlWithInvalidEnvVar() throws IOException, AppYamlNotFoundException {
     String appYamlDefaultPath = "app.yaml";
     Path workspace = new TestWorkspaceBuilder()
         .file(appYamlDefaultPath).build()
         .build();
 
-    Path result = new AppYamlFinder("path/does/not/exist").findAppYamlFile(workspace);
-    assertEquals(workspace.resolve(appYamlDefaultPath), result);
+    new AppYamlFinder("path/does/not/exist").findAppYamlFile(workspace);
   }
 
-  @Test(expected = AppYamlNotFoundException.class)
+  @Test
   public void testDirectoryAsAppYaml() throws IOException, AppYamlNotFoundException {
     Path workspace = new TestWorkspaceBuilder().build();
-    new AppYamlFinder(null).findAppYamlFile(workspace);
+    Optional<Path> result = new AppYamlFinder(null).findAppYamlFile(workspace);
+    assertTrue(!result.isPresent());
   }
 
-  @Test(expected = AppYamlNotFoundException.class)
+  @Test
   public void testAppYamlNotPresent() throws AppYamlNotFoundException, IOException {
     Path workspace = new TestWorkspaceBuilder()
         .file("other.yaml").build()
         .build();
-    new AppYamlFinder(null).findAppYamlFile(workspace);
+    Optional<Path> result = new AppYamlFinder(null).findAppYamlFile(workspace);
+    assertTrue(!result.isPresent());
 
   }
 

@@ -25,12 +25,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
-import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
-import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
-import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.GradleBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.MavenBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.ScriptExecutionBuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
+import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
 import com.google.cloud.runtimes.builder.config.AppYamlFinder;
 import com.google.cloud.runtimes.builder.config.AppYamlParser;
 import com.google.cloud.runtimes.builder.config.YamlParser;
@@ -38,7 +38,6 @@ import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 
-import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

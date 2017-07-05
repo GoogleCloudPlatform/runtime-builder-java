@@ -1,7 +1,7 @@
 package com.google.cloud.runtimes.builder.config;
 
+import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
@@ -65,7 +65,7 @@ public class AppYamlFinderTest {
   public void testDirectoryAsAppYaml() throws IOException, AppYamlNotFoundException {
     Path workspace = new TestWorkspaceBuilder().build();
     Optional<Path> result = new AppYamlFinder(Optional.empty()).findAppYamlFile(workspace);
-    assertTrue(!result.isPresent());
+    assertFalse(result.isPresent());
   }
 
   @Test
@@ -74,7 +74,7 @@ public class AppYamlFinderTest {
         .file("other.yaml").build()
         .build();
     Optional<Path> result = new AppYamlFinder(Optional.empty()).findAppYamlFile(workspace);
-    assertTrue(!result.isPresent());
+    assertFalse(result.isPresent());
 
   }
 

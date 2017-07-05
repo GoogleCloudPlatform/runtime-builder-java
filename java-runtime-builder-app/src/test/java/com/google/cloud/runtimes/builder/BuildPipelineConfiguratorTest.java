@@ -25,12 +25,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
-import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
-import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
-import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.GradleBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.MavenBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.ScriptExecutionBuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
+import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
+import com.google.cloud.runtimes.builder.config.AppYamlFinder;
 import com.google.cloud.runtimes.builder.config.AppYamlParser;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
@@ -45,6 +46,7 @@ import org.mockito.MockitoAnnotations;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Unit tests for {@link BuildPipelineConfigurator}
@@ -57,8 +59,9 @@ public class BuildPipelineConfiguratorTest {
   @Mock private StageDockerArtifactBuildStep stageDockerArtifactBuildStep;
   @Mock private ScriptExecutionBuildStep scriptExecutionBuildStep;
 
-  // use the actual yaml parser instead of a mock.
+  // use the actual yaml parser and yaml finders instead of mocks
   private YamlParser<AppYaml> appYamlYamlParser = new AppYamlParser();
+  private AppYamlFinder appYamlFinder = new AppYamlFinder(Optional.empty());
   private BuildPipelineConfigurator buildPipelineConfigurator;
 
   @Before
@@ -72,7 +75,8 @@ public class BuildPipelineConfiguratorTest {
     when(buildStepFactory.createScriptExecutionBuildStep(anyString()))
         .thenReturn(scriptExecutionBuildStep);
 
-    buildPipelineConfigurator = new BuildPipelineConfigurator(appYamlYamlParser, buildStepFactory);
+    buildPipelineConfigurator
+        = new BuildPipelineConfigurator(appYamlYamlParser, appYamlFinder, buildStepFactory);
   }
 
   @Test

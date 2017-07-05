@@ -16,9 +16,12 @@
 
 package com.google.cloud.runtimes.builder.exception;
 
-public class ArtifactNotFoundException extends RuntimeBuilderException {
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+
+public class ArtifactNotFoundException extends BuildStepException {
 
   public ArtifactNotFoundException() {
     super("No deployable artifacts were found. Unable to proceed.");
   }
+
 }

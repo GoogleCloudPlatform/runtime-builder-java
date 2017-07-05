@@ -16,63 +16,43 @@
 
 package com.google.cloud.runtimes.builder.buildsteps;
 
-import com.google.cloud.runtimes.builder.buildsteps.base.AbstractSubprocessBuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
-import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepMetadataConstants;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
+import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 /**
  * Build step that invokes gradle.
  */
-public class GradleBuildStep extends AbstractSubprocessBuildStep {
+public class GradleBuildStep implements BuildStep {
+
+  private static final String DOCKERFILE_STEP = "FROM gcr.io/cloud-builders/java/gradle\n"
+      + "RUN %s build\n"
+      + "\n";
 
   private final Logger logger = LoggerFactory.getLogger(GradleBuildStep.class);
 
   @Override
-  protected List<String> getBuildCommand(Path buildDirectory) {
-    return Arrays.asList(getGradleExecutable(buildDirectory), "build");
-  }
-
-  @Override
-  protected void doBuild(Path directory, Map<String, String> metadata) throws BuildStepException {
-    super.doBuild(directory, metadata);
-    metadata.put(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH, "build/libs");
-  }
-
-  @VisibleForTesting
-  String getGradleHome() {
-    return System.getenv("GRADLE_HOME");
+  public void run(BuildContext buildContext) throws BuildStepException {
+    String gradleExecutable = getGradleExecutable(buildContext.getWorkspaceDir());
+    buildContext.getDockerfile().append(String.format(DOCKERFILE_STEP, gradleExecutable));
+    buildContext.setExpectedArtifactDir(
+        Optional.of(buildContext.getWorkspaceDir().resolve("build/libs")));
   }
 
   private String getGradleExecutable(Path directory) {
     Path wrapperPath = directory.resolve("gradlew");
-    if (Files.isExecutable(wrapperPath)) {
+    if (Files.exists(wrapperPath)) {
       logger.info("Gradle wrapper discovered at {}. Using wrapper instead of system gradle.",
           wrapperPath.toString());
       return wrapperPath.toString();
     }
-
-    String gradleHome = getGradleHome();
-    if (Strings.isNullOrEmpty(gradleHome)) {
-      throw new IllegalStateException("$GRADLE_HOME must be set.");
-    }
-    Path systemGradle = Paths.get(gradleHome).resolve("bin").resolve("gradle");
-    if (Files.isExecutable(systemGradle)) {
-      return systemGradle.toString();
-    }
-
-    throw new IllegalStateException(
-        String.format("The file at %s is not a valid gradle executable", systemGradle.toString()));
+    return "gradle";
   }
 }

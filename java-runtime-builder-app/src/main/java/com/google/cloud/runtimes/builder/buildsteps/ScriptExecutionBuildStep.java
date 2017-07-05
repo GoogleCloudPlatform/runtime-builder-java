@@ -16,19 +16,17 @@
 
 package com.google.cloud.runtimes.builder.buildsteps;
 
-import com.google.cloud.runtimes.builder.buildsteps.base.AbstractSubprocessBuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.common.base.MoreObjects;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * Build step that invokes an arbitrary string as a shell command.
  */
-public class ScriptExecutionBuildStep extends AbstractSubprocessBuildStep {
+public class ScriptExecutionBuildStep implements BuildStep {
 
   private final String buildCommand;
 
@@ -38,8 +36,8 @@ public class ScriptExecutionBuildStep extends AbstractSubprocessBuildStep {
   }
 
   @Override
-  protected List<String> getBuildCommand(Path buildDirectory) {
-    return Arrays.asList("/bin/bash", "-c", buildCommand);
+  public void run(BuildContext buildContext) throws BuildStepException {
+    buildContext.getDockerfile().append("RUN " + buildCommand);
   }
 
   @Override

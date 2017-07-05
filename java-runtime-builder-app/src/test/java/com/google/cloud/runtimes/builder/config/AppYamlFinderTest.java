@@ -24,7 +24,7 @@ public class AppYamlFinderTest {
         .file(yamlPath).build()
         .build();
 
-    Optional<Path> result = new AppYamlFinder(null).findAppYamlFile(workspace);
+    Optional<Path> result = new AppYamlFinder(Optional.empty()).findAppYamlFile(workspace);
     assertEquals(workspace.resolve(yamlPath), result.get());
   }
 
@@ -35,7 +35,7 @@ public class AppYamlFinderTest {
         .file(yamlPath).build()
         .build();
 
-    Optional<Path> result = new AppYamlFinder(null).findAppYamlFile(workspace);
+    Optional<Path> result = new AppYamlFinder(Optional.empty()).findAppYamlFile(workspace);
     assertEquals(workspace.resolve(yamlPath), result.get());
   }
 
@@ -47,7 +47,7 @@ public class AppYamlFinderTest {
         .file(pathFromEnvVar).build()
         .build();
 
-    Optional<Path> result = new AppYamlFinder(pathFromEnvVar).findAppYamlFile(workspace);
+    Optional<Path> result = new AppYamlFinder(Optional.of(pathFromEnvVar)).findAppYamlFile(workspace);
     assertEquals(workspace.resolve(pathFromEnvVar), result.get());
   }
 
@@ -58,13 +58,13 @@ public class AppYamlFinderTest {
         .file(appYamlDefaultPath).build()
         .build();
 
-    new AppYamlFinder("path/does/not/exist").findAppYamlFile(workspace);
+    new AppYamlFinder(Optional.of("path/does/not/exist")).findAppYamlFile(workspace);
   }
 
   @Test
   public void testDirectoryAsAppYaml() throws IOException, AppYamlNotFoundException {
     Path workspace = new TestWorkspaceBuilder().build();
-    Optional<Path> result = new AppYamlFinder(null).findAppYamlFile(workspace);
+    Optional<Path> result = new AppYamlFinder(Optional.empty()).findAppYamlFile(workspace);
     assertTrue(!result.isPresent());
   }
 
@@ -73,7 +73,7 @@ public class AppYamlFinderTest {
     Path workspace = new TestWorkspaceBuilder()
         .file("other.yaml").build()
         .build();
-    Optional<Path> result = new AppYamlFinder(null).findAppYamlFile(workspace);
+    Optional<Path> result = new AppYamlFinder(Optional.empty()).findAppYamlFile(workspace);
     assertTrue(!result.isPresent());
 
   }

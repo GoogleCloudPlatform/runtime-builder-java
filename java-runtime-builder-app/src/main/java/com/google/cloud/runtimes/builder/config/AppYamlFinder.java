@@ -27,7 +27,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.Nullable;
 
 public class AppYamlFinder {
 
@@ -38,12 +37,12 @@ public class AppYamlFinder {
   /**
    * Constructs a new {@link AppYamlFinder}.
    *
-   * @param configYamlPath the expected path for a config file to be found
+   * @param providedConfigPath the expected path for a config file to be found
    */
   @Inject
   @VisibleForTesting
-  public AppYamlFinder(@Nullable @ConfigYamlPath String configYamlPath) {
-    this.providedConfigPath = Optional.ofNullable(configYamlPath);
+  public AppYamlFinder(@ConfigYamlPath Optional<String> providedConfigPath) {
+    this.providedConfigPath = providedConfigPath;
   }
 
   /**

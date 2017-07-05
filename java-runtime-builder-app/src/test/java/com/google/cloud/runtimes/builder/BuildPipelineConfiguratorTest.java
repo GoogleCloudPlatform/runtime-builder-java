@@ -46,6 +46,7 @@ import org.mockito.MockitoAnnotations;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Unit tests for {@link BuildPipelineConfigurator}
@@ -60,7 +61,7 @@ public class BuildPipelineConfiguratorTest {
 
   // use the actual yaml parser and yaml finders instead of mocks
   private YamlParser<AppYaml> appYamlYamlParser = new AppYamlParser();
-  private AppYamlFinder appYamlFinder = new AppYamlFinder(null);
+  private AppYamlFinder appYamlFinder = new AppYamlFinder(Optional.empty());
   private BuildPipelineConfigurator buildPipelineConfigurator;
 
   @Before

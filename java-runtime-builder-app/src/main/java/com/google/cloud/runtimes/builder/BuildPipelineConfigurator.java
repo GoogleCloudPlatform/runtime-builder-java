@@ -17,11 +17,12 @@
 package com.google.cloud.runtimes.builder;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
-import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
 import com.google.cloud.runtimes.builder.config.AppYamlFinder;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
+import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.BuildTool;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
@@ -35,9 +36,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -59,14 +58,34 @@ public class BuildPipelineConfigurator {
     this.buildStepFactory = buildStepFactory;
   }
 
-  /**
-   * Examines a directory and returns a list of build steps that should be executed on it.
-   *
-   * @throws AppYamlNotFoundException if an app.yaml config file is not found
-   * @throws IOException if a transient file system error is encountered
-   */
-  public List<BuildStep> configurePipeline(Path workspaceDir)
-      throws AppYamlNotFoundException, IOException {
+  public void generateDockerResources(Path workspaceDir) throws AppYamlNotFoundException,
+      IOException, BuildStepException {
+
+    BuildContext buildContext = configureBuildContext(workspaceDir);
+
+    String buildScript = buildContext.getRuntimeConfig().getBuildScript();
+    if (!Strings.isNullOrEmpty(buildScript)) {
+      // the user has specified a custom command to build the project
+      buildStepFactory.createScriptExecutionBuildStep(buildScript).run(buildContext);
+    } else {
+      // search for build files in the workspace
+      Optional<Path> buildFile = findBuildFile(workspaceDir);
+      if (buildFile.isPresent()) {
+        // select the correct build step for the buildTool
+        BuildTool buildTool = BuildTool.getForBuildFile(buildFile.get());
+        getBuildStepForTool(buildTool).run(buildContext);
+      }
+    }
+
+    buildStepFactory.createRuntimeImageBuildStep().run(buildContext);
+
+    // TODO write Dockerfile and .dockerignore to files
+    // TODO also, make sure to honor an existing .dockerignore by appending to it rather than overwriting
+  }
+
+  private BuildContext configureBuildContext(Path workspaceDir) throws AppYamlNotFoundException,
+      IOException {
+
     // locate and deserialize configuration files
     Optional<Path> pathToAppYaml = appYamlFinder.findAppYamlFile(workspaceDir);
 
@@ -89,28 +108,7 @@ public class BuildPipelineConfigurator {
           + "from the root of your sources to continue.");
     }
 
-    // assemble the list of build steps
-    List<BuildStep> steps = new ArrayList<>();
-
-    String buildScript = runtimeConfig.getBuildScript();
-    if (!Strings.isNullOrEmpty(buildScript)) {
-      // the user has specified a custom command to build the project
-      steps.add(buildStepFactory.createScriptExecutionBuildStep(buildScript));
-    } else {
-      // search for build files in the workspace
-      Optional<Path> buildFile = findBuildFile(workspaceDir);
-      if (buildFile.isPresent()) {
-        // select the correct build step for the buildTool
-        BuildTool buildTool = BuildTool.getForBuildFile(buildFile.get());
-        steps.add(getBuildStepForTool(buildTool));
-      }
-    }
-
-    StageDockerArtifactBuildStep stageDockerBuildStep
-        = buildStepFactory.createStageDockerArtifactBuildStep(runtimeConfig);
-    stageDockerBuildStep.setArtifactPathOverride(runtimeConfig.getArtifact());
-    steps.add(stageDockerBuildStep);
-    return steps;
+    return new BuildContext(runtimeConfig, workspaceDir);
   }
 
   private AppYaml parseAppYaml(Path pathToAppYaml) throws IOException {

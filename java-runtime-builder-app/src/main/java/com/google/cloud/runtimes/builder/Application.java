@@ -78,7 +78,7 @@ public class Application {
       throws BuildStepException, IOException, AppYamlNotFoundException {
     // Perform dependency injection and run the application
     Injector injector = Guice.createInjector(new RootModule(jdkMappings, serverMappings));
-    injector.getInstance(BuildPipeline.class).build(workspaceDir);
+    injector.getInstance(BuildPipelineConfigurator.class).generateDockerResources(workspaceDir);
   }
 
   private static CommandLine parse(String[] args) {

@@ -42,7 +42,7 @@ public class GradleBuildStep implements BuildStep {
   public void run(BuildContext buildContext) throws BuildStepException {
     String gradleExecutable = getGradleExecutable(buildContext.getWorkspaceDir());
     buildContext.getDockerfile().append(String.format(DOCKERFILE_STEP, gradleExecutable));
-    buildContext.setExpectedArtifactDir(
+    buildContext.setBuildArtifactLocation(
         Optional.of(buildContext.getWorkspaceDir().resolve("build/libs")));
   }
 

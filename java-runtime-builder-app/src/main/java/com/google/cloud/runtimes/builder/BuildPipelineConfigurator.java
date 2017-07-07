@@ -36,7 +36,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -58,29 +59,39 @@ public class BuildPipelineConfigurator {
     this.buildStepFactory = buildStepFactory;
   }
 
+  /**
+   * Generates files required for a docker build into the source directory.
+   */
   public void generateDockerResources(Path workspaceDir) throws AppYamlNotFoundException,
-      IOException, BuildStepException {
+      BuildStepException, IOException {
 
     BuildContext buildContext = configureBuildContext(workspaceDir);
+
+    List<BuildStep> steps = new ArrayList<>();
 
     String buildScript = buildContext.getRuntimeConfig().getBuildScript();
     if (!Strings.isNullOrEmpty(buildScript)) {
       // the user has specified a custom command to build the project
-      buildStepFactory.createScriptExecutionBuildStep(buildScript).run(buildContext);
+      steps.add(buildStepFactory.createScriptExecutionBuildStep(buildScript));
     } else {
       // search for build files in the workspace
-      Optional<Path> buildFile = findBuildFile(workspaceDir);
-      if (buildFile.isPresent()) {
-        // select the correct build step for the buildTool
-        BuildTool buildTool = BuildTool.getForBuildFile(buildFile.get());
-        getBuildStepForTool(buildTool).run(buildContext);
-      }
+      buildContext.getBuildTool()
+          .ifPresent(buildTool ->
+              steps.add(getBuildStepForTool(buildTool)));
     }
 
-    buildStepFactory.createRuntimeImageBuildStep().run(buildContext);
+    if (buildContext.isSourceBuild()) {
+      steps.add(buildStepFactory.createSourceBuildRuntimeImageStep());
+    } else {
+      steps.add(buildStepFactory.createPrebuiltRuntimeImageBuildStep());
+    }
 
-    // TODO write Dockerfile and .dockerignore to files
-    // TODO also, make sure to honor an existing .dockerignore by appending to it rather than overwriting
+    // execute all build steps
+    for (BuildStep step : steps) {
+      step.run(buildContext);
+    }
+
+    buildContext.writeDockerFiles();
   }
 
   private BuildContext configureBuildContext(Path workspaceDir) throws AppYamlNotFoundException,
@@ -134,18 +145,6 @@ public class BuildPipelineConfigurator {
         throw new IllegalArgumentException(
             String.format("No build step available for build tool %s", buildTool));
     }
-  }
-
-  /*
-   * Attempt to find a file in the workspace that looks like a build file.
-   */
-  private Optional<Path> findBuildFile(Path workspaceDir) throws IOException {
-    return Files.list(workspaceDir)
-        .filter((path) -> Files.isRegularFile(path))
-        .filter(BuildTool::isABuildFile)
-        // sort based on natural ordering of BuildTool for each path
-        .sorted(Comparator.comparing(BuildTool::getForBuildFile))
-        .findFirst();
   }
 
   /*

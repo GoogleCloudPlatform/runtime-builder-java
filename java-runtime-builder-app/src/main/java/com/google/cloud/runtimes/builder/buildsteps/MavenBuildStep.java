@@ -43,7 +43,7 @@ public class MavenBuildStep implements BuildStep {
   public void run(BuildContext buildContext) throws BuildStepException {
     String mvnExecutable = getMavenExecutable(buildContext.getWorkspaceDir());
     buildContext.getDockerfile().append(String.format(DOCKERFILE_STEP, mvnExecutable));
-    buildContext.setExpectedArtifactDir(
+    buildContext.setBuildArtifactLocation(
         Optional.of(buildContext.getWorkspaceDir().resolve(DEFAULT_ARTIFACT_PATH)));
   }
 

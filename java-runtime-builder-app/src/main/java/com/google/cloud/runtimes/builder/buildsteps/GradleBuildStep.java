@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 /**
@@ -32,22 +33,25 @@ import java.util.Optional;
  */
 public class GradleBuildStep implements BuildStep {
 
-  private static final String DOCKERFILE_STEP = "FROM gcr.io/cloud-builders/java/gradle\n"
-      + "RUN %s build\n"
-      + "\n";
-
+  private static final String BUILD_CONTAINER_WORKDIR = "/build";
   private final Logger logger = LoggerFactory.getLogger(GradleBuildStep.class);
 
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
-    String gradleExecutable = getGradleExecutable(buildContext.getWorkspaceDir());
-    buildContext.getDockerfile().append(String.format(DOCKERFILE_STEP, gradleExecutable));
-    buildContext.setBuildArtifactLocation(
-        Optional.of(buildContext.getWorkspaceDir().resolve("build/libs")));
+    String dockerfileStep
+        = "FROM gcr.io/cloud-builders/java/gradle\n"
+        + "WORKDIR " + BUILD_CONTAINER_WORKDIR + "\n"
+        + "ADD . .\n"
+        + "RUN " + getGradleExecutable() + " build\n"
+        + "\n";
+
+    buildContext.getDockerfile().append(dockerfileStep);
+    buildContext.setBuildArtifactLocation(Optional.of(
+        Paths.get(BUILD_CONTAINER_WORKDIR, "build/libs")));
   }
 
-  private String getGradleExecutable(Path directory) {
-    Path wrapperPath = directory.resolve("gradlew");
+  private String getGradleExecutable() {
+    Path wrapperPath = Paths.get("./gradlew");
     if (Files.exists(wrapperPath)) {
       logger.info("Gradle wrapper discovered at {}. Using wrapper instead of system gradle.",
           wrapperPath.toString());

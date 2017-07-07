@@ -52,7 +52,7 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
       } else if (artifacts.size() > 1) {
         throw new TooManyArtifactsException(artifacts);
       } else {
-        return artifacts.get(0).toString();
+        return artifacts.get(0).relativize(buildContext.getWorkspaceDir()).toString();
       }
     }
   }

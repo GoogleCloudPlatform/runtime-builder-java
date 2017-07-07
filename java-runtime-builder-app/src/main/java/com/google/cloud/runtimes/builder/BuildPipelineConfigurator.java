@@ -91,6 +91,7 @@ public class BuildPipelineConfigurator {
       step.run(buildContext);
     }
 
+    logger.info("Generating docker resources");
     buildContext.writeDockerFiles();
   }
 

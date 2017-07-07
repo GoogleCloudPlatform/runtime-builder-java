@@ -16,6 +16,8 @@
 
 package com.google.cloud.runtimes.builder.buildsteps;
 
+import static com.google.cloud.runtimes.builder.Constants.DOCKERFILE_BUILD_STAGE;
+
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
@@ -25,7 +27,8 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
     buildContext.getDockerfile().append("FROM " + getBaseRuntimeImage(buildContext) + "\n");
-    buildContext.getDockerfile().append("ADD " + getArtifact(buildContext) + " $APP_DESTINATION\n");
+    buildContext.getDockerfile().append("COPY --from=" + DOCKERFILE_BUILD_STAGE + " "
+        + getArtifact(buildContext) + " $APP_DESTINATION\n");
   }
 
   /**

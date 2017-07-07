@@ -16,6 +16,8 @@
 
 package com.google.cloud.runtimes.builder.buildsteps;
 
+import static com.google.cloud.runtimes.builder.Constants.DOCKERFILE_BUILD_STAGE;
+
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
@@ -25,6 +27,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 /**
@@ -32,23 +35,25 @@ import java.util.Optional;
  */
 public class MavenBuildStep implements BuildStep {
 
-  private static final String DEFAULT_ARTIFACT_PATH = "target";
-  private static final String DOCKERFILE_STEP = "FROM gcr.io/cloud-builders/java/mvn\n"
-      + "RUN %s -B -DskipTests=true clean package\n"
-      + "\n";
-
+  private static final String BUILD_CONTAINER_WORKDIR = "/build";
   private static final Logger logger = LoggerFactory.getLogger(MavenBuildStep.class);
 
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
-    String mvnExecutable = getMavenExecutable(buildContext.getWorkspaceDir());
-    buildContext.getDockerfile().append(String.format(DOCKERFILE_STEP, mvnExecutable));
-    buildContext.setBuildArtifactLocation(
-        Optional.of(buildContext.getWorkspaceDir().resolve(DEFAULT_ARTIFACT_PATH)));
+    String dockerfileStep
+        = "FROM gcr.io/cloud-builders/java/mvn as " + DOCKERFILE_BUILD_STAGE + "\n"
+        + "WORKDIR " + BUILD_CONTAINER_WORKDIR + "\n"
+        + "ADD . .\n"
+        + "RUN " + getMavenExecutable() + " -B -DskipTests clean install\n"
+        + "\n";
+
+    buildContext.getDockerfile().append(dockerfileStep);
+    buildContext.setBuildArtifactLocation(Optional.of(
+        Paths.get(BUILD_CONTAINER_WORKDIR, "target")));
   }
 
-  private String getMavenExecutable(Path directory) {
-    Path wrapperPath = directory.resolve("mvnw");
+  private String getMavenExecutable() {
+    Path wrapperPath = Paths.get("./mvnw");
     if (Files.exists(wrapperPath)) {
       logger.info("Maven wrapper discovered at {}. Using wrapper instead of system mvn.",
           wrapperPath.toString());

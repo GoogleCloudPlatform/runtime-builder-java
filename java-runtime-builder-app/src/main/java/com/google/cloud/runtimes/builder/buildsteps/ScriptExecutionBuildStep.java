@@ -19,7 +19,6 @@ package com.google.cloud.runtimes.builder.buildsteps;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
-import com.google.common.base.MoreObjects;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 

@@ -21,6 +21,8 @@ import static com.google.cloud.runtimes.builder.Constants.DOCKERFILE_BUILD_STAGE
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
+import com.google.cloud.runtimes.builder.injection.MavenDockerImage;
+import com.google.inject.Inject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,13 +40,20 @@ public class MavenBuildStep implements BuildStep {
   private static final String BUILD_CONTAINER_WORKDIR = "/build";
   private static final Logger logger = LoggerFactory.getLogger(MavenBuildStep.class);
 
+  private final String mavenDockerImage;
+
+  @Inject
+  MavenBuildStep(@MavenDockerImage String mavenDockerImage) {
+    this.mavenDockerImage = mavenDockerImage;
+  }
+
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
     String dockerfileStep
-        = "FROM gcr.io/cloud-builders/java/mvn as " + DOCKERFILE_BUILD_STAGE + "\n"
+        = "FROM " + mavenDockerImage + " as " + DOCKERFILE_BUILD_STAGE + "\n"
         + "WORKDIR " + BUILD_CONTAINER_WORKDIR + "\n"
         + "ADD . .\n"
-        + "RUN " + getMavenExecutable() + " -B -DskipTests clean install\n"
+        + "RUN " + getMavenExecutable(buildContext) + " -B -DskipTests clean install\n"
         + "\n";
 
     buildContext.getDockerfile().append(dockerfileStep);
@@ -52,12 +61,13 @@ public class MavenBuildStep implements BuildStep {
         Paths.get(BUILD_CONTAINER_WORKDIR, "target")));
   }
 
-  private String getMavenExecutable() {
-    Path wrapperPath = Paths.get("./mvnw");
+  private String getMavenExecutable(BuildContext buildContext) {
+    Path wrapperPath = buildContext.getWorkspaceDir().resolve("mvnw");
     if (Files.exists(wrapperPath)) {
+      String relativePath = buildContext.getWorkspaceDir().relativize(wrapperPath).toString();
       logger.info("Maven wrapper discovered at {}. Using wrapper instead of system mvn.",
-          wrapperPath.toString());
-      return wrapperPath.toString();
+          relativePath);
+      return relativePath;
     }
     return "mvn";
   }

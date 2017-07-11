@@ -41,6 +41,9 @@ public class RootModule extends AbstractModule {
 
   private final String[] jdkMappings;
   private final String[] serverMappings;
+  private final String mavenDockerImage;
+  private final String gradleDockerImage;
+
   private static final String CONFIG_YAML_ENV_VAR = "GAE_APPLICATION_YAML_PATH";
 
   /**
@@ -49,12 +52,17 @@ public class RootModule extends AbstractModule {
    * @param jdkMappings mappings between supported jdk versions and docker images
    * @param serverMappings mappings between supported jdk versions, server types, and docker images
    */
-  public RootModule(String[] jdkMappings, String[] serverMappings) {
+  public RootModule(String[] jdkMappings, String[] serverMappings, String mavenDockerImage,
+      String gradleDockerImage) {
     Preconditions.checkNotNull(jdkMappings);
     Preconditions.checkNotNull(serverMappings);
+    Preconditions.checkNotNull(mavenDockerImage);
+    Preconditions.checkNotNull(gradleDockerImage);
 
     this.jdkMappings = jdkMappings;
     this.serverMappings = serverMappings;
+    this.mavenDockerImage = mavenDockerImage;
+    this.gradleDockerImage = gradleDockerImage;
   }
 
   @Override
@@ -62,6 +70,12 @@ public class RootModule extends AbstractModule {
     bind(new TypeLiteral<Optional<String>>(){})
         .annotatedWith(ConfigYamlPath.class)
         .toInstance(Optional.ofNullable(System.getenv(CONFIG_YAML_ENV_VAR)));
+    bind(String.class)
+        .annotatedWith(MavenDockerImage.class)
+        .toInstance(mavenDockerImage);
+    bind(String.class)
+        .annotatedWith(GradleDockerImage.class)
+        .toInstance(gradleDockerImage);
 
     bind(new TypeLiteral<YamlParser<AppYaml>>(){})
         .to(AppYamlParser.class);

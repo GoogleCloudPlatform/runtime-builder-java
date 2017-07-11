@@ -20,8 +20,16 @@ steps:
   - '*=gcr.io/google_appengine/openjdk:8'
   - 'openjdk8=gcr.io/google_appengine/openjdk:8'
 
+  # Image to use for maven builds
+  - '--maven-docker-image'
+  - 'gcr.io/cloud-builders/java/mvn'
+
+  # Image to use for gradle builds
+  - '--gradle-docker-image'
+  - 'gcr.io/cloud-builders/java/gradle'
+
 # execute the docker build to produce the resulting image
 - name: 'gcr.io/cloud-builders/docker:latest'
-  args: ['build', '--tag=$_OUTPUT_IMAGE', '.docker_staging']
+  args: ['build', '--tag=$_OUTPUT_IMAGE', '.']
 
 images: ['$_OUTPUT_IMAGE']

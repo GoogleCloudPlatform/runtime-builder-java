@@ -56,6 +56,20 @@ public class Application {
         .longOpt("server-runtimes-map")
         .desc("Mappings between supported jdk versions, server types, and docker images")
         .build());
+
+    CLI_OPTIONS.addOption(Option.builder("m")
+        .required()
+        .hasArg()
+        .longOpt("maven-docker-image")
+        .desc("Docker image to use for maven builds")
+        .build());
+
+    CLI_OPTIONS.addOption(Option.builder("g")
+        .required()
+        .hasArg()
+        .longOpt("gradle-docker-image")
+        .desc("Docker image to use for gradle builds")
+        .build());
   }
 
   /**
@@ -66,19 +80,21 @@ public class Application {
     CommandLine cmd = parse(args);
     String[] jdkMappings = cmd.getOptionValues("j");
     String[] serverMappings = cmd.getOptionValues("s");
+    String mavenImage = cmd.getOptionValue("m");
+    String gradleImage = cmd.getOptionValue("g");
 
+    Injector injector = buildInjector(jdkMappings, serverMappings, mavenImage, gradleImage);
+
+    // Perform dependency injection and run the application
     Path workspaceDir  = Paths.get(System.getProperty("user.dir"));
-    build(jdkMappings, serverMappings, workspaceDir);
+    injector.getInstance(BuildPipelineConfigurator.class).generateDockerResources(workspaceDir);
   }
 
-  /**
-   * Invokes the builder.
-   */
-  public static void build(String[] jdkMappings, String[] serverMappings, Path workspaceDir)
-      throws BuildStepException, IOException, AppYamlNotFoundException {
-    // Perform dependency injection and run the application
-    Injector injector = Guice.createInjector(new RootModule(jdkMappings, serverMappings));
-    injector.getInstance(BuildPipelineConfigurator.class).generateDockerResources(workspaceDir);
+  private static Injector buildInjector(String[] jdkMappings, String[] serverMappings,
+      String mavenImage, String gradleImage) throws BuildStepException, IOException,
+      AppYamlNotFoundException {
+    return Guice.createInjector(
+        new RootModule(jdkMappings, serverMappings, mavenImage, gradleImage));
   }
 
   private static CommandLine parse(String[] args) {

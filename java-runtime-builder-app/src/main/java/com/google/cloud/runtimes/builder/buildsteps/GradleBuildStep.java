@@ -16,9 +16,12 @@
 
 package com.google.cloud.runtimes.builder.buildsteps;
 
+import com.google.cloud.runtimes.builder.Constants;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
+import com.google.cloud.runtimes.builder.injection.GradleDockerImage;
+import com.google.inject.Inject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,13 +39,20 @@ public class GradleBuildStep implements BuildStep {
   private static final String BUILD_CONTAINER_WORKDIR = "/build";
   private final Logger logger = LoggerFactory.getLogger(GradleBuildStep.class);
 
+  private final String gradleImage;
+
+  @Inject
+  GradleBuildStep(@GradleDockerImage String gradleImage) {
+    this.gradleImage = gradleImage;
+  }
+
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
     String dockerfileStep
-        = "FROM gcr.io/cloud-builders/java/gradle\n"
+        = "FROM " + gradleImage + " as " + Constants.DOCKERFILE_BUILD_STAGE + "\n"
         + "WORKDIR " + BUILD_CONTAINER_WORKDIR + "\n"
         + "ADD . .\n"
-        + "RUN " + getGradleExecutable() + " build\n"
+        + "RUN " + getGradleExecutable(buildContext) + " build\n"
         + "\n";
 
     buildContext.getDockerfile().append(dockerfileStep);
@@ -50,12 +60,13 @@ public class GradleBuildStep implements BuildStep {
         Paths.get(BUILD_CONTAINER_WORKDIR, "build/libs")));
   }
 
-  private String getGradleExecutable() {
-    Path wrapperPath = Paths.get("./gradlew");
+  private String getGradleExecutable(BuildContext buildContext) {
+    Path wrapperPath = buildContext.getWorkspaceDir().resolve("gradlew");
     if (Files.exists(wrapperPath)) {
+      String relativePath = buildContext.getWorkspaceDir().relativize(wrapperPath).toString();
       logger.info("Gradle wrapper discovered at {}. Using wrapper instead of system gradle.",
-          wrapperPath.toString());
-      return wrapperPath.toString();
+          relativePath);
+      return relativePath;
     }
     return "gradle";
   }

@@ -37,14 +37,7 @@ public class ScriptExecutionBuildStep implements BuildStep {
 
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
-    buildContext.getDockerfile().append("RUN " + buildCommand);
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("buildCommand", "\"" + buildCommand + "\"")
-        .toString();
+    buildContext.getDockerfile().append("RUN " + buildCommand + "\n");
   }
 
 }

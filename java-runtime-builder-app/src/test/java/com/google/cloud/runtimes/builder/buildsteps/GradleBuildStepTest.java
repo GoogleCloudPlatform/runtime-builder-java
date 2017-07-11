@@ -1,79 +1,78 @@
 package com.google.cloud.runtimes.builder.buildsteps;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.spy;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.runtimes.builder.Constants;
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+import com.google.cloud.runtimes.builder.config.domain.BuildContext;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import org.junit.Before;
-import org.junit.Test;
+import java.util.Optional;
 
 /**
  * Unit tests for {@link GradleBuildStep}
  */
 public class GradleBuildStepTest {
 
-  private String testGradleHome;
   private GradleBuildStep gradleBuildStep;
+  private StringBuilder dockerfileBuilder;
+  private String gradleBuilderImage;
+
+  @Mock private BuildContext buildContext;
 
   @Before
   public void before() throws IOException {
-    gradleBuildStep = spy(new GradleBuildStep());
+    dockerfileBuilder = new StringBuilder();
+    gradleBuilderImage = "gcr.io/foo/gradle";
 
-    testGradleHome = new TestWorkspaceBuilder()
-        .file("bin/gradle").setIsExecutable(true).build()
-        .build()
-        .toString();
+    MockitoAnnotations.initMocks(this);
+    when(buildContext.getDockerfile()).thenReturn(dockerfileBuilder);
 
-    when(gradleBuildStep.getGradleHome()).thenReturn(testGradleHome);
+    gradleBuildStep = new GradleBuildStep(gradleBuilderImage);
+  }
+
+  // common assertions
+  private void assertBuild() {
+    assertTrue(dockerfileBuilder.toString().startsWith("FROM " + gradleBuilderImage + " as " + Constants.DOCKERFILE_BUILD_STAGE + "\n"));
+    verify(buildContext, times(1)).setBuildArtifactLocation(
+        eq(Optional.of(Paths.get("/build/build/libs"))));
   }
 
   @Test
-  public void testBuildWithWrapper() throws IOException {
+  public void testRunWithWrapper() throws IOException, BuildStepException {
     Path workspace = new TestWorkspaceBuilder()
         .file("gradlew").setIsExecutable(true).build()
         .build();
+    when(buildContext.getWorkspaceDir()).thenReturn(workspace);
 
-    List<String> buildCommand = gradleBuildStep.getBuildCommand(workspace);
+    gradleBuildStep.run(buildContext);
 
-    // assert that the first build command part is the gradlew wrapper executable
-    assertEquals(workspace.resolve("gradlew").toString(), buildCommand.get(0));
+    assertBuild();
+    assertTrue(dockerfileBuilder.toString().contains("RUN gradlew build\n"));
   }
 
   @Test
-  public void testBuildWithSystemGradle() throws IOException {
+  public void testRunWithSystemGradle() throws IOException, BuildStepException {
     Path workspace = new TestWorkspaceBuilder()
         .build();
+    when(buildContext.getWorkspaceDir()).thenReturn(workspace);
 
-    List<String> buildCommand = gradleBuildStep.getBuildCommand(workspace);
+    gradleBuildStep.run(buildContext);
 
-    // assert that the system gradle is called
-    assertEquals(Paths.get(testGradleHome, "bin", "gradle").toString(), buildCommand.get(0));
+    assertBuild();
+    assertTrue(dockerfileBuilder.toString().contains("RUN gradle build\n"));
   }
 
-  @Test(expected = IllegalStateException.class)
-  public void testBuildWithNoGradleHomeEnvVariable() throws IOException {
-    Path workspace = new TestWorkspaceBuilder()
-        .build();
-
-    when(gradleBuildStep.getGradleHome()).thenReturn(null);
-
-    gradleBuildStep.getBuildCommand(workspace);
-  }
-
-  @Test(expected = IllegalStateException.class)
-  public void testBuildWithInvalidGradleHome() throws IOException {
-    Path workspace = new TestWorkspaceBuilder()
-        .build();
-    Path emptyGradleHome = new TestWorkspaceBuilder()
-        .build();
-
-    when(gradleBuildStep.getGradleHome()).thenReturn(emptyGradleHome.toString());
-
-    gradleBuildStep.getBuildCommand(workspace);
-  }
 }

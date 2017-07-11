@@ -37,18 +37,23 @@ public class SourceBuildRuntimeImageBuildStep extends RuntimeImageBuildStep {
     String providedArtifactPath = buildContext.getRuntimeConfig().getArtifact();
     if (providedArtifactPath != null) {
       // if the artifact path is set in runtime configuration, use that value
-      return buildContext.getWorkspaceDir().resolve(providedArtifactPath).toString();
-    } else {
-      // otherwise, guess the artifact's location
-      String dir = buildContext.getBuildArtifactLocation().get().toString();
-      String extension = isServerRuntime(buildContext) ? "war" : "jar";
-      return dir + File.separator + "*." + extension;
+      return providedArtifactPath;
     }
+
+    // otherwise, guess the artifact's location
+    // TODO is this even a good idea? error out?
+    String dir = buildContext.getBuildArtifactLocation().get().toString();
+    String extension = isServerRuntime(buildContext) ? "war" : "jar";
+    return dir + File.separator + "*." + extension;
   }
 
   @Override
   protected String getBaseRuntimeImage(BuildContext buildContext) {
-    // TODO throw exception if not set?? or just use defaults?
+    // TODO throw exception if not set?
+    // other option - require that artifact is explicitly set in config, and use its extension to
+    // determine the default runtime type. This is more consistent with how it's done for prebuilt
+    // artifacts
+
     RuntimeConfig runtimeConfig = buildContext.getRuntimeConfig();
     String server = runtimeConfig.getServer();
     if (server != null) {

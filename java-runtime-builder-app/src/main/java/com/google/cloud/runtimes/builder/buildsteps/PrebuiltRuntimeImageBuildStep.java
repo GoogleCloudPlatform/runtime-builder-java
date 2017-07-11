@@ -18,8 +18,11 @@ package com.google.cloud.runtimes.builder.buildsteps;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
+import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
+import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
 import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
+import com.google.inject.Inject;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -27,9 +30,33 @@ import java.util.List;
 
 public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
 
+  private final JdkServerLookup jdkServerLookup;
+
+  @Inject
+  PrebuiltRuntimeImageBuildStep(JdkServerLookup jdkServerLookup) {
+    this.jdkServerLookup = jdkServerLookup;
+  }
+
   @Override
-  protected String getBaseRuntimeImage(BuildContext buildContext) {
-    return null;
+  protected String getBaseRuntimeImage(BuildContext buildContext) throws BuildStepException {
+    String artifact = getArtifact(buildContext);
+    RuntimeConfig runtimeConfig = buildContext.getRuntimeConfig();
+
+    // Runtime type (web server vs plain JDK) runtime is selected based on the file extension of the
+    // artifact. Then, the runtime image is looked up using the provided runtime config fields.
+    if (artifact.endsWith("war") || artifact.endsWith("WAR")) {
+      return jdkServerLookup.lookupServerImage(runtimeConfig.getJdk(), runtimeConfig.getServer());
+    } else if (artifact.endsWith("jar") || artifact.endsWith("JAR")) {
+      // If the user expects a server to be involved, fail loudly.
+      if (runtimeConfig.getServer() != null) {
+        throw new BuildStepException("runtime_config.server configuration is not compatible with "
+            + ".jar artifacts. To use a web server runtime, use a .war artifact instead.");
+      }
+      return jdkServerLookup.lookupJdkImage(runtimeConfig.getJdk());
+    } else {
+      throw new BuildStepException("Unrecognized artifact: '" + artifact + "'. A .jar or .war "
+          + "artifact was expected.");
+    }
   }
 
   @Override
@@ -37,23 +64,22 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
     String providedArtifactPath = buildContext.getRuntimeConfig().getArtifact();
     if (providedArtifactPath != null) {
       // if the artifact path is set in runtime configuration, use that value
-      return buildContext.getWorkspaceDir().resolve(providedArtifactPath).toString();
+      return providedArtifactPath;
+    }
+
+    List<Path> artifacts;
+    try {
+      artifacts = buildContext.findArtifacts();
+    } catch (IOException e) {
+      throw new BuildStepException(e);
+    }
+
+    if (artifacts.size() < 1) {
+      throw new ArtifactNotFoundException();
+    } else if (artifacts.size() > 1) {
+      throw new TooManyArtifactsException(artifacts);
     } else {
-
-      List<Path> artifacts;
-      try {
-        artifacts = buildContext.findArtifacts();
-      } catch (IOException e) {
-        throw new BuildStepException(e);
-      }
-
-      if (artifacts.size() < 1) {
-        throw new ArtifactNotFoundException();
-      } else if (artifacts.size() > 1) {
-        throw new TooManyArtifactsException(artifacts);
-      } else {
-        return artifacts.get(0).relativize(buildContext.getWorkspaceDir()).toString();
-      }
+      return buildContext.getWorkspaceDir().relativize(artifacts.get(0)).toString();
     }
   }
 }

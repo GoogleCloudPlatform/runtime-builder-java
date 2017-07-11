@@ -23,6 +23,9 @@ import static java.nio.file.StandardOpenOption.WRITE;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,6 +39,8 @@ public class BuildContext {
 
   private static final String DOCKERFILE_NAME = "Dockerfile";
   private static final String DOCKERIGNORE_NAME = ".dockerignore";
+
+  private final Logger logger = LoggerFactory.getLogger(BuildContext.class);
 
   private final RuntimeConfig runtimeConfig;
   private final Path workspaceDir;
@@ -104,14 +109,25 @@ public class BuildContext {
    * @throws IOException if a transient error occurs while writing the files
    */
   public void writeDockerFiles() throws IOException {
+    Path dockerFilePath = workspaceDir.resolve(DOCKERFILE_NAME);
+
+    // fail loudly if a Dockerfile already exists
+    if (Files.exists(dockerFilePath)) {
+      throw new IllegalStateException("Custom Dockerfiles are not supported. If you wish to use a "
+          + "custom Dockerfile, consider using runtime: custom. Otherwise, remove the Dockerfile "
+          + "from the root of your sources to continue.");
+    }
+
     // write Dockerfile
-    try (BufferedWriter writer = Files.newBufferedWriter(workspaceDir.resolve(DOCKERFILE_NAME))) {
+    logger.info("Generating Dockerfile at {}", dockerFilePath);
+    try (BufferedWriter writer = Files.newBufferedWriter(dockerFilePath)) {
       writer.write(dockerfile.toString());
     }
 
     // write .dockerignore file, appending to an existing file if it exists
-    try (BufferedWriter writer = Files.newBufferedWriter(workspaceDir.resolve(DOCKERIGNORE_NAME),
-        CREATE, WRITE, APPEND)) {
+    Path dockerIgnorePath = workspaceDir.resolve(DOCKERIGNORE_NAME);
+    logger.info("Generating .dockerignore file at {}", dockerIgnorePath);
+    try (BufferedWriter writer = Files.newBufferedWriter(dockerIgnorePath, CREATE, WRITE, APPEND)) {
       // write a newline in case an existing .dockerignore doesn't end with a newline character
       writer.newLine();
       writer.write(dockerignore.toString());
@@ -126,7 +142,7 @@ public class BuildContext {
         // filter out files that don't end in .war or .jar
         .filter((path) -> {
           String extension = com.google.common.io.Files.getFileExtension(path.toString());
-          return extension.equals("war") || extension.equals("jar");
+          return extension.equalsIgnoreCase("war") || extension.equalsIgnoreCase("jar");
         })
         .collect(Collectors.toList());
   }

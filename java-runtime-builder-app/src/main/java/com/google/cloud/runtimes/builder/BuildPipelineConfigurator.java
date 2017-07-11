@@ -34,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -91,7 +90,6 @@ public class BuildPipelineConfigurator {
       step.run(buildContext);
     }
 
-    logger.info("Generating docker resources");
     buildContext.writeDockerFiles();
   }
 
@@ -111,14 +109,6 @@ public class BuildPipelineConfigurator {
     RuntimeConfig runtimeConfig = appYaml.getRuntimeConfig() != null
         ? appYaml.getRuntimeConfig()
         : new RuntimeConfig();
-
-    // custom Dockerfiles are not supported - fail loudly so there is no ambiguity about the image
-    // being built
-    if (findDockerfile(workspaceDir).isPresent()) {
-      throw new IllegalStateException("Custom Dockerfiles are not supported. If you wish to use a "
-          + "custom Dockerfile, consider using runtime: custom. Otherwise, remove the Dockerfile "
-          + "from the root of your sources to continue.");
-    }
 
     return new BuildContext(runtimeConfig, workspaceDir);
   }
@@ -148,15 +138,4 @@ public class BuildPipelineConfigurator {
     }
   }
 
-  /*
-   * Search for a Dockerfile at the root of the workspace
-   */
-  private Optional<Path> findDockerfile(Path workspaceDir) {
-    Path dockerfilePath = workspaceDir.resolve("Dockerfile");
-    if (Files.exists(dockerfilePath) && Files.isRegularFile(dockerfilePath)) {
-      return Optional.of(dockerfilePath);
-    } else {
-      return Optional.empty();
-    }
-  }
 }

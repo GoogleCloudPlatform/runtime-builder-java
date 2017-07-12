@@ -63,10 +63,11 @@ public class GradleBuildStep implements BuildStep {
   private String getGradleExecutable(BuildContext buildContext) {
     Path wrapperPath = buildContext.getWorkspaceDir().resolve("gradlew");
     if (Files.exists(wrapperPath)) {
-      String relativePath = buildContext.getWorkspaceDir().relativize(wrapperPath).toString();
+      Path relativePath = buildContext.getWorkspaceDir().relativize(wrapperPath);
       logger.info("Gradle wrapper discovered at {}. Using wrapper instead of system gradle.",
           relativePath);
-      return relativePath;
+
+      return Paths.get(BUILD_CONTAINER_WORKDIR).resolve(relativePath).toString();
     }
     return "gradle";
   }

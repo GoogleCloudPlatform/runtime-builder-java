@@ -60,7 +60,8 @@ public class MavenBuildStepTest {
     mavenBuildStep.run(buildContext);
 
     assertBuild();
-    assertTrue(dockerfileBuilder.toString().contains("RUN mvnw -B -DskipTests clean install\n"));
+    assertTrue(dockerfileBuilder.toString().contains("RUN /build/mvnw "
+        + "-B -DskipTests clean install\n"));
   }
 
   @Test

@@ -64,10 +64,11 @@ public class MavenBuildStep implements BuildStep {
   private String getMavenExecutable(BuildContext buildContext) {
     Path wrapperPath = buildContext.getWorkspaceDir().resolve("mvnw");
     if (Files.exists(wrapperPath)) {
-      String relativePath = buildContext.getWorkspaceDir().relativize(wrapperPath).toString();
+      Path relativePath = buildContext.getWorkspaceDir().relativize(wrapperPath);
       logger.info("Maven wrapper discovered at {}. Using wrapper instead of system mvn.",
           relativePath);
-      return relativePath;
+
+      return Paths.get(BUILD_CONTAINER_WORKDIR).resolve(relativePath).toString();
     }
     return "mvn";
   }

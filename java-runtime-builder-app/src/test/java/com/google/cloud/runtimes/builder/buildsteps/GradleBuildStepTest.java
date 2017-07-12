@@ -60,7 +60,7 @@ public class GradleBuildStepTest {
     gradleBuildStep.run(buildContext);
 
     assertBuild();
-    assertTrue(dockerfileBuilder.toString().contains("RUN gradlew build\n"));
+    assertTrue(dockerfileBuilder.toString().contains("RUN /build/gradlew build\n"));
   }
 
   @Test

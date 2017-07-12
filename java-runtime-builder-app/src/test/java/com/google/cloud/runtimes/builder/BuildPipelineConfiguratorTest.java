@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
 import com.google.cloud.runtimes.builder.buildsteps.GradleBuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.JettyOptionsBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.MavenBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.PrebuiltRuntimeImageBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.ScriptExecutionBuildStep;
@@ -63,6 +64,7 @@ public class BuildPipelineConfiguratorTest {
   @Mock private ScriptExecutionBuildStep scriptExecutionBuildStep;
   @Mock private PrebuiltRuntimeImageBuildStep prebuiltRuntimeImageBuildStep;
   @Mock private SourceBuildRuntimeImageBuildStep sourceBuildRuntimeImageBuildStep;
+  @Mock private JettyOptionsBuildStep jettyOptionsBuildStep;
 
   // use the actual yaml parser and yaml finders instead of mocks
   private YamlParser<AppYaml> appYamlYamlParser = new AppYamlParser();
@@ -81,16 +83,19 @@ public class BuildPipelineConfiguratorTest {
         .thenReturn(prebuiltRuntimeImageBuildStep);
     when(buildStepFactory.createSourceBuildRuntimeImageStep())
         .thenReturn(sourceBuildRuntimeImageBuildStep);
+    when(buildStepFactory.createJettyOptionsBuildStep()).thenReturn(jettyOptionsBuildStep);
 
     buildPipelineConfigurator
         = new BuildPipelineConfigurator(appYamlYamlParser, appYamlFinder, buildStepFactory);
   }
 
-  private void assertBuildStepCalledWithRuntimeConfig(BuildStep buildStep, RuntimeConfig expected)
-      throws BuildStepException {
-    ArgumentCaptor<BuildContext> captor = ArgumentCaptor.forClass(BuildContext.class);
-    verify(buildStep, times(1)).run(captor.capture());
-    assertRuntimeConfigEquals(expected, captor.getValue().getRuntimeConfig());
+  private void assertBuildStepsCalledWithRuntimeConfig(RuntimeConfig expected,
+      BuildStep... buildSteps) throws BuildStepException {
+    for (BuildStep buildStep : buildSteps) {
+      ArgumentCaptor<BuildContext> captor = ArgumentCaptor.forClass(BuildContext.class);
+      verify(buildStep, times(1)).run(captor.capture());
+      assertRuntimeConfigEquals(expected, captor.getValue().getRuntimeConfig());
+    }
   }
 
   private void assertRuntimeConfigEquals(RuntimeConfig expected, RuntimeConfig actual) {
@@ -111,9 +116,11 @@ public class BuildPipelineConfiguratorTest {
     buildPipelineConfigurator.generateDockerResources(workspace);
 
     verify(buildStepFactory, times(1)).createPrebuiltRuntimeImageBuildStep();
+    verify(buildStepFactory, times(1)).createJettyOptionsBuildStep();
     verifyNoMoreInteractions(buildStepFactory);
 
-    assertBuildStepCalledWithRuntimeConfig(prebuiltRuntimeImageBuildStep, new RuntimeConfig());
+    assertBuildStepsCalledWithRuntimeConfig(new RuntimeConfig(), prebuiltRuntimeImageBuildStep,
+        jettyOptionsBuildStep);
   }
 
   @Test
@@ -127,10 +134,11 @@ public class BuildPipelineConfiguratorTest {
 
     verify(buildStepFactory, times(1)).createMavenBuildStep();
     verify(buildStepFactory, times(1)).createSourceBuildRuntimeImageStep();
+    verify(buildStepFactory, times(1)).createJettyOptionsBuildStep();
     verifyNoMoreInteractions(buildStepFactory);
 
-    assertBuildStepCalledWithRuntimeConfig(mavenBuildStep, new RuntimeConfig());
-    assertBuildStepCalledWithRuntimeConfig(sourceBuildRuntimeImageBuildStep, new RuntimeConfig());
+    assertBuildStepsCalledWithRuntimeConfig(new RuntimeConfig(), mavenBuildStep,
+        sourceBuildRuntimeImageBuildStep, jettyOptionsBuildStep);
   }
 
   @Test
@@ -144,10 +152,11 @@ public class BuildPipelineConfiguratorTest {
 
     verify(buildStepFactory, times(1)).createGradleBuildStep();
     verify(buildStepFactory, times(1)).createSourceBuildRuntimeImageStep();
+    verify(buildStepFactory, times(1)).createJettyOptionsBuildStep();
     verifyNoMoreInteractions(buildStepFactory);
 
-    assertBuildStepCalledWithRuntimeConfig(gradleBuildStep, new RuntimeConfig());
-    assertBuildStepCalledWithRuntimeConfig(sourceBuildRuntimeImageBuildStep, new RuntimeConfig());
+    assertBuildStepsCalledWithRuntimeConfig(new RuntimeConfig(), gradleBuildStep,
+        sourceBuildRuntimeImageBuildStep, jettyOptionsBuildStep);
   }
 
   @Test
@@ -162,10 +171,11 @@ public class BuildPipelineConfiguratorTest {
 
     verify(buildStepFactory, times(1)).createMavenBuildStep();
     verify(buildStepFactory, times(1)).createSourceBuildRuntimeImageStep();
+    verify(buildStepFactory, times(1)).createJettyOptionsBuildStep();
     verifyNoMoreInteractions(buildStepFactory);
 
-    assertBuildStepCalledWithRuntimeConfig(mavenBuildStep, new RuntimeConfig());
-    assertBuildStepCalledWithRuntimeConfig(sourceBuildRuntimeImageBuildStep, new RuntimeConfig());
+    assertBuildStepsCalledWithRuntimeConfig(new RuntimeConfig(), mavenBuildStep,
+        sourceBuildRuntimeImageBuildStep, jettyOptionsBuildStep);
   }
 
   @Test
@@ -183,12 +193,13 @@ public class BuildPipelineConfiguratorTest {
 
     verify(buildStepFactory, times(1)).createScriptExecutionBuildStep(eq(customScript));
     verify(buildStepFactory, times(1)).createSourceBuildRuntimeImageStep();
+    verify(buildStepFactory, times(1)).createJettyOptionsBuildStep();
     verifyNoMoreInteractions(buildStepFactory);
 
     RuntimeConfig expectedConfig = new RuntimeConfig();
     expectedConfig.setBuildScript(customScript);
-    assertBuildStepCalledWithRuntimeConfig(scriptExecutionBuildStep, expectedConfig);
-    assertBuildStepCalledWithRuntimeConfig(sourceBuildRuntimeImageBuildStep, expectedConfig);
+    assertBuildStepsCalledWithRuntimeConfig(expectedConfig, scriptExecutionBuildStep,
+        sourceBuildRuntimeImageBuildStep, jettyOptionsBuildStep);
   }
 
   @Test
@@ -203,10 +214,11 @@ public class BuildPipelineConfiguratorTest {
 
     verify(buildStepFactory, times(1)).createMavenBuildStep();
     verify(buildStepFactory, times(1)).createSourceBuildRuntimeImageStep();
+    verify(buildStepFactory, times(1)).createJettyOptionsBuildStep();
     verifyNoMoreInteractions(buildStepFactory);
 
-    assertBuildStepCalledWithRuntimeConfig(mavenBuildStep, new RuntimeConfig());
-    assertBuildStepCalledWithRuntimeConfig(sourceBuildRuntimeImageBuildStep, new RuntimeConfig());
+    assertBuildStepsCalledWithRuntimeConfig(new RuntimeConfig(), mavenBuildStep,
+        sourceBuildRuntimeImageBuildStep, jettyOptionsBuildStep);
   }
 
 }

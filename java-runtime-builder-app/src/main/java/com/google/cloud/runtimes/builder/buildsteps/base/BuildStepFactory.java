@@ -17,6 +17,7 @@
 package com.google.cloud.runtimes.builder.buildsteps.base;
 
 import com.google.cloud.runtimes.builder.buildsteps.GradleBuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.JettyOptionsBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.MavenBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.PrebuiltRuntimeImageBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.ScriptExecutionBuildStep;
@@ -38,5 +39,7 @@ public interface BuildStepFactory {
   SourceBuildRuntimeImageBuildStep createSourceBuildRuntimeImageStep();
 
   PrebuiltRuntimeImageBuildStep createPrebuiltRuntimeImageBuildStep();
+
+  JettyOptionsBuildStep createJettyOptionsBuildStep();
 
 }

@@ -85,6 +85,9 @@ public class BuildPipelineConfigurator {
       steps.add(buildStepFactory.createPrebuiltRuntimeImageBuildStep());
     }
 
+    // add build step for optional jetty customizations
+    steps.add(buildStepFactory.createJettyOptionsBuildStep());
+
     // execute all build steps
     for (BuildStep step : steps) {
       step.run(buildContext);
@@ -117,8 +120,8 @@ public class BuildPipelineConfigurator {
     try {
       return appYamlParser.parse(pathToAppYaml);
     } catch (JsonMappingException e) {
-      logger.error("There was an error parsing the config file located at {}. Please make sure it "
-          + "is a valid yaml file.", pathToAppYaml, e);
+      logger.error("There was an error parsing the config file located at " + pathToAppYaml + "."
+          + " Please make sure it is a valid yaml file.", e);
       throw e;
     }
   }

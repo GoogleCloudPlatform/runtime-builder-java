@@ -16,9 +16,11 @@
 
 package com.google.cloud.runtimes.builder.buildsteps;
 
+import com.google.cloud.runtimes.builder.Constants;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
@@ -27,6 +29,9 @@ import com.google.inject.assistedinject.Assisted;
  */
 public class ScriptExecutionBuildStep implements BuildStep {
 
+  @VisibleForTesting
+  static final String BUILD_IMAGE = "gcr.io/gcp-runtimes/java/runtime-builder";
+  private static final String WORKDIR = "/build";
   private final String buildCommand;
 
   @Inject
@@ -36,7 +41,11 @@ public class ScriptExecutionBuildStep implements BuildStep {
 
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
-    buildContext.getDockerfile().append("RUN " + buildCommand + "\n");
+    buildContext.getDockerfile().append(
+        "FROM " + BUILD_IMAGE + " as " + Constants.DOCKERFILE_BUILD_STAGE + "\n"
+        + "ADD . .\n"
+        + "RUN " + buildCommand + "\n"
+        + "\n");
   }
 
 }

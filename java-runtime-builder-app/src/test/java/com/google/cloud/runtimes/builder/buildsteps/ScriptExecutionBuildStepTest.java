@@ -1,8 +1,6 @@
 package com.google.cloud.runtimes.builder.buildsteps;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
@@ -34,7 +32,11 @@ public class ScriptExecutionBuildStepTest {
     String buildCommand = "echo $VAR; cd /dir; mvn package";
 
     new ScriptExecutionBuildStep(buildCommand).run(buildContext);
-    assertEquals("RUN " + buildCommand + '\n', dockerfileBuilder.toString());
+    String dockerfileContents = dockerfileBuilder.toString();
+
+    assertTrue(dockerfileContents.contains("RUN " + buildCommand + '\n'));
+    assertTrue(dockerfileContents.contains("FROM " + ScriptExecutionBuildStep.BUILD_IMAGE
+        + " as builder\n"));
   }
 
 }

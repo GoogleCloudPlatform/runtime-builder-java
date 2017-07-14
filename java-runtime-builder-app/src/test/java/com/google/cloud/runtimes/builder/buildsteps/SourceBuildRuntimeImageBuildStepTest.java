@@ -16,8 +16,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.Optional;
 
 /**
  * Unit tests for {@link SourceBuildRuntimeImageBuildStep}.
@@ -52,14 +50,20 @@ public class SourceBuildRuntimeImageBuildStepTest {
     return new BuildContext(runtimeConfig, new TestWorkspaceBuilder().build());
   }
 
-  @Test
-  public void testServerAndJdk() throws IOException, BuildStepException {
+  @Test(expected = IllegalStateException.class)
+  public void testNoArtifactSpecified() throws IOException, BuildStepException {
     BuildContext ctx = initBuildContext();
-    ctx.setBuildArtifactLocation(Optional.of(Paths.get("/workdir/foo")));
+    buildStep.run(ctx);
+  }
 
+  @Test
+  public void testWithArtifactSpecified() throws IOException, BuildStepException {
+    String artifact = "path/to/artifact.war";
+    BuildContext ctx = initBuildContext();
+    ctx.getRuntimeConfig().setArtifact(artifact);
     buildStep.run(ctx);
 
-    assertEquals("FROM " + TEST_SERVER_RUNTIME + "\nCOPY /workdir/foo/*.war $APP_DESTINATION\n",
+    assertEquals("FROM " + TEST_SERVER_RUNTIME + "\nCOPY " + artifact + " $APP_DESTINATION\n",
         ctx.getDockerfile().toString());
   }
 

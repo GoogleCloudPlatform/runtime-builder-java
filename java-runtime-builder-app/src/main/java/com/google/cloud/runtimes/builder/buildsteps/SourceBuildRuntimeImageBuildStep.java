@@ -18,52 +18,26 @@ package com.google.cloud.runtimes.builder.buildsteps;
 
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
-import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.inject.Inject;
-
-import java.io.File;
 
 public class SourceBuildRuntimeImageBuildStep extends RuntimeImageBuildStep {
 
-  private final JdkServerLookup jdkServerLookup;
-
   @Inject
   SourceBuildRuntimeImageBuildStep(JdkServerLookup jdkServerLookup) {
-    this.jdkServerLookup = jdkServerLookup;
+    super(jdkServerLookup);
   }
 
   @Override
   protected String getArtifact(BuildContext buildContext) {
     String providedArtifactPath = buildContext.getRuntimeConfig().getArtifact();
-    if (providedArtifactPath != null) {
-      // if the artifact path is set in runtime configuration, use that value
-      return providedArtifactPath;
+
+    // Require that the artifact name is explicitly provided by the user.
+    if (providedArtifactPath == null) {
+      throw new IllegalStateException("Unable to determine the artifact path. In order to build "
+          + "from source, the path to the artifact must be specified in the runtime_config.artifact"
+          + " field.");
     }
-
-    // otherwise, guess the artifact's location
-    // TODO is this even a good idea? error out?
-    String dir = buildContext.getBuildArtifactLocation().get().toString();
-    String extension = isServerRuntime(buildContext) ? "war" : "jar";
-    return dir + File.separator + "*." + extension;
+    return providedArtifactPath;
   }
 
-  @Override
-  protected String getBaseRuntimeImage(BuildContext buildContext) {
-    // TODO throw exception if not set?
-    // other option - require that artifact is explicitly set in config, and use its extension to
-    // determine the default runtime type. This is more consistent with how it's done for prebuilt
-    // artifacts
-
-    RuntimeConfig runtimeConfig = buildContext.getRuntimeConfig();
-    String server = runtimeConfig.getServer();
-    if (server != null) {
-      return jdkServerLookup.lookupServerImage(runtimeConfig.getJdk(), runtimeConfig.getServer());
-    } else {
-      return jdkServerLookup.lookupJdkImage(runtimeConfig.getJdk());
-    }
-  }
-
-  private boolean isServerRuntime(BuildContext buildContext) {
-    return buildContext.getRuntimeConfig().getServer() != null;
-  }
 }

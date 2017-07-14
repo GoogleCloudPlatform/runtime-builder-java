@@ -19,7 +19,6 @@ package com.google.cloud.runtimes.builder.buildsteps;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
-import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
 import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import com.google.inject.Inject;
@@ -30,33 +29,9 @@ import java.util.List;
 
 public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
 
-  private final JdkServerLookup jdkServerLookup;
-
   @Inject
   PrebuiltRuntimeImageBuildStep(JdkServerLookup jdkServerLookup) {
-    this.jdkServerLookup = jdkServerLookup;
-  }
-
-  @Override
-  protected String getBaseRuntimeImage(BuildContext buildContext) throws BuildStepException {
-    String artifact = getArtifact(buildContext);
-    RuntimeConfig runtimeConfig = buildContext.getRuntimeConfig();
-
-    // Runtime type (web server vs plain JDK) runtime is selected based on the file extension of the
-    // artifact. Then, the runtime image is looked up using the provided runtime config fields.
-    if (artifact.endsWith("war") || artifact.endsWith("WAR")) {
-      return jdkServerLookup.lookupServerImage(runtimeConfig.getJdk(), runtimeConfig.getServer());
-    } else if (artifact.endsWith("jar") || artifact.endsWith("JAR")) {
-      // If the user expects a server to be involved, fail loudly.
-      if (runtimeConfig.getServer() != null) {
-        throw new BuildStepException("runtime_config.server configuration is not compatible with "
-            + ".jar artifacts. To use a web server runtime, use a .war artifact instead.");
-      }
-      return jdkServerLookup.lookupJdkImage(runtimeConfig.getJdk());
-    } else {
-      throw new BuildStepException("Unrecognized artifact: '" + artifact + "'. A .jar or .war "
-          + "artifact was expected.");
-    }
+    super(jdkServerLookup);
   }
 
   @Override

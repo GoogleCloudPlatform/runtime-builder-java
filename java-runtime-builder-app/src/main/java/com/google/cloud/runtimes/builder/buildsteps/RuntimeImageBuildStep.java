@@ -21,8 +21,16 @@ import static com.google.cloud.runtimes.builder.Constants.DOCKERFILE_BUILD_STAGE
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
+import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
+import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 
 public abstract class RuntimeImageBuildStep implements BuildStep {
+
+  private final JdkServerLookup jdkServerLookup;
+
+  protected RuntimeImageBuildStep(JdkServerLookup jdkServerLookup) {
+    this.jdkServerLookup = jdkServerLookup;
+  }
 
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
@@ -36,11 +44,26 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
         + " $APP_DESTINATION\n");
   }
 
-  /**
-   * Returns the name of the base image runtime.
-   */
-  protected abstract String getBaseRuntimeImage(BuildContext buildContext)
-      throws BuildStepException;
+  private String getBaseRuntimeImage(BuildContext buildContext) throws BuildStepException {
+    String artifact = getArtifact(buildContext);
+    RuntimeConfig runtimeConfig = buildContext.getRuntimeConfig();
+
+    // Runtime type (web server vs plain JDK) runtime is selected based on the file extension of the
+    // artifact. Then, the runtime image is looked up using the provided runtime config fields.
+    if (artifact.endsWith("war") || artifact.endsWith("WAR")) {
+      return jdkServerLookup.lookupServerImage(runtimeConfig.getJdk(), runtimeConfig.getServer());
+    } else if (artifact.endsWith("jar") || artifact.endsWith("JAR")) {
+      // If the user expects a server to be involved, fail loudly.
+      if (runtimeConfig.getServer() != null) {
+        throw new BuildStepException("runtime_config.server configuration is not compatible with "
+            + ".jar artifacts. To use a web server runtime, use a .war artifact instead.");
+      }
+      return jdkServerLookup.lookupJdkImage(runtimeConfig.getJdk());
+    } else {
+      throw new BuildStepException("Unrecognized artifact: '" + artifact + "'. A .jar or .war "
+          + "artifact was expected.");
+    }
+  }
 
   /**
    * Returns the artifact to add to the runtime docker image.

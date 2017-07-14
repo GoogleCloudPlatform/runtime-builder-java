@@ -1,0 +1,5 @@
+runtime: java
+env: flex
+
+runtime_config:
+  artifact: "build/libs/gs-spring-boot-0.1.0.jar"

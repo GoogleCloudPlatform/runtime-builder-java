@@ -47,7 +47,7 @@ public class MavenBuildStepTest {
   private void assertBuild() {
     assertTrue(dockerfileBuilder.toString().startsWith("FROM " + mavenBuilderImage + " as " + Constants.DOCKERFILE_BUILD_STAGE + "\n"));
     verify(buildContext, times(1)).setBuildArtifactLocation(
-        eq(Optional.of(Paths.get("/build/target"))));
+        eq(Optional.of(Paths.get("target"))));
   }
 
   @Test
@@ -60,7 +60,7 @@ public class MavenBuildStepTest {
     mavenBuildStep.run(buildContext);
 
     assertBuild();
-    assertTrue(dockerfileBuilder.toString().contains("RUN /build/mvnw "
+    assertTrue(dockerfileBuilder.toString().contains("RUN ./mvnw "
         + "-B -DskipTests clean install\n"));
   }
 

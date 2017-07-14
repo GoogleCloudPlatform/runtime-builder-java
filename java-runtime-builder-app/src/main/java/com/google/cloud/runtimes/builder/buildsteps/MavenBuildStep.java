@@ -37,7 +37,6 @@ import java.util.Optional;
  */
 public class MavenBuildStep implements BuildStep {
 
-  private static final String BUILD_CONTAINER_WORKDIR = "/build";
   private static final Logger logger = LoggerFactory.getLogger(MavenBuildStep.class);
 
   private final String mavenDockerImage;
@@ -51,14 +50,12 @@ public class MavenBuildStep implements BuildStep {
   public void run(BuildContext buildContext) throws BuildStepException {
     String dockerfileStep
         = "FROM " + mavenDockerImage + " as " + DOCKERFILE_BUILD_STAGE + "\n"
-        + "WORKDIR " + BUILD_CONTAINER_WORKDIR + "\n"
         + "ADD . .\n"
         + "RUN " + getMavenExecutable(buildContext) + " -B -DskipTests clean install\n"
         + "\n";
 
     buildContext.getDockerfile().append(dockerfileStep);
-    buildContext.setBuildArtifactLocation(Optional.of(
-        Paths.get(BUILD_CONTAINER_WORKDIR, "target")));
+    buildContext.setBuildArtifactLocation(Optional.of(Paths.get("target")));
   }
 
   private String getMavenExecutable(BuildContext buildContext) {
@@ -68,7 +65,7 @@ public class MavenBuildStep implements BuildStep {
       logger.info("Maven wrapper discovered at {}. Using wrapper instead of system mvn.",
           relativePath);
 
-      return Paths.get(BUILD_CONTAINER_WORKDIR).resolve(relativePath).toString();
+      return "./" + relativePath.toString();
     }
     return "mvn";
   }

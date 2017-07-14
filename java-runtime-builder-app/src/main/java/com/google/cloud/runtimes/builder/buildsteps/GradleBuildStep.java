@@ -36,7 +36,6 @@ import java.util.Optional;
  */
 public class GradleBuildStep implements BuildStep {
 
-  private static final String BUILD_CONTAINER_WORKDIR = "/build";
   private final Logger logger = LoggerFactory.getLogger(GradleBuildStep.class);
 
   private final String gradleImage;
@@ -50,14 +49,12 @@ public class GradleBuildStep implements BuildStep {
   public void run(BuildContext buildContext) throws BuildStepException {
     String dockerfileStep
         = "FROM " + gradleImage + " as " + Constants.DOCKERFILE_BUILD_STAGE + "\n"
-        + "WORKDIR " + BUILD_CONTAINER_WORKDIR + "\n"
         + "ADD . .\n"
         + "RUN " + getGradleExecutable(buildContext) + " build\n"
         + "\n";
 
     buildContext.getDockerfile().append(dockerfileStep);
-    buildContext.setBuildArtifactLocation(Optional.of(
-        Paths.get(BUILD_CONTAINER_WORKDIR, "build/libs")));
+    buildContext.setBuildArtifactLocation(Optional.of(Paths.get("build/libs")));
   }
 
   private String getGradleExecutable(BuildContext buildContext) {
@@ -67,7 +64,7 @@ public class GradleBuildStep implements BuildStep {
       logger.info("Gradle wrapper discovered at {}. Using wrapper instead of system gradle.",
           relativePath);
 
-      return Paths.get(BUILD_CONTAINER_WORKDIR).resolve(relativePath).toString();
+      return "./" + relativePath.toString();
     }
     return "gradle";
   }

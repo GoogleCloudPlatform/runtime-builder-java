@@ -47,7 +47,7 @@ public class GradleBuildStepTest {
   private void assertBuild() {
     assertTrue(dockerfileBuilder.toString().startsWith("FROM " + gradleBuilderImage + " as " + Constants.DOCKERFILE_BUILD_STAGE + "\n"));
     verify(buildContext, times(1)).setBuildArtifactLocation(
-        eq(Optional.of(Paths.get("/build/build/libs"))));
+        eq(Optional.of(Paths.get("build/libs"))));
   }
 
   @Test
@@ -60,7 +60,7 @@ public class GradleBuildStepTest {
     gradleBuildStep.run(buildContext);
 
     assertBuild();
-    assertTrue(dockerfileBuilder.toString().contains("RUN /build/gradlew build\n"));
+    assertTrue(dockerfileBuilder.toString().contains("RUN ./gradlew build\n"));
   }
 
   @Test

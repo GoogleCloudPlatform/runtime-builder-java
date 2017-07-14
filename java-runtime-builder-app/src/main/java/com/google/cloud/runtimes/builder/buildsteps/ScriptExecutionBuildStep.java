@@ -31,7 +31,6 @@ public class ScriptExecutionBuildStep implements BuildStep {
 
   @VisibleForTesting
   static final String BUILD_IMAGE = "gcr.io/gcp-runtimes/java/runtime-builder";
-  private static final String WORKDIR = "/build";
   private final String buildCommand;
 
   @Inject

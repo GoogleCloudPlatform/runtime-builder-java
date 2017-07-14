@@ -2,7 +2,9 @@ package com.google.cloud.runtimes.builder.injection;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.cloud.runtimes.builder.BuildPipelineConfigurator;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
+import com.google.inject.Guice;
 
 import org.junit.Test;
 
@@ -56,6 +58,15 @@ public class RootModuleTest {
     assertEquals("gcr.io/jdk:other", jdkServerLookup.lookupJdkImage("someJdk"));
     assertEquals("gcr.io/server:latest", jdkServerLookup.lookupServerImage(null, null));
     assertEquals("gcr.io/server:version", jdkServerLookup.lookupServerImage("key1", null));
+  }
+
+  @Test
+  public void testConfigure() {
+    String[] jdkMappings = {"*=gcr.io/jdk:latest"};
+    String[] serverMappings = {"*|*=gcr.io/server:latest"};
+    // test that the bindings can be created without errors
+    Guice.createInjector(new RootModule(jdkMappings, serverMappings, MVN_IMAGE, GRADLE_IMAGE))
+        .getInstance(BuildPipelineConfigurator.class);
   }
 
 }

@@ -40,7 +40,7 @@ import java.nio.file.Paths;
 public class Application {
 
   private static final Options CLI_OPTIONS = new Options();
-  private static final String EXECUTABLE_NAME = "<BUILDER_JAR>";
+  private static final String EXECUTABLE_NAME = "<BUILDER>";
 
   static {
     CLI_OPTIONS.addOption(Option.builder("j")

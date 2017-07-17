@@ -8,17 +8,17 @@ steps:
 
   # Mappings of server and JDK config names to runtime images.
   - '--server-runtimes-map'
-  - '*|*=gcr.io/google_appengine/jetty:9'
-  - 'openjdk8|*=gcr.io/google_appengine/jetty:9'
-  - 'openjdk8|jetty9=gcr.io/google_appengine/jetty:9'
-  - 'openjdk8|tomcat8=gcr.io/google_appengine/tomcat:8'
-  - '*|jetty9=gcr.io/google_appengine/jetty:9'
-  - '*|tomcat8=gcr.io/google_appengine/tomcat:8'
+  - '*|*=gcr.io/google-appengine/jetty:9'
+  - 'openjdk8|*=gcr.io/google-appengine/jetty:9'
+  - 'openjdk8|jetty9=gcr.io/google-appengine/jetty:9'
+  - 'openjdk8|tomcat8=gcr.io/google-appengine/tomcat:8'
+  - '*|jetty9=gcr.io/google-appengine/jetty:9'
+  - '*|tomcat8=gcr.io/google-appengine/tomcat:8'
 
   # Mappings of JDK config names to images.
   - '--jdk-runtimes-map'
-  - '*=gcr.io/google_appengine/openjdk:8'
-  - 'openjdk8=gcr.io/google_appengine/openjdk:8'
+  - '*=gcr.io/google-appengine/openjdk:8'
+  - 'openjdk8=gcr.io/google-appengine/openjdk:8'
 
   # Image to use for maven builds
   - '--maven-docker-image=gcr.io/cloud-builders/java/mvn:3.5.0-jdk-8'

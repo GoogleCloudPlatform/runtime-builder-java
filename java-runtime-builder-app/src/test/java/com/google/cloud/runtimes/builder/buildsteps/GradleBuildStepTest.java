@@ -10,6 +10,7 @@ import com.google.cloud.runtimes.builder.Constants;
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
+import com.google.cloud.runtimes.builder.util.StringLineAppender;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -27,14 +28,14 @@ import java.util.Optional;
 public class GradleBuildStepTest {
 
   private GradleBuildStep gradleBuildStep;
-  private StringBuilder dockerfileBuilder;
+  private StringLineAppender dockerfileBuilder;
   private String gradleBuilderImage;
 
   @Mock private BuildContext buildContext;
 
   @Before
   public void before() throws IOException {
-    dockerfileBuilder = new StringBuilder();
+    dockerfileBuilder = new StringLineAppender();
     gradleBuilderImage = "gcr.io/foo/gradle";
 
     MockitoAnnotations.initMocks(this);

@@ -20,19 +20,24 @@ import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.WRITE;
 
+import com.google.cloud.runtimes.builder.util.StringLineAppender;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class BuildContext {
@@ -44,8 +49,8 @@ public class BuildContext {
 
   private final RuntimeConfig runtimeConfig;
   private final Path workspaceDir;
-  private final StringBuilder dockerfile;
-  private final StringBuilder dockerignore;
+  private final StringLineAppender dockerfile;
+  private final StringLineAppender dockerignore;
 
   private Optional<Path> buildArtifactLocation;
 
@@ -60,8 +65,8 @@ public class BuildContext {
 
     this.runtimeConfig = runtimeConfig;
     this.workspaceDir = workspaceDir;
-    this.dockerfile = new StringBuilder();
-    this.dockerignore = new StringBuilder();
+    this.dockerfile = new StringLineAppender();
+    this.dockerignore = new StringLineAppender();
 
     buildArtifactLocation = Optional.empty();
   }
@@ -74,11 +79,11 @@ public class BuildContext {
     return workspaceDir;
   }
 
-  public StringBuilder getDockerfile() {
+  public StringLineAppender getDockerfile() {
     return dockerfile;
   }
 
-  public StringBuilder getDockerignore() {
+  public StringLineAppender getDockerignore() {
     return dockerignore;
   }
 
@@ -108,7 +113,12 @@ public class BuildContext {
    *
    * @throws IOException if a transient error occurs while writing the files
    */
-  public void writeDockerFiles() throws IOException {
+  public void writeDockerResources() throws IOException {
+    writeDockerFile();
+    writeDockerIgnore();
+  }
+
+  private void writeDockerFile() throws IOException {
     Path dockerFilePath = workspaceDir.resolve(DOCKERFILE_NAME);
 
     // fail loudly if a Dockerfile already exists
@@ -123,13 +133,53 @@ public class BuildContext {
     try (BufferedWriter writer = Files.newBufferedWriter(dockerFilePath)) {
       writer.write(dockerfile.toString());
     }
+  }
 
-    // write .dockerignore file, appending to an existing file if it exists
+  private void writeDockerIgnore() throws IOException {
+    // If there's nothing to write, return
+    if (dockerignore.getLines().size() < 1) {
+      logger.debug("Skipping .dockerignore generation - nothing to write!");
+      return;
+    }
+
     Path dockerIgnorePath = workspaceDir.resolve(DOCKERIGNORE_NAME);
+    Set<String> existingDockerignoreLines = new HashSet<>();
+    boolean shouldPrependNewline = false;
+
+    // Read the contents of an existing .dockerignore file to avoid duplicating lines
+    if (Files.exists(dockerIgnorePath)) {
+      try (BufferedReader reader = Files.newBufferedReader(dockerIgnorePath)) {
+        reader.lines().forEach(existingDockerignoreLines::add);
+      }
+
+      // Check if the file ends in a UNIX newline character
+      RandomAccessFile file = new RandomAccessFile(dockerIgnorePath.toFile(), "r");
+      byte[] buffer = new byte[1];
+      file.seek(file.length() - 1);
+      file.read(buffer, 0, 1);
+      shouldPrependNewline = buffer[0] != '\n';
+    }
+
+    // Filter out lines that are already present
+    dockerignore.setLines(dockerignore.getLines().stream()
+        .filter(line -> !existingDockerignoreLines.contains(line))
+        .collect(Collectors.toList()));
+
+    // Make sure there are lines remaining before proceeding
+    if (dockerignore.getLines().size() < 1) {
+      logger.debug("Skipping .dockerignore generation - nothing to write!");
+      return;
+    }
+
+    // Write the dockerignore file
     logger.info("Generating .dockerignore file at {}", dockerIgnorePath);
-    try (BufferedWriter writer = Files.newBufferedWriter(dockerIgnorePath, CREATE, WRITE, APPEND)) {
-      // write a newline in case an existing .dockerignore doesn't end with a newline character
-      writer.newLine();
+    try (BufferedWriter writer
+        = Files.newBufferedWriter(dockerIgnorePath, CREATE, WRITE, APPEND)) {
+      // write a newline if the file doesn't end with a newline character
+      if (shouldPrependNewline) {
+        dockerignore.prependLine();
+      }
+
       writer.write(dockerignore.toString());
     }
   }

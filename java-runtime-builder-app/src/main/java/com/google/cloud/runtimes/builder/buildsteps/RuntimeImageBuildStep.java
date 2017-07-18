@@ -34,14 +34,14 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
 
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
-    buildContext.getDockerfile().append("FROM " + getBaseRuntimeImage(buildContext) + "\n");
+    buildContext.getDockerfile().appendLine("FROM " + getBaseRuntimeImage(buildContext));
 
     String copyStep = "COPY ";
     if (buildContext.isSourceBuild()) {
       copyStep += "--from=" + DOCKERFILE_BUILD_STAGE + " ";
     }
-    buildContext.getDockerfile().append(copyStep + getArtifact(buildContext)
-        + " $APP_DESTINATION\n");
+    buildContext.getDockerfile().appendLine(copyStep + getArtifact(buildContext)
+        + " $APP_DESTINATION");
   }
 
   private String getBaseRuntimeImage(BuildContext buildContext) throws BuildStepException {

@@ -24,12 +24,12 @@ import com.google.common.annotations.VisibleForTesting;
 public class JettyOptionsBuildStep implements BuildStep {
 
   @VisibleForTesting
-  protected static final String JETTY_QUICKSTART_COMMAND = "RUN /scripts/jetty/quickstart.sh\n";
+  protected static final String JETTY_QUICKSTART_COMMAND = "RUN /scripts/jetty/quickstart.sh";
 
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
     if (buildContext.getRuntimeConfig().getJettyQuickstart()) {
-      buildContext.getDockerfile().append(JETTY_QUICKSTART_COMMAND);
+      buildContext.getDockerfile().appendLine(JETTY_QUICKSTART_COMMAND);
     }
   }
 }

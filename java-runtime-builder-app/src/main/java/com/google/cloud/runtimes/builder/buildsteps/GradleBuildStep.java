@@ -47,13 +47,12 @@ public class GradleBuildStep implements BuildStep {
 
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
-    String dockerfileStep
-        = "FROM " + gradleImage + " as " + Constants.DOCKERFILE_BUILD_STAGE + "\n"
-        + "ADD . .\n"
-        + "RUN " + getGradleExecutable(buildContext) + " build\n"
-        + "\n";
+    buildContext.getDockerfile()
+        .appendLine("FROM " + gradleImage + " as " + Constants.DOCKERFILE_BUILD_STAGE)
+        .appendLine("ADD . .")
+        .appendLine("RUN " + getGradleExecutable(buildContext) + " build")
+        .appendLine();
 
-    buildContext.getDockerfile().append(dockerfileStep);
     buildContext.setBuildArtifactLocation(Optional.of(Paths.get("build/libs")));
   }
 

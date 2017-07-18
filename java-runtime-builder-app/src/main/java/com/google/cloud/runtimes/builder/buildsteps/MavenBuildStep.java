@@ -48,13 +48,12 @@ public class MavenBuildStep implements BuildStep {
 
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
-    String dockerfileStep
-        = "FROM " + mavenDockerImage + " as " + DOCKERFILE_BUILD_STAGE + "\n"
-        + "ADD . .\n"
-        + "RUN " + getMavenExecutable(buildContext) + " -B -DskipTests clean install\n"
-        + "\n";
+    buildContext.getDockerfile()
+        .appendLine("FROM " + mavenDockerImage + " as " + DOCKERFILE_BUILD_STAGE)
+        .appendLine("ADD . .")
+        .appendLine("RUN " + getMavenExecutable(buildContext) + " -B -DskipTests clean install")
+        .appendLine();
 
-    buildContext.getDockerfile().append(dockerfileStep);
     buildContext.setBuildArtifactLocation(Optional.of(Paths.get("target")));
   }
 

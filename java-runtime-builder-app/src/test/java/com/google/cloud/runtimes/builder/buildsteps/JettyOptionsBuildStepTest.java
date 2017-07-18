@@ -39,7 +39,7 @@ public class JettyOptionsBuildStepTest {
     JettyOptionsBuildStep buildStep = new JettyOptionsBuildStep();
     buildStep.run(ctx);
 
-    String expected = dockerfileBefore + JettyOptionsBuildStep.JETTY_QUICKSTART_COMMAND;
+    String expected = dockerfileBefore + JettyOptionsBuildStep.JETTY_QUICKSTART_COMMAND + "\n";
     assertEquals(expected, ctx.getDockerfile().toString());
   }
 

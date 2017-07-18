@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
+import com.google.cloud.runtimes.builder.util.StringLineAppender;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -17,11 +18,11 @@ import org.mockito.MockitoAnnotations;
 public class ScriptExecutionBuildStepTest {
 
   @Mock private BuildContext buildContext;
-  private StringBuilder dockerfileBuilder;
+  private StringLineAppender dockerfileBuilder;
 
   @Before
   public void before() {
-    dockerfileBuilder = new StringBuilder();
+    dockerfileBuilder = new StringLineAppender();
 
     MockitoAnnotations.initMocks(this);
     when(buildContext.getDockerfile()).thenReturn(dockerfileBuilder);

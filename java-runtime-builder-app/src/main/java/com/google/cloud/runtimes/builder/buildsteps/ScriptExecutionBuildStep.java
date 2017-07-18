@@ -40,11 +40,11 @@ public class ScriptExecutionBuildStep implements BuildStep {
 
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
-    buildContext.getDockerfile().append(
-        "FROM " + BUILD_IMAGE + " as " + Constants.DOCKERFILE_BUILD_STAGE + "\n"
-        + "ADD . .\n"
-        + "RUN " + buildCommand + "\n"
-        + "\n");
+    buildContext.getDockerfile()
+        .appendLine("FROM " + BUILD_IMAGE + " as " + Constants.DOCKERFILE_BUILD_STAGE)
+        .appendLine("ADD . .")
+        .appendLine("RUN " + buildCommand)
+        .appendLine();
   }
 
 }

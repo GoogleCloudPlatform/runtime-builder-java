@@ -93,7 +93,7 @@ public class BuildPipelineConfigurator {
       step.run(buildContext);
     }
 
-    buildContext.writeDockerFiles();
+    buildContext.writeDockerResources();
   }
 
   private BuildContext configureBuildContext(Path workspaceDir) throws AppYamlNotFoundException,

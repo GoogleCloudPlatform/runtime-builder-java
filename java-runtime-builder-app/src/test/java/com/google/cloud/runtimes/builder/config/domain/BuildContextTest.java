@@ -9,6 +9,7 @@ import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,10 +29,9 @@ public class BuildContextTest {
 
   @Test
   public void testWriteDockerFilesWithEmptyBuffers() throws IOException {
-    new BuildContext(new RuntimeConfig(), workspace).writeDockerFiles();
-
+    new BuildContext(new RuntimeConfig(), workspace).writeDockerResources();
     assertEquals("", readFile(getDockerfile()));
-    assertEquals("\n", readFile(getDockerIgnore()));
+    assertFalse(Files.exists(workspace.resolve(".dockerfile")));
   }
 
   @Test
@@ -42,12 +42,31 @@ public class BuildContextTest {
         .build();
 
     BuildContext context = new BuildContext(new RuntimeConfig(), workspace);
-    String dockerIgnoreAppend = "more_paths\n";
-    context.getDockerignore().append(dockerIgnoreAppend);
+    String dockerIgnoreAppend = "more_paths";
+    context.getDockerignore().appendLine(dockerIgnoreAppend);
 
-    context.writeDockerFiles();
+    context.writeDockerResources();
     assertEquals("", readFile(getDockerfile()));
-    assertEquals(dockerIgnoreContents + "\n" + dockerIgnoreAppend, readFile(getDockerIgnore()));
+    assertEquals(dockerIgnoreContents + "\n" + dockerIgnoreAppend + "\n",
+        readFile(getDockerIgnore()));
+  }
+
+  @Test
+  public void testWriteDockerFilesWithExistingDockerignoreTerminalNewline() throws IOException {
+    String commonIgnoreLine = "foo/**";
+    String dockerIgnoreContents = commonIgnoreLine + "\nbar\n";
+    workspace = new TestWorkspaceBuilder()
+        .file(".dockerignore").withContents(dockerIgnoreContents).build()
+        .build();
+
+    BuildContext context = new BuildContext(new RuntimeConfig(), workspace);
+    String dockerIgnoreAppend = "more_paths";
+    context.getDockerignore().appendLine(dockerIgnoreAppend);
+    context.getDockerignore().appendLine(commonIgnoreLine);
+
+    context.writeDockerResources();
+    assertEquals("", readFile(getDockerfile()));
+    assertEquals(dockerIgnoreContents + dockerIgnoreAppend + "\n", readFile(getDockerIgnore()));
   }
 
   @Test(expected = IllegalStateException.class)
@@ -57,7 +76,7 @@ public class BuildContextTest {
         .build();
 
     BuildContext context = new BuildContext(new RuntimeConfig(), workspace);
-    context.writeDockerFiles();
+    context.writeDockerResources();
   }
 
   @Test
@@ -144,6 +163,9 @@ public class BuildContextTest {
   }
 
   private String readFile(Path file) throws IOException {
+    if (!Files.exists(file)) {
+      throw new FileNotFoundException(file + " not found!");
+    }
     return new String(Files.readAllBytes(file));
   }
 }

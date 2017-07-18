@@ -31,14 +31,18 @@ image is available locally.) Note that these commands effectively mirror the ste
 [java.yaml](java.yaml) pipeline config file.
 
 ```bash
-# compile my application's source and generate a dockerfile
-docker run -v /path/to/my/java/app:/workspace -w /workspace runtime-builder \
-    --jar-runtime=gcr.io/google-appengine/openjdk \
-    --server-runtime=gcr.io/google-appengine/jetty \
-    --tomcat-runtime=gcr.io/google-appengine/tomcat
-    
+LOCAL_APPLICATION_DIR=/path/to/my/app
+
+# Generate docker resources
+# See java.yaml for the fullly specified jdk-runtimes-map server-runtimes-map args
+docker run -v $LOCAL_APPLICATION_DIR:/workspace -w /workspace runtime-builder \
+    --jdk-runtimes-map='*=gcr.io/google-appengine/openjdk:8' \
+    --server-runtimes-map='*|*=gcr.io/google-appengine/jetty:9' \
+    --maven-docker-image='gcr.io/cloud-builders/java/mvn:3.5.0-jdk-8' \
+    --gradle-docker-image='gcr.io/cloud-builders/java/gradle:4.0-jdk-8'
+
 # package my application into a docker container
-docker build -t my-java-app /path/to/my/java/app/.docker_staging
+docker build -t my-app-container $LOCAL_APPLICATION_DIR
 ```
 
 ## Configuration

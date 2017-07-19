@@ -20,9 +20,9 @@ commandTests:
   command: ['javac', '-version']
   expectedError: ['javac 1\.8\.0_131']
   exitCode: '0'
-- name: 'MAVEN_HOME is set'
+- name: 'M2_HOME is set'
   command: ['env']
-  expectedOutput: ['MAVEN_HOME=/usr/share/maven']
+  expectedOutput: ['M2_HOME=/usr/share/maven']
 - name: 'GRADLE_HOME is set'
   command: ['env']
   expectedOutput: ['GRADLE_HOME=/usr/share/gradle-3.4']

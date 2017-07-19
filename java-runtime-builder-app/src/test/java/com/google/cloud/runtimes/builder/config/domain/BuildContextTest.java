@@ -66,7 +66,7 @@ public class BuildContextTest {
 
     context.writeDockerResources();
     assertEquals("", readFile(getDockerfile()));
-    assertEquals(dockerIgnoreContents + dockerIgnoreAppend + "\n", readFile(getDockerIgnore()));
+    assertEquals(dockerIgnoreContents + "\n" + dockerIgnoreAppend + "\n", readFile(getDockerIgnore()));
   }
 
   @Test(expected = IllegalStateException.class)

@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -144,20 +143,12 @@ public class BuildContext {
 
     Path dockerIgnorePath = workspaceDir.resolve(DOCKERIGNORE_NAME);
     Set<String> existingDockerignoreLines = new HashSet<>();
-    boolean shouldPrependNewline = false;
 
     // Read the contents of an existing .dockerignore file to avoid duplicating lines
     if (Files.exists(dockerIgnorePath)) {
       try (BufferedReader reader = Files.newBufferedReader(dockerIgnorePath)) {
         reader.lines().forEach(existingDockerignoreLines::add);
       }
-
-      // Check if the file ends in a UNIX newline character
-      RandomAccessFile file = new RandomAccessFile(dockerIgnorePath.toFile(), "r");
-      byte[] buffer = new byte[1];
-      file.seek(file.length() - 1);
-      file.read(buffer, 0, 1);
-      shouldPrependNewline = buffer[0] != '\n';
     }
 
     // Filter out lines that are already present
@@ -175,11 +166,8 @@ public class BuildContext {
     logger.info("Generating .dockerignore file at {}", dockerIgnorePath);
     try (BufferedWriter writer
         = Files.newBufferedWriter(dockerIgnorePath, CREATE, WRITE, APPEND)) {
-      // write a newline if the file doesn't end with a newline character
-      if (shouldPrependNewline) {
-        dockerignore.prependLine();
-      }
-
+      // prepend with a newline character
+      dockerignore.prependLine();
       writer.write(dockerignore.toString());
     }
   }

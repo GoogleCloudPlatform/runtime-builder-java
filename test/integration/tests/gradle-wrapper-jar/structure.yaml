@@ -8,6 +8,6 @@ commandTests:
 
 fileExistenceTests:
 - name: 'test application exists'
-  path: '/var/lib/jetty/webapps/root.war' # TODO
+  path: 'app.jar'
   isDirectory: false
   shouldExist: true

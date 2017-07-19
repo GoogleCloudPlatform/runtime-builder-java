@@ -14,17 +14,10 @@
  * limitations under the License.
  */
 
-package com.google.cloud.runtimes.builder.buildsteps.docker;
+package com.google.cloud.runtimes.builder;
 
-import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
+public class Constants {
 
-import java.nio.file.Path;
-
-public interface DockerfileGenerator {
-
-  /**
-   * Generate a Dockerfile for an artifact file at the given path.
-   */
-  String generateDockerfile(Path artifact, RuntimeConfig runtimeConfig);
+  public static final String DOCKERFILE_BUILD_STAGE = "builder";
 
 }

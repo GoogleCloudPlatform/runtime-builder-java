@@ -16,10 +16,12 @@
 
 package com.google.cloud.runtimes.builder.exception;
 
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+
 import java.nio.file.Path;
 import java.util.List;
 
-public class TooManyArtifactsException extends RuntimeBuilderException {
+public class TooManyArtifactsException extends BuildStepException {
 
   public TooManyArtifactsException(List<Path> artifacts) {
     super(buildMessage(artifacts));

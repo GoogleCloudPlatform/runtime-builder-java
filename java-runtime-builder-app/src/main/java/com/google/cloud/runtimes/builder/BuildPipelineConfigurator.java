@@ -17,11 +17,12 @@
 package com.google.cloud.runtimes.builder;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
-import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
 import com.google.cloud.runtimes.builder.config.AppYamlFinder;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
+import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.BuildTool;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
@@ -33,10 +34,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,13 +59,46 @@ public class BuildPipelineConfigurator {
   }
 
   /**
-   * Examines a directory and returns a list of build steps that should be executed on it.
-   *
-   * @throws AppYamlNotFoundException if an app.yaml config file is not found
-   * @throws IOException if a transient file system error is encountered
+   * Generates files required for a docker build into the source directory.
    */
-  public List<BuildStep> configurePipeline(Path workspaceDir)
-      throws AppYamlNotFoundException, IOException {
+  public void generateDockerResources(Path workspaceDir) throws AppYamlNotFoundException,
+      BuildStepException, IOException {
+
+    BuildContext buildContext = configureBuildContext(workspaceDir);
+
+    List<BuildStep> steps = new ArrayList<>();
+
+    String buildScript = buildContext.getRuntimeConfig().getBuildScript();
+    if (!Strings.isNullOrEmpty(buildScript)) {
+      // the user has specified a custom command to build the project
+      steps.add(buildStepFactory.createScriptExecutionBuildStep(buildScript));
+    } else {
+      // search for build files in the workspace
+      buildContext.getBuildTool()
+          .ifPresent(buildTool ->
+              steps.add(getBuildStepForTool(buildTool)));
+    }
+
+    if (buildContext.isSourceBuild()) {
+      steps.add(buildStepFactory.createSourceBuildRuntimeImageStep());
+    } else {
+      steps.add(buildStepFactory.createPrebuiltRuntimeImageBuildStep());
+    }
+
+    // add build step for optional jetty customizations
+    steps.add(buildStepFactory.createJettyOptionsBuildStep());
+
+    // execute all build steps
+    for (BuildStep step : steps) {
+      step.run(buildContext);
+    }
+
+    buildContext.writeDockerResources();
+  }
+
+  private BuildContext configureBuildContext(Path workspaceDir) throws AppYamlNotFoundException,
+      IOException {
+
     // locate and deserialize configuration files
     Optional<Path> pathToAppYaml = appYamlFinder.findAppYamlFile(workspaceDir);
 
@@ -81,44 +113,15 @@ public class BuildPipelineConfigurator {
         ? appYaml.getRuntimeConfig()
         : new RuntimeConfig();
 
-    // custom Dockerfiles are not supported - fail loudly so there is no ambiguity about the image
-    // being built
-    if (findDockerfile(workspaceDir).isPresent()) {
-      throw new IllegalStateException("Custom Dockerfiles are not supported. If you wish to use a "
-          + "custom Dockerfile, consider using runtime: custom. Otherwise, remove the Dockerfile "
-          + "from the root of your sources to continue.");
-    }
-
-    // assemble the list of build steps
-    List<BuildStep> steps = new ArrayList<>();
-
-    String buildScript = runtimeConfig.getBuildScript();
-    if (!Strings.isNullOrEmpty(buildScript)) {
-      // the user has specified a custom command to build the project
-      steps.add(buildStepFactory.createScriptExecutionBuildStep(buildScript));
-    } else {
-      // search for build files in the workspace
-      Optional<Path> buildFile = findBuildFile(workspaceDir);
-      if (buildFile.isPresent()) {
-        // select the correct build step for the buildTool
-        BuildTool buildTool = BuildTool.getForBuildFile(buildFile.get());
-        steps.add(getBuildStepForTool(buildTool));
-      }
-    }
-
-    StageDockerArtifactBuildStep stageDockerBuildStep
-        = buildStepFactory.createStageDockerArtifactBuildStep(runtimeConfig);
-    stageDockerBuildStep.setArtifactPathOverride(runtimeConfig.getArtifact());
-    steps.add(stageDockerBuildStep);
-    return steps;
+    return new BuildContext(runtimeConfig, workspaceDir);
   }
 
   private AppYaml parseAppYaml(Path pathToAppYaml) throws IOException {
     try {
       return appYamlParser.parse(pathToAppYaml);
     } catch (JsonMappingException e) {
-      logger.error("There was an error parsing the config file located at {}. Please make sure it "
-          + "is a valid yaml file.", pathToAppYaml, e);
+      logger.error("There was an error parsing the config file located at " + pathToAppYaml + "."
+          + " Please make sure it is a valid yaml file.", e);
       throw e;
     }
   }
@@ -138,27 +141,4 @@ public class BuildPipelineConfigurator {
     }
   }
 
-  /*
-   * Attempt to find a file in the workspace that looks like a build file.
-   */
-  private Optional<Path> findBuildFile(Path workspaceDir) throws IOException {
-    return Files.list(workspaceDir)
-        .filter((path) -> Files.isRegularFile(path))
-        .filter(BuildTool::isABuildFile)
-        // sort based on natural ordering of BuildTool for each path
-        .sorted(Comparator.comparing(BuildTool::getForBuildFile))
-        .findFirst();
-  }
-
-  /*
-   * Search for a Dockerfile at the root of the workspace
-   */
-  private Optional<Path> findDockerfile(Path workspaceDir) {
-    Path dockerfilePath = workspaceDir.resolve("Dockerfile");
-    if (Files.exists(dockerfilePath) && Files.isRegularFile(dockerfilePath)) {
-      return Optional.of(dockerfilePath);
-    } else {
-      return Optional.empty();
-    }
-  }
 }

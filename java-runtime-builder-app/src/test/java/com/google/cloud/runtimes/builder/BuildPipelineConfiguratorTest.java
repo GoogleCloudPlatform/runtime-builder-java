@@ -16,36 +16,41 @@
 
 package com.google.cloud.runtimes.builder;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
+import static junit.framework.TestCase.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
 import com.google.cloud.runtimes.builder.buildsteps.GradleBuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.JettyOptionsBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.MavenBuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.PrebuiltRuntimeImageBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.ScriptExecutionBuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.SourceBuildRuntimeImageBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepFactory;
-import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
 import com.google.cloud.runtimes.builder.config.AppYamlFinder;
 import com.google.cloud.runtimes.builder.config.AppYamlParser;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
+import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
+import com.google.common.base.Objects;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -56,8 +61,10 @@ public class BuildPipelineConfiguratorTest {
   @Mock private BuildStepFactory buildStepFactory;
   @Mock private MavenBuildStep mavenBuildStep;
   @Mock private GradleBuildStep gradleBuildStep;
-  @Mock private StageDockerArtifactBuildStep stageDockerArtifactBuildStep;
   @Mock private ScriptExecutionBuildStep scriptExecutionBuildStep;
+  @Mock private PrebuiltRuntimeImageBuildStep prebuiltRuntimeImageBuildStep;
+  @Mock private SourceBuildRuntimeImageBuildStep sourceBuildRuntimeImageBuildStep;
+  @Mock private JettyOptionsBuildStep jettyOptionsBuildStep;
 
   // use the actual yaml parser and yaml finders instead of mocks
   private YamlParser<AppYaml> appYamlYamlParser = new AppYamlParser();
@@ -65,109 +72,153 @@ public class BuildPipelineConfiguratorTest {
   private BuildPipelineConfigurator buildPipelineConfigurator;
 
   @Before
-  public void setup() {
+  public void setup() throws BuildStepException {
     MockitoAnnotations.initMocks(this);
 
     when(buildStepFactory.createMavenBuildStep()).thenReturn(mavenBuildStep);
     when(buildStepFactory.createGradleBuildStep()).thenReturn(gradleBuildStep);
-    when(buildStepFactory.createStageDockerArtifactBuildStep(any(RuntimeConfig.class)))
-        .thenReturn(stageDockerArtifactBuildStep);
     when(buildStepFactory.createScriptExecutionBuildStep(anyString()))
         .thenReturn(scriptExecutionBuildStep);
+    when(buildStepFactory.createPrebuiltRuntimeImageBuildStep())
+        .thenReturn(prebuiltRuntimeImageBuildStep);
+    when(buildStepFactory.createSourceBuildRuntimeImageStep())
+        .thenReturn(sourceBuildRuntimeImageBuildStep);
+    when(buildStepFactory.createJettyOptionsBuildStep()).thenReturn(jettyOptionsBuildStep);
 
     buildPipelineConfigurator
         = new BuildPipelineConfigurator(appYamlYamlParser, appYamlFinder, buildStepFactory);
   }
 
+  private void assertBuildStepsCalledWithRuntimeConfig(RuntimeConfig expected,
+      BuildStep... buildSteps) throws BuildStepException {
+    for (BuildStep buildStep : buildSteps) {
+      ArgumentCaptor<BuildContext> captor = ArgumentCaptor.forClass(BuildContext.class);
+      verify(buildStep, times(1)).run(captor.capture());
+      assertRuntimeConfigEquals(expected, captor.getValue().getRuntimeConfig());
+    }
+  }
+
+  private void assertRuntimeConfigEquals(RuntimeConfig expected, RuntimeConfig actual) {
+    assertTrue(Objects.equal(expected.getJdk(), actual.getJdk())
+        && Objects.equal(expected.getArtifact(), actual.getArtifact())
+        && Objects.equal(expected.getServer(), actual.getServer())
+        && Objects.equal(expected.getBuildScript(), actual.getBuildScript())
+        && Objects.equal(expected.getJettyQuickstart(), actual.getJettyQuickstart()));
+  }
+
   @Test
-  public void test_simpleWorkspace() throws AppYamlNotFoundException, IOException {
+  public void testPrebuiltArtifact() throws BuildStepException, IOException,
+      AppYamlNotFoundException {
     Path workspace = new TestWorkspaceBuilder()
         .file("foo.war").build()
-        .file("app.yaml").withContents("env: flex\nruntime: java").build()
         .build();
 
-    List<BuildStep> buildSteps = buildPipelineConfigurator.configurePipeline(workspace);
-    assertEquals(1, buildSteps.size());
-    assertEquals(stageDockerArtifactBuildStep, buildSteps.get(0));
+    buildPipelineConfigurator.generateDockerResources(workspace);
+
+    verify(buildStepFactory, times(1)).createPrebuiltRuntimeImageBuildStep();
+    verify(buildStepFactory, times(1)).createJettyOptionsBuildStep();
+    verifyNoMoreInteractions(buildStepFactory);
+
+    assertBuildStepsCalledWithRuntimeConfig(new RuntimeConfig(), prebuiltRuntimeImageBuildStep,
+        jettyOptionsBuildStep);
   }
 
   @Test
-  public void test_mavenWorkspace() throws AppYamlNotFoundException, IOException {
+  public void testMavenSourceBuild() throws BuildStepException, IOException,
+      AppYamlNotFoundException {
     Path workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()
-        .file("src/main/appengine/app.yaml").withContents("env: flex\nruntime: java").build()
         .build();
 
-    List<BuildStep> buildSteps = buildPipelineConfigurator.configurePipeline(workspace);
-    assertEquals(2, buildSteps.size());
-    assertEquals(mavenBuildStep, buildSteps.get(0));
-    assertEquals(stageDockerArtifactBuildStep, buildSteps.get(1));
+    buildPipelineConfigurator.generateDockerResources(workspace);
+
+    verify(buildStepFactory, times(1)).createMavenBuildStep();
+    verify(buildStepFactory, times(1)).createSourceBuildRuntimeImageStep();
+    verify(buildStepFactory, times(1)).createJettyOptionsBuildStep();
+    verifyNoMoreInteractions(buildStepFactory);
+
+    assertBuildStepsCalledWithRuntimeConfig(new RuntimeConfig(), mavenBuildStep,
+        sourceBuildRuntimeImageBuildStep, jettyOptionsBuildStep);
   }
 
   @Test
-  public void test_mavenAndGradleWorkspace() throws AppYamlNotFoundException, IOException {
+  public void testGradleSourceBuild() throws BuildStepException, IOException,
+      AppYamlNotFoundException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("build.gradle").build()
+        .build();
+
+    buildPipelineConfigurator.generateDockerResources(workspace);
+
+    verify(buildStepFactory, times(1)).createGradleBuildStep();
+    verify(buildStepFactory, times(1)).createSourceBuildRuntimeImageStep();
+    verify(buildStepFactory, times(1)).createJettyOptionsBuildStep();
+    verifyNoMoreInteractions(buildStepFactory);
+
+    assertBuildStepsCalledWithRuntimeConfig(new RuntimeConfig(), gradleBuildStep,
+        sourceBuildRuntimeImageBuildStep, jettyOptionsBuildStep);
+  }
+
+  @Test
+  public void testMavenAndGradleSourceBuild() throws BuildStepException, IOException,
+      AppYamlNotFoundException {
     Path workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()
         .file("build.gradle").build()
-        .file("src/main/appengine/app.yaml").withContents("env: flex\nruntime: java").build()
         .build();
 
-    List<BuildStep> buildSteps = buildPipelineConfigurator.configurePipeline(workspace);
-    assertEquals(2, buildSteps.size());
-    // maven takes precedence
-    assertEquals(mavenBuildStep, buildSteps.get(0));
-    assertEquals(stageDockerArtifactBuildStep, buildSteps.get(1));
+    buildPipelineConfigurator.generateDockerResources(workspace);
+
+    verify(buildStepFactory, times(1)).createMavenBuildStep();
+    verify(buildStepFactory, times(1)).createSourceBuildRuntimeImageStep();
+    verify(buildStepFactory, times(1)).createJettyOptionsBuildStep();
+    verifyNoMoreInteractions(buildStepFactory);
+
+    assertBuildStepsCalledWithRuntimeConfig(new RuntimeConfig(), mavenBuildStep,
+        sourceBuildRuntimeImageBuildStep, jettyOptionsBuildStep);
   }
 
   @Test
-  public void test_mavenWorkspace_customArtifact() throws AppYamlNotFoundException, IOException {
+  public void testMavenBuildWithCustomScript() throws BuildStepException, IOException,
+      AppYamlNotFoundException {
+    String customScript = "custom mvn goals";
     Path workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()
-        .file("src/main/appengine/app.yaml")
-            .withContents(
-                "runtime: java\n" +
-                "env: flex\n" +
-                "runtime_config:\n" +
-                "  artifact: my_output_dir/artifact.jar\n").build()
+        .file("app.yaml").withContents(
+            "runtime_config:\n"
+            + "  build_script: " + customScript).build()
         .build();
 
-    List<BuildStep> buildSteps = buildPipelineConfigurator.configurePipeline(workspace);
-    assertEquals(2, buildSteps.size());
-    assertEquals(mavenBuildStep, buildSteps.get(0));
-    assertEquals(stageDockerArtifactBuildStep, buildSteps.get(1));
-    verify(stageDockerArtifactBuildStep, times(1))
-        .setArtifactPathOverride(eq("my_output_dir/artifact.jar"));
+    buildPipelineConfigurator.generateDockerResources(workspace);
+
+    verify(buildStepFactory, times(1)).createScriptExecutionBuildStep(eq(customScript));
+    verify(buildStepFactory, times(1)).createSourceBuildRuntimeImageStep();
+    verify(buildStepFactory, times(1)).createJettyOptionsBuildStep();
+    verifyNoMoreInteractions(buildStepFactory);
+
+    RuntimeConfig expectedConfig = new RuntimeConfig();
+    expectedConfig.setBuildScript(customScript);
+    assertBuildStepsCalledWithRuntimeConfig(expectedConfig, scriptExecutionBuildStep,
+        sourceBuildRuntimeImageBuildStep, jettyOptionsBuildStep);
   }
 
   @Test
-  public void test_customBuildWorkspace() throws AppYamlNotFoundException, IOException {
-    String buildScript = "gradle clean test buildThing";
+  public void testPrebuiltArtifactAndMavenBuild() throws BuildStepException, IOException,
+      AppYamlNotFoundException {
     Path workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()
-        .file("src/main/appengine/app.yaml")
-        .withContents(
-            "env: flex\n" +
-            "runtime: java\n" +
-            "runtime_config:\n" +
-            "  build_script: \"" + buildScript + "\"").build()
+        .file("foo.war").build()
         .build();
 
-    List<BuildStep> buildSteps = buildPipelineConfigurator.configurePipeline(workspace);
-    assertEquals(2, buildSteps.size());
-    assertEquals(scriptExecutionBuildStep, buildSteps.get(0));
-    assertEquals(stageDockerArtifactBuildStep, buildSteps.get(1));
-    verify(buildStepFactory, times(1))
-        .createScriptExecutionBuildStep(eq(buildScript));
-  }
+    buildPipelineConfigurator.generateDockerResources(workspace);
 
-  @Test(expected = IllegalStateException.class)
-  public void test_providedDockerfile() throws AppYamlNotFoundException, IOException {
-    Path workspace = new TestWorkspaceBuilder()
-        .file("app.yaml").withContents("env: flex\nruntime: java").build()
-        .file("Dockerfile").build()
-        .build();
+    verify(buildStepFactory, times(1)).createMavenBuildStep();
+    verify(buildStepFactory, times(1)).createSourceBuildRuntimeImageStep();
+    verify(buildStepFactory, times(1)).createJettyOptionsBuildStep();
+    verifyNoMoreInteractions(buildStepFactory);
 
-    buildPipelineConfigurator.configurePipeline(workspace);
+    assertBuildStepsCalledWithRuntimeConfig(new RuntimeConfig(), mavenBuildStep,
+        sourceBuildRuntimeImageBuildStep, jettyOptionsBuildStep);
   }
 
 }

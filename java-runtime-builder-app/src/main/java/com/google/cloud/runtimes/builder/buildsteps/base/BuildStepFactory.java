@@ -17,10 +17,11 @@
 package com.google.cloud.runtimes.builder.buildsteps.base;
 
 import com.google.cloud.runtimes.builder.buildsteps.GradleBuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.JettyOptionsBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.MavenBuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.PrebuiltRuntimeImageBuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.ScriptExecutionBuildStep;
-import com.google.cloud.runtimes.builder.buildsteps.docker.StageDockerArtifactBuildStep;
-import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
+import com.google.cloud.runtimes.builder.buildsteps.SourceBuildRuntimeImageBuildStep;
 
 /**
  * Factory interface to simplify instantiation of objects with Guice-provided dependencies. See
@@ -33,8 +34,12 @@ public interface BuildStepFactory {
 
   GradleBuildStep createGradleBuildStep();
 
-  StageDockerArtifactBuildStep createStageDockerArtifactBuildStep(RuntimeConfig runtimeConfig);
-
   ScriptExecutionBuildStep createScriptExecutionBuildStep(String buildCommand);
+
+  SourceBuildRuntimeImageBuildStep createSourceBuildRuntimeImageStep();
+
+  PrebuiltRuntimeImageBuildStep createPrebuiltRuntimeImageBuildStep();
+
+  JettyOptionsBuildStep createJettyOptionsBuildStep();
 
 }

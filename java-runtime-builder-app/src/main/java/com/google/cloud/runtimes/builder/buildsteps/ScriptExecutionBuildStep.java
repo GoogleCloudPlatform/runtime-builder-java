@@ -16,20 +16,21 @@
 
 package com.google.cloud.runtimes.builder.buildsteps;
 
-import com.google.cloud.runtimes.builder.buildsteps.base.AbstractSubprocessBuildStep;
-import com.google.common.base.MoreObjects;
+import com.google.cloud.runtimes.builder.Constants;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+import com.google.cloud.runtimes.builder.config.domain.BuildContext;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
-
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Build step that invokes an arbitrary string as a shell command.
  */
-public class ScriptExecutionBuildStep extends AbstractSubprocessBuildStep {
+public class ScriptExecutionBuildStep implements BuildStep {
 
+  @VisibleForTesting
+  static final String BUILD_IMAGE = "gcr.io/gcp-runtimes/java/runtime-builder";
   private final String buildCommand;
 
   @Inject
@@ -38,15 +39,12 @@ public class ScriptExecutionBuildStep extends AbstractSubprocessBuildStep {
   }
 
   @Override
-  protected List<String> getBuildCommand(Path buildDirectory) {
-    return Arrays.asList("/bin/bash", "-c", buildCommand);
-  }
-
-  @Override
-  public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("buildCommand", "\"" + buildCommand + "\"")
-        .toString();
+  public void run(BuildContext buildContext) throws BuildStepException {
+    buildContext.getDockerfile()
+        .appendLine("FROM " + BUILD_IMAGE + " as " + Constants.DOCKERFILE_BUILD_STAGE)
+        .appendLine("ADD . .")
+        .appendLine("RUN " + buildCommand)
+        .appendLine();
   }
 
 }

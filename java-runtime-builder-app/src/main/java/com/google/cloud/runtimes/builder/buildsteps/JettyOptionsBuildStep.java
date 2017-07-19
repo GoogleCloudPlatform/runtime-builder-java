@@ -14,14 +14,22 @@
  * limitations under the License.
  */
 
-package com.google.cloud.runtimes.builder.exception;
+package com.google.cloud.runtimes.builder.buildsteps;
 
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+import com.google.cloud.runtimes.builder.config.domain.BuildContext;
+import com.google.common.annotations.VisibleForTesting;
 
-public class ArtifactNotFoundException extends BuildStepException {
+public class JettyOptionsBuildStep implements BuildStep {
 
-  public ArtifactNotFoundException() {
-    super("No deployable artifacts were found. Unable to proceed.");
+  @VisibleForTesting
+  protected static final String JETTY_QUICKSTART_COMMAND = "RUN /scripts/jetty/quickstart.sh";
+
+  @Override
+  public void run(BuildContext buildContext) throws BuildStepException {
+    if (buildContext.getRuntimeConfig().getJettyQuickstart()) {
+      buildContext.getDockerfile().appendLine(JETTY_QUICKSTART_COMMAND);
+    }
   }
-
 }

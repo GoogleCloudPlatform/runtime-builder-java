@@ -16,11 +16,13 @@
 
 package com.google.cloud.runtimes.builder.buildsteps;
 
-import com.google.cloud.runtimes.builder.buildsteps.base.AbstractSubprocessBuildStep;
+import static com.google.cloud.runtimes.builder.Constants.DOCKERFILE_BUILD_STAGE;
+
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
-import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepMetadataConstants;
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
+import com.google.cloud.runtimes.builder.config.domain.BuildContext;
+import com.google.cloud.runtimes.builder.injection.MavenDockerImage;
+import com.google.inject.Inject;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,53 +30,42 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 /**
  * Build step that invokes maven.
  */
-public class MavenBuildStep extends AbstractSubprocessBuildStep {
+public class MavenBuildStep implements BuildStep {
 
   private static final Logger logger = LoggerFactory.getLogger(MavenBuildStep.class);
 
-  @Override
-  protected List<String> getBuildCommand(Path directory) {
-    return Arrays.asList(getMavenExecutable(directory),
-        "-B", "-DskipTests=true", "clean", "package");
+  private final String mavenDockerImage;
+
+  @Inject
+  MavenBuildStep(@MavenDockerImage String mavenDockerImage) {
+    this.mavenDockerImage = mavenDockerImage;
   }
 
   @Override
-  protected void doBuild(Path directory, Map<String, String> metadata) throws BuildStepException {
-    super.doBuild(directory, metadata);
-    metadata.put(BuildStepMetadataConstants.BUILD_ARTIFACT_PATH, "target/");
+  public void run(BuildContext buildContext) throws BuildStepException {
+    buildContext.getDockerfile()
+        .appendLine("FROM " + mavenDockerImage + " as " + DOCKERFILE_BUILD_STAGE)
+        .appendLine("ADD . .")
+        .appendLine("RUN " + getMavenExecutable(buildContext) + " -B -DskipTests clean install")
+        .appendLine();
+
+    buildContext.setBuildArtifactLocation(Optional.of(Paths.get("target")));
   }
 
-  @VisibleForTesting
-  String getMavenHome() {
-    return System.getenv("MAVEN_HOME");
-  }
-
-  private String getMavenExecutable(Path directory) {
-    Path wrapperPath = directory.resolve("mvnw");
-    if (Files.isExecutable(wrapperPath)) {
+  private String getMavenExecutable(BuildContext buildContext) {
+    Path wrapperPath = buildContext.getWorkspaceDir().resolve("mvnw");
+    if (Files.exists(wrapperPath)) {
+      Path relativePath = buildContext.getWorkspaceDir().relativize(wrapperPath);
       logger.info("Maven wrapper discovered at {}. Using wrapper instead of system mvn.",
-          wrapperPath.toString());
-      return wrapperPath.toString();
-    }
+          relativePath);
 
-    String mavenHome = getMavenHome();
-    if (Strings.isNullOrEmpty(mavenHome)) {
-      throw new IllegalStateException("$MAVEN_HOME must be set.");
+      return "./" + relativePath.toString();
     }
-    Path systemMvn = Paths.get(mavenHome).resolve("bin").resolve("mvn");
-    if (Files.isExecutable(systemMvn)) {
-      return systemMvn.toString();
-    }
-
-    throw new IllegalStateException(
-        String.format("The file at %s is not a valid maven executable", systemMvn.toString()));
+    return "mvn";
   }
-
 }

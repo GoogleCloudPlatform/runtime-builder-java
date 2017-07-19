@@ -1,79 +1,80 @@
 package com.google.cloud.runtimes.builder.buildsteps;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.spy;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.cloud.runtimes.builder.Constants;
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
+import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+import com.google.cloud.runtimes.builder.config.domain.BuildContext;
+import com.google.cloud.runtimes.builder.util.StringLineAppender;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import org.junit.Before;
-import org.junit.Test;
+import java.util.Optional;
 
 /**
  * Unit tests for {@link MavenBuildStep}
  */
 public class MavenBuildStepTest {
 
-  private String testMavenHomeDir;
   private MavenBuildStep mavenBuildStep;
+  private StringLineAppender dockerfileBuilder;
+  private String mavenBuilderImage;
+
+  @Mock private BuildContext buildContext;
 
   @Before
   public void before() throws IOException {
-    mavenBuildStep = spy(new MavenBuildStep());
+    dockerfileBuilder = new StringLineAppender();
+    mavenBuilderImage = "gcr.io/foo/maven";
 
-    testMavenHomeDir = new TestWorkspaceBuilder()
-        .file("bin/mvn").setIsExecutable(true).build()
-        .build()
-        .toString();
+    MockitoAnnotations.initMocks(this);
+    when(buildContext.getDockerfile()).thenReturn(dockerfileBuilder);
 
-    when(mavenBuildStep.getMavenHome()).thenReturn(testMavenHomeDir);
+    mavenBuildStep = new MavenBuildStep(mavenBuilderImage);
+  }
+
+  // common assertions
+  private void assertBuild() {
+    assertTrue(dockerfileBuilder.toString().startsWith("FROM " + mavenBuilderImage + " as " + Constants.DOCKERFILE_BUILD_STAGE + "\n"));
+    verify(buildContext, times(1)).setBuildArtifactLocation(
+        eq(Optional.of(Paths.get("target"))));
   }
 
   @Test
-  public void testBuildWithWrapper() throws IOException {
+  public void testRunWithWrapper() throws IOException, BuildStepException {
     Path workspace = new TestWorkspaceBuilder()
         .file("mvnw").setIsExecutable(true).build()
         .build();
+    when(buildContext.getWorkspaceDir()).thenReturn(workspace);
 
-    List<String> buildCommand = mavenBuildStep.getBuildCommand(workspace);
+    mavenBuildStep.run(buildContext);
 
-    // assert that the first build command part is the mvnw wrapper executable
-    assertEquals(workspace.resolve("mvnw").toString(), buildCommand.get(0));
+    assertBuild();
+    assertTrue(dockerfileBuilder.toString().contains("RUN ./mvnw "
+        + "-B -DskipTests clean install\n"));
   }
 
   @Test
-  public void testBuildWithSystemMaven() throws IOException {
+  public void testRunWithSystemGradle() throws IOException, BuildStepException {
     Path workspace = new TestWorkspaceBuilder()
         .build();
+    when(buildContext.getWorkspaceDir()).thenReturn(workspace);
 
-    List<String> buildCommand = mavenBuildStep.getBuildCommand(workspace);
+    mavenBuildStep.run(buildContext);
 
-    // assert that the system maven is called
-    assertEquals(Paths.get(testMavenHomeDir, "bin", "mvn").toString(), buildCommand.get(0));
+    assertBuild();
+    assertTrue(dockerfileBuilder.toString().contains("RUN mvn -B -DskipTests clean install\n"));
   }
 
-  @Test(expected = IllegalStateException.class)
-  public void testBuildWithNoMavenHomeEnvVariable() throws IOException {
-    Path workspace = new TestWorkspaceBuilder()
-        .build();
-
-    when(mavenBuildStep.getMavenHome()).thenReturn(null);
-
-    mavenBuildStep.getBuildCommand(workspace);
-  }
-
-  @Test(expected = IllegalStateException.class)
-  public void testBuildWithInvalidMavenHome() throws IOException {
-    Path workspace = new TestWorkspaceBuilder()
-        .build();
-    Path emptyMavenHome = new TestWorkspaceBuilder()
-        .build();
-
-    when(mavenBuildStep.getMavenHome()).thenReturn(emptyMavenHome.toString());
-
-    mavenBuildStep.getBuildCommand(workspace);
-  }
 }

@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
-package com.google.cloud.runtimes.builder.buildsteps.base;
+package com.google.cloud.runtimes.builder.injection;
 
-public class BuildStepMetadataConstants {
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.PARAMETER;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-  public static final String BUILD_ARTIFACT_PATH = "build.artifact.path";
-  public static final String DOCKER_STAGING_PATH = "docker.staging.path";
+import com.google.inject.BindingAnnotation;
 
-}
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+@BindingAnnotation
+@Target({ FIELD, PARAMETER, METHOD }) @Retention(RUNTIME)
+public @interface MavenDockerImage {}

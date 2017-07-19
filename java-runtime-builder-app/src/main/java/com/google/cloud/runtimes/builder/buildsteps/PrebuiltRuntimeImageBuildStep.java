@@ -23,11 +23,18 @@ import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
 import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import com.google.inject.Inject;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
+
+  private final Logger logger = LoggerFactory.getLogger(RuntimeImageBuildStep.class);
 
   @Inject
   PrebuiltRuntimeImageBuildStep(JdkServerLookup jdkServerLookup) {
@@ -44,7 +51,7 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
 
     List<Path> artifacts;
     try {
-      artifacts = buildContext.findArtifacts();
+      artifacts = findArtifacts(buildContext.getWorkspaceDir());
     } catch (IOException e) {
       throw new BuildStepException(e);
     }
@@ -54,7 +61,42 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
     } else if (artifacts.size() > 1) {
       throw new TooManyArtifactsException(artifacts);
     } else {
-      return buildContext.getWorkspaceDir().relativize(artifacts.get(0)).toString();
+      String artifact = getRelativeArtifactPath(artifacts.get(0), buildContext.getWorkspaceDir());
+      logger.debug("Found Java artifact {}", artifact);
+      return artifact;
     }
+  }
+
+  // Get artifact name relative to the workspaceDir
+  private String getRelativeArtifactPath(Path artifact, Path workspaceDir) {
+    String artifactName = workspaceDir.relativize(artifact).toString();
+    if (artifactName.isEmpty()) {
+      artifactName = ".";
+    }
+    return artifactName;
+  }
+
+  /*
+   * Searches non-recursively for deployable artifacts in the given directory. Potential artifacts
+   * include:
+   * - files ending in .jar or .war
+   * - the current directory itself, if it is an exploded war
+   */
+  private List<Path> findArtifacts(Path searchDir) throws IOException {
+    List<Path> artifacts = Files.list(searchDir)
+        .filter(path -> {
+          String extension = com.google.common.io.Files.getFileExtension(path.toString());
+          return extension.equalsIgnoreCase("war") || extension.equalsIgnoreCase("jar");
+        })
+        .collect(Collectors.toList());
+
+    // TODO this is what XRT does. Should we check instead for WEB-INF/appengine-web.xml?
+    Path webInf = searchDir.resolve("WEB-INF");
+    if (Files.exists(webInf) && Files.isDirectory(webInf)) {
+      // The deploy directory itself is an exploded war artifact.
+      artifacts.add(searchDir);
+    }
+
+    return artifacts;
   }
 }

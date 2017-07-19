@@ -103,22 +103,6 @@ public class BuildContextTest {
   }
 
   @Test
-  public void testFindArtifactsWithMultiple() throws IOException {
-    workspace = new TestWorkspaceBuilder()
-        .file("foo.jar").build()
-        .file("bar.JAR").build()
-        .file("foo.war").build()
-        .build();
-
-    assertEquals(3, new BuildContext(new RuntimeConfig(), workspace).findArtifacts().size());
-  }
-
-  @Test
-  public void testFindArtifactsWithNone() throws IOException {
-    assertEquals(0, new BuildContext(new RuntimeConfig(), workspace).findArtifacts().size());
-  }
-
-  @Test
   public void testGetBuildToolWithNone() throws IOException {
     assertFalse(new BuildContext(new RuntimeConfig(), workspace).getBuildTool().isPresent());
   }

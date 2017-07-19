@@ -48,17 +48,24 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
     String artifact = getArtifact(buildContext);
     RuntimeConfig runtimeConfig = buildContext.getRuntimeConfig();
 
-    // Runtime type (web server vs plain JDK) runtime is selected based on the file extension of the
-    // artifact. Then, the runtime image is looked up using the provided runtime config fields.
-    if (artifact.endsWith("war") || artifact.endsWith("WAR")) {
+    // Runtime type is selected based on the file extension of the artifact. Then, the runtime image
+    // is looked up using the provided runtime config fields.
+    String extension = com.google.common.io.Files.getFileExtension(artifact.toString());
+    if (extension.equalsIgnoreCase("war")) {
       return jdkServerLookup.lookupServerImage(runtimeConfig.getJdk(), runtimeConfig.getServer());
-    } else if (artifact.endsWith("jar") || artifact.endsWith("JAR")) {
+
+    } else if (extension.equalsIgnoreCase("jar")) {
       // If the user expects a server to be involved, fail loudly.
       if (runtimeConfig.getServer() != null) {
         throw new BuildStepException("runtime_config.server configuration is not compatible with "
             + ".jar artifacts. To use a web server runtime, use a .war artifact instead.");
       }
       return jdkServerLookup.lookupJdkImage(runtimeConfig.getJdk());
+
+    } else if (artifact.equals(".")) {
+      // If it's an exploded-war, use the flex-compat runtime.
+      // TODO jdkServerlookups for compat??
+      return "compat";
     } else {
       throw new BuildStepException("Unrecognized artifact: '" + artifact + "'. A .jar or .war "
           + "artifact was expected.");

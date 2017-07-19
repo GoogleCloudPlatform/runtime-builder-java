@@ -32,6 +32,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -170,19 +171,6 @@ public class BuildContext {
       dockerignore.prependLine();
       writer.write(dockerignore.toString());
     }
-  }
-
-  /**
-   * Searches for files that look like deployable artifacts in the given directory.
-   */
-  public List<Path> findArtifacts() throws IOException {
-    return Files.list(workspaceDir)
-        // filter out files that don't end in .war or .jar
-        .filter((path) -> {
-          String extension = com.google.common.io.Files.getFileExtension(path.toString());
-          return extension.equalsIgnoreCase("war") || extension.equalsIgnoreCase("jar");
-        })
-        .collect(Collectors.toList());
   }
 
   /**

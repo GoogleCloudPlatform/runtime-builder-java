@@ -125,19 +125,30 @@ public class PrebuiltRuntimeImageBuildStepTest {
     prebuiltRuntimeImageBuildStep.run(buildContext);
   }
 
-  @Test(expected = BuildStepException.class)
+  @Test(expected = ArtifactNotFoundException.class)
   public void testUnrecognizedArtifact() throws IOException, BuildStepException {
-    Path workspace = new TestWorkspaceBuilder().build();
     String artifact = "foo.xyz";
+    Path workspace = new TestWorkspaceBuilder()
+        .file(artifact).build()
+        .build();
     BuildContext mockContext = mock(BuildContext.class);
     when(mockContext.getRuntimeConfig()).thenReturn(new RuntimeConfig());
     when(mockContext.getWorkspaceDir()).thenReturn(workspace);
-    when(mockContext.findArtifacts()).thenReturn(Arrays.asList(workspace.resolve(artifact)));
 
     assertEquals(artifact, prebuiltRuntimeImageBuildStep.getArtifact(mockContext));
 
     // should throw an exception
     prebuiltRuntimeImageBuildStep.run(mockContext);
+  }
+
+  @Test
+  public void testExplodedWarArtifact() throws IOException, BuildStepException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("WEB-INF/web.xml").build()
+        .build();
+    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace);
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+    buildContext.getDockerfile();
   }
 
 }

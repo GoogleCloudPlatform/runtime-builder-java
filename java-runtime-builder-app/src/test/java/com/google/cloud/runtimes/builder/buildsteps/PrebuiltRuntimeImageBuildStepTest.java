@@ -1,6 +1,7 @@
 package com.google.cloud.runtimes.builder.buildsteps;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -29,11 +30,14 @@ public class PrebuiltRuntimeImageBuildStepTest {
   private PrebuiltRuntimeImageBuildStep prebuiltRuntimeImageBuildStep;
 
   @Mock private JdkServerLookup jdkServerLookup;
+  private String compatImageName;
 
   @Before
   public void before() {
     MockitoAnnotations.initMocks(this);
-    prebuiltRuntimeImageBuildStep = new PrebuiltRuntimeImageBuildStep(jdkServerLookup);
+    compatImageName = "test-compat-image";
+    prebuiltRuntimeImageBuildStep
+        = new PrebuiltRuntimeImageBuildStep(jdkServerLookup, compatImageName);
   }
 
   @Test
@@ -148,7 +152,9 @@ public class PrebuiltRuntimeImageBuildStepTest {
         .build();
     BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace);
     prebuiltRuntimeImageBuildStep.run(buildContext);
-    buildContext.getDockerfile();
+
+    assertTrue(buildContext.getDockerfile().toString()
+        .startsWith("FROM " + compatImageName + "\n"));
   }
 
 }

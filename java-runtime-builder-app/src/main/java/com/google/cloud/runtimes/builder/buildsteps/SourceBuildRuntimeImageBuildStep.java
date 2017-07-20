@@ -18,13 +18,15 @@ package com.google.cloud.runtimes.builder.buildsteps;
 
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
+import com.google.cloud.runtimes.builder.injection.CompatDockerImage;
 import com.google.inject.Inject;
 
 public class SourceBuildRuntimeImageBuildStep extends RuntimeImageBuildStep {
 
   @Inject
-  SourceBuildRuntimeImageBuildStep(JdkServerLookup jdkServerLookup) {
-    super(jdkServerLookup);
+  SourceBuildRuntimeImageBuildStep(JdkServerLookup jdkServerLookup,
+      @CompatDockerImage String compatImage) {
+    super(jdkServerLookup, compatImage);
   }
 
   @Override

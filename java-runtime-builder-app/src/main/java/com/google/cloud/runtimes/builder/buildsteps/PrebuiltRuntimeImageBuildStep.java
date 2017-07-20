@@ -21,6 +21,7 @@ import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
 import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
+import com.google.cloud.runtimes.builder.injection.CompatDockerImage;
 import com.google.inject.Inject;
 
 import org.slf4j.Logger;
@@ -37,8 +38,9 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
   private final Logger logger = LoggerFactory.getLogger(RuntimeImageBuildStep.class);
 
   @Inject
-  PrebuiltRuntimeImageBuildStep(JdkServerLookup jdkServerLookup) {
-    super(jdkServerLookup);
+  PrebuiltRuntimeImageBuildStep(JdkServerLookup jdkServerLookup,
+      @CompatDockerImage String compatImageName) {
+    super(jdkServerLookup, compatImageName);
   }
 
   @Override

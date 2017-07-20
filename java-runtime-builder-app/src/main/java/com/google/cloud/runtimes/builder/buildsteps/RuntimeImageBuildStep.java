@@ -27,9 +27,11 @@ import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 public abstract class RuntimeImageBuildStep implements BuildStep {
 
   private final JdkServerLookup jdkServerLookup;
+  private final String compatImageName;
 
-  protected RuntimeImageBuildStep(JdkServerLookup jdkServerLookup) {
+  protected RuntimeImageBuildStep(JdkServerLookup jdkServerLookup, String compatImageName) {
     this.jdkServerLookup = jdkServerLookup;
+    this.compatImageName = compatImageName;
   }
 
   @Override
@@ -64,8 +66,7 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
 
     } else if (artifact.equals(".")) {
       // If it's an exploded-war, use the flex-compat runtime.
-      // TODO jdkServerlookups for compat??
-      return "compat";
+      return compatImageName;
     } else {
       throw new BuildStepException("Unrecognized artifact: '" + artifact + "'. A .jar or .war "
           + "artifact was expected.");

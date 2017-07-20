@@ -57,6 +57,13 @@ public class Application {
         .desc("Mappings between supported jdk versions, server types, and docker images")
         .build());
 
+    CLI_OPTIONS.addOption(Option.builder("c")
+        .required()
+        .hasArgs()
+        .longOpt("compat-runtime-image")
+        .desc("Base runtime image to use for the flex-compat environment")
+        .build());
+
     CLI_OPTIONS.addOption(Option.builder("m")
         .required()
         .hasArg()
@@ -80,10 +87,12 @@ public class Application {
     CommandLine cmd = parse(args);
     String[] jdkMappings = cmd.getOptionValues("j");
     String[] serverMappings = cmd.getOptionValues("s");
+    String compatImage = cmd.getOptionValue("c");
     String mavenImage = cmd.getOptionValue("m");
     String gradleImage = cmd.getOptionValue("g");
 
-    Injector injector = buildInjector(jdkMappings, serverMappings, mavenImage, gradleImage);
+    Injector injector
+        = buildInjector(jdkMappings, serverMappings, compatImage, mavenImage, gradleImage);
 
     // Perform dependency injection and run the application
     Path workspaceDir  = Paths.get(System.getProperty("user.dir"));
@@ -91,10 +100,9 @@ public class Application {
   }
 
   private static Injector buildInjector(String[] jdkMappings, String[] serverMappings,
-      String mavenImage, String gradleImage) throws BuildStepException, IOException,
-      AppYamlNotFoundException {
+      String compatImage, String mavenImage, String gradleImage) {
     return Guice.createInjector(
-        new RootModule(jdkMappings, serverMappings, mavenImage, gradleImage));
+        new RootModule(jdkMappings, serverMappings, compatImage, mavenImage, gradleImage));
   }
 
   private static CommandLine parse(String[] args) {

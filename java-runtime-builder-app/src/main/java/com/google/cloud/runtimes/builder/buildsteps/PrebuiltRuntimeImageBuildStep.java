@@ -92,10 +92,10 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
         })
         .collect(Collectors.toList());
 
-    // TODO this is what XRT does. Should we check instead for WEB-INF/appengine-web.xml?
+    // If the directory contains a WEB_INF/ directory, assume the workspace directory itself is an
+    // exploded war artifact.
     Path webInf = searchDir.resolve("WEB-INF");
     if (Files.exists(webInf) && Files.isDirectory(webInf)) {
-      // The deploy directory itself is an exploded war artifact.
       artifacts.add(searchDir);
     }
 

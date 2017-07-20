@@ -65,7 +65,7 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
       return jdkServerLookup.lookupJdkImage(runtimeConfig.getJdk());
 
     } else if (artifact.equals(".")) {
-      // If it's an exploded-war, use the flex-compat runtime.
+      // The deploy directory is an exploded war, so we use the flex-compat runtime.
       return compatImageName;
     } else {
       throw new BuildStepException("Unrecognized artifact: '" + artifact + "'. A .jar or .war "

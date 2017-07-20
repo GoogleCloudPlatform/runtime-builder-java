@@ -83,7 +83,7 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
         })
         .collect(Collectors.toList());
 
-    // If the search directory itself contains a WEB_INF/ directory, it is an exploded war.
+    // If the search directory contains a compat deployment descriptor, it is a valid artifact
     if (Files.exists(searchDir.resolve("WEB-INF").resolve("appengine-web.xml"))) {
       artifacts.add(searchDir);
     }

@@ -163,8 +163,9 @@ public class PrebuiltRuntimeImageBuildStepTest {
     BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace);
     prebuiltRuntimeImageBuildStep.run(buildContext);
 
-    assertTrue(buildContext.getDockerfile().toString()
-        .startsWith("FROM " + compatImageName + "\n"));
+    String dockerfile = buildContext.getDockerfile().toString();
+    assertTrue(dockerfile.startsWith("FROM " + compatImageName + "\n"));
+    assertTrue(dockerfile.contains("COPY ./ $APP_DESTINATION"));
   }
 
   @Test(expected = ArtifactNotFoundException.class)
@@ -178,10 +179,16 @@ public class PrebuiltRuntimeImageBuildStepTest {
 
   @Test
   public void testCompatArtifactNotAtRoot() throws IOException, BuildStepException {
+    String serverRuntime = "server_runtime_image";
+    when(jdkServerLookup.lookupServerImage(null, null)).thenReturn(serverRuntime);
     Path workspace = new TestWorkspaceBuilder()
         .file("foo.war/WEB-INF/web.xml").build()
         .build();
     BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace);
     prebuiltRuntimeImageBuildStep.run(buildContext);
+    String dockerfile = buildContext.getDockerfile().toString();
+
+    assertTrue(dockerfile.startsWith("FROM " + serverRuntime));
+    assertTrue(dockerfile.contains("COPY " + "./foo.war $APP_DESTINATION"));
   }
 }

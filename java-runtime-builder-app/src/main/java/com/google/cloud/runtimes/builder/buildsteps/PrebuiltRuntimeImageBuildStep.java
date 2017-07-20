@@ -44,11 +44,11 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
   }
 
   @Override
-  protected String getArtifact(BuildContext buildContext) throws BuildStepException {
+  protected Path getArtifact(BuildContext buildContext) throws BuildStepException {
     String providedArtifactPath = buildContext.getRuntimeConfig().getArtifact();
     if (providedArtifactPath != null) {
       // if the artifact path is set in runtime configuration, use that value
-      return providedArtifactPath;
+      return buildContext.getWorkspaceDir().resolve(providedArtifactPath);
     }
 
     List<Path> artifacts;
@@ -63,19 +63,10 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
     } else if (artifacts.size() > 1) {
       throw new TooManyArtifactsException(artifacts);
     } else {
-      String artifact = getRelativeArtifactPath(artifacts.get(0), buildContext.getWorkspaceDir());
+      Path artifact = artifacts.get(0);
       logger.debug("Found Java artifact {}", artifact);
       return artifact;
     }
-  }
-
-  // Get artifact name relative to the workspaceDir
-  private String getRelativeArtifactPath(Path artifact, Path workspaceDir) {
-    String artifactName = workspaceDir.relativize(artifact).toString();
-    if (artifactName.isEmpty()) {
-      artifactName = ".";
-    }
-    return artifactName;
   }
 
   /*

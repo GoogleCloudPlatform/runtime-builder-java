@@ -20,7 +20,6 @@ import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
 
 /**
  * Unit tests for {@link PrebuiltRuntimeImageBuildStep}.
@@ -117,7 +116,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
     runtimeConfig.setServer("custom_server");
     BuildContext buildContext = new BuildContext(runtimeConfig, workspace);
 
-    assertEquals("foo.jar", prebuiltRuntimeImageBuildStep.getArtifact(buildContext));
+    assertEquals(workspace.resolve("foo.jar"), prebuiltRuntimeImageBuildStep.getArtifact(buildContext));
 
     prebuiltRuntimeImageBuildStep.run(buildContext);
   }

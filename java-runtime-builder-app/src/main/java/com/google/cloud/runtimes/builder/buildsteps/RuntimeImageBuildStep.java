@@ -24,6 +24,8 @@ import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 
+import java.nio.file.Path;
+
 public abstract class RuntimeImageBuildStep implements BuildStep {
 
   private final JdkServerLookup jdkServerLookup;
@@ -42,12 +44,14 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
     if (buildContext.isSourceBuild()) {
       copyStep += "--from=" + DOCKERFILE_BUILD_STAGE + " ";
     }
-    buildContext.getDockerfile().appendLine(copyStep + getArtifact(buildContext)
-        + " $APP_DESTINATION");
+
+    Path relativeArtifactPath = buildContext.getWorkspaceDir()
+        .relativize(getArtifact(buildContext));
+    buildContext.getDockerfile().appendLine(copyStep + relativeArtifactPath + " $APP_DESTINATION");
   }
 
   private String getBaseRuntimeImage(BuildContext buildContext) throws BuildStepException {
-    String artifact = getArtifact(buildContext);
+    Path artifact = getArtifact(buildContext);
     RuntimeConfig runtimeConfig = buildContext.getRuntimeConfig();
 
     // Runtime type is selected based on the file extension of the artifact. Then, the runtime image
@@ -64,8 +68,10 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
       }
       return jdkServerLookup.lookupJdkImage(runtimeConfig.getJdk());
 
-    } else if (artifact.equals(".")) {
-      // The deploy directory is an exploded war, so we use the flex-compat runtime.
+    } else if (artifact.toFile().isDirectory()
+        && artifact.resolve("WEB-INF").toFile().isDirectory()) {
+      // If the artifact is a directory that contains a WEB-INF directory, assume it's an exploded
+      // war, and use the flex-compat runtime.
       return compatImageName;
     } else {
       throw new BuildStepException("Unrecognized artifact: '" + artifact + "'. A .jar or .war "
@@ -76,6 +82,6 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
   /**
    * Returns the artifact to add to the runtime docker image.
    */
-  protected abstract String getArtifact(BuildContext buildContext) throws BuildStepException;
+  protected abstract Path getArtifact(BuildContext buildContext) throws BuildStepException;
 
 }

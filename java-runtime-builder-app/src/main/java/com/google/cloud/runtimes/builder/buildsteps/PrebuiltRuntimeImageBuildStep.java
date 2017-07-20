@@ -72,7 +72,7 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
   /*
    * Searches non-recursively for deployable artifacts in the given directory. Potential artifacts
    * include:
-   * - files ending in .jar or .war
+   * - files or directories ending in .jar or .war
    * - the current directory itself, if it is an exploded war
    */
   private List<Path> findArtifacts(Path searchDir) throws IOException {
@@ -83,10 +83,8 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
         })
         .collect(Collectors.toList());
 
-    // If the directory contains a WEB_INF/ directory, assume the workspace directory itself is an
-    // exploded war artifact.
-    Path webInf = searchDir.resolve("WEB-INF");
-    if (Files.exists(webInf) && Files.isDirectory(webInf)) {
+    // If the search directory itself contains a WEB_INF/ directory, it is an exploded war.
+    if (Files.exists(searchDir.resolve("WEB-INF").resolve("appengine-web.xml"))) {
       artifacts.add(searchDir);
     }
 

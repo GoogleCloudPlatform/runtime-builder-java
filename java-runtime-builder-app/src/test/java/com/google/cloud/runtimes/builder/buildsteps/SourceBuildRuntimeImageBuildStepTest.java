@@ -64,7 +64,7 @@ public class SourceBuildRuntimeImageBuildStepTest {
     ctx.getRuntimeConfig().setArtifact(artifact);
     buildStep.run(ctx);
 
-    assertEquals("FROM " + TEST_SERVER_RUNTIME + "\nCOPY " + artifact + " $APP_DESTINATION\n",
+    assertEquals("FROM " + TEST_SERVER_RUNTIME + "\nCOPY " + "./" + artifact + " $APP_DESTINATION\n",
         ctx.getDockerfile().toString());
   }
 

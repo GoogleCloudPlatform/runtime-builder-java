@@ -54,7 +54,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
     prebuiltRuntimeImageBuildStep.run(buildContext);
 
     String expected = "FROM test_image\n"
-        + "COPY artifactDir/my_artifact.jar $APP_DESTINATION\n";
+        + "COPY ./artifactDir/my_artifact.jar $APP_DESTINATION\n";
     assertEquals(expected, buildContext.getDockerfile().toString());
   }
 
@@ -73,7 +73,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
   public void testMultipleArtifactsWithCompat() throws IOException, BuildStepException {
     Path workspace = new TestWorkspaceBuilder()
         .file("foo.jar").build()
-        .file("WEB-INF/web.xml").build()
+        .file("foo.war/WEB-INF/web.xml").build()
         .build();
 
     BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace);
@@ -92,7 +92,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
 
     prebuiltRuntimeImageBuildStep.run(buildContext);
     String expected = "FROM test_war_image\n"
-        + "COPY foo.war $APP_DESTINATION\n";
+        + "COPY ./foo.war $APP_DESTINATION\n";
     assertEquals(expected, buildContext.getDockerfile().toString());
   }
 
@@ -111,7 +111,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
 
     prebuiltRuntimeImageBuildStep.run(buildContext);
     String expected = "FROM custom_jdk_image\n"
-        + "COPY foo.jar $APP_DESTINATION\n";
+        + "COPY ./foo.jar $APP_DESTINATION\n";
     assertEquals(expected, buildContext.getDockerfile().toString());
   }
 
@@ -156,9 +156,9 @@ public class PrebuiltRuntimeImageBuildStepTest {
   }
 
   @Test
-  public void testExplodedWarArtifact() throws IOException, BuildStepException {
+  public void testCompatArtifact() throws IOException, BuildStepException {
     Path workspace = new TestWorkspaceBuilder()
-        .file("WEB-INF/web.xml").build()
+        .file("WEB-INF/appengine-web.xml").build()
         .build();
     BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace);
     prebuiltRuntimeImageBuildStep.run(buildContext);
@@ -167,4 +167,21 @@ public class PrebuiltRuntimeImageBuildStepTest {
         .startsWith("FROM " + compatImageName + "\n"));
   }
 
+  @Test(expected = ArtifactNotFoundException.class)
+  public void testNonCompatExplodedWarArtifactAtRoot() throws IOException, BuildStepException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("WEB-INF/web.xml").build()
+        .build();
+    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace);
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+  }
+
+  @Test
+  public void testCompatArtifactNotAtRoot() throws IOException, BuildStepException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("foo.war/WEB-INF/web.xml").build()
+        .build();
+    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace);
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+  }
 }

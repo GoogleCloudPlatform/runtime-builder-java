@@ -24,6 +24,8 @@ import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public abstract class RuntimeImageBuildStep implements BuildStep {
@@ -38,19 +40,27 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
 
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
-    buildContext.getDockerfile().appendLine("FROM " + getBaseRuntimeImage(buildContext));
+    String baseImage;
+    try {
+      baseImage = getBaseRuntimeImage(buildContext);
+    } catch (IOException e) {
+      throw new BuildStepException("An error was encountered while searching for an artifact. "
+          + "Please try again later.", e);
+    }
 
+    buildContext.getDockerfile().appendLine("FROM " + baseImage);
     String copyStep = "COPY ";
     if (buildContext.isSourceBuild()) {
       copyStep += "--from=" + DOCKERFILE_BUILD_STAGE + " ";
     }
 
-    Path relativeArtifactPath = buildContext.getWorkspaceDir()
-        .relativize(getArtifact(buildContext));
+    String relativeArtifactPath = "./" + buildContext.getWorkspaceDir()
+        .relativize(getArtifact(buildContext)).toString();
     buildContext.getDockerfile().appendLine(copyStep + relativeArtifactPath + " $APP_DESTINATION");
   }
 
-  private String getBaseRuntimeImage(BuildContext buildContext) throws BuildStepException {
+  private String getBaseRuntimeImage(BuildContext buildContext)
+      throws BuildStepException, IOException {
     Path artifact = getArtifact(buildContext);
     RuntimeConfig runtimeConfig = buildContext.getRuntimeConfig();
 
@@ -68,11 +78,11 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
       }
       return jdkServerLookup.lookupJdkImage(runtimeConfig.getJdk());
 
-    } else if (artifact.toFile().isDirectory()
-        && artifact.resolve("WEB-INF").toFile().isDirectory()) {
-      // If the artifact is a directory that contains a WEB-INF directory, assume it's an exploded
-      // war, and use the flex-compat runtime.
+    } else if (Files.isSameFile(artifact, buildContext.getWorkspaceDir())
+        && artifact.resolve("WEB-INF").resolve("appengine-web.xml").toFile().exists()) {
+      // If the workspace directory itself is an exploded war, use the compat runtime.
       return compatImageName;
+
     } else {
       throw new BuildStepException("Unrecognized artifact: '" + artifact + "'. A .jar or .war "
           + "artifact was expected.");

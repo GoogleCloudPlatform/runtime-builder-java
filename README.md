@@ -38,6 +38,7 @@ LOCAL_APPLICATION_DIR=/path/to/my/app
 docker run -v $LOCAL_APPLICATION_DIR:/workspace -w /workspace runtime-builder \
     --jdk-runtimes-map='*=gcr.io/google-appengine/openjdk:8' \
     --server-runtimes-map='*|*=gcr.io/google-appengine/jetty:9' \
+    --compat-docker-image='gcr.io/google-appengine/jetty9-compat' \
     --maven-docker-image='gcr.io/cloud-builders/java/mvn:3.5.0-jdk-8' \
     --gradle-docker-image='gcr.io/cloud-builders/java/gradle:4.0-jdk-8'
 

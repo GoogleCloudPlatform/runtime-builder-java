@@ -69,6 +69,17 @@ public class PrebuiltRuntimeImageBuildStepTest {
     prebuiltRuntimeImageBuildStep.run(buildContext);
   }
 
+  @Test(expected = TooManyArtifactsException.class)
+  public void testMultipleArtifactsWithCompat() throws IOException, BuildStepException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("foo.jar").build()
+        .file("WEB-INF/web.xml").build()
+        .build();
+
+    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace);
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+  }
+
   @Test
   public void testSingleWarArtifact() throws IOException, BuildStepException {
     Path workspace = new TestWorkspaceBuilder()

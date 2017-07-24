@@ -17,19 +17,20 @@
 package com.google.cloud.runtimes.builder.buildsteps;
 
 import static com.google.cloud.runtimes.builder.Constants.DOCKERFILE_BUILD_STAGE;
+import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.APP_ENGINE_EXPLODED_WAR;
+import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.EXPLODED_WAR;
+import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.JAR;
+import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.WAR;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+import com.google.cloud.runtimes.builder.config.domain.Artifact;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 public abstract class RuntimeImageBuildStep implements BuildStep {
 
@@ -45,42 +46,39 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
 
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
-    Path artifact = getArtifact(buildContext);
+    Artifact artifact = getArtifact(buildContext);
     logger.debug("Found Java artifact {}", artifact);
 
-    String baseImage;
-    try {
-      baseImage = getBaseRuntimeImage(buildContext, artifact);
-    } catch (IOException e) {
-      throw new BuildStepException("An error was encountered while searching for an artifact. "
-          + "Please try again later.", e);
-    }
-
-    buildContext.getDockerfile().appendLine("FROM " + baseImage);
+    buildContext.getDockerfile().appendLine("FROM " + getBaseRuntimeImage(buildContext, artifact));
     String copyStep = "COPY ";
     if (buildContext.isSourceBuild()) {
       copyStep += "--from=" + DOCKERFILE_BUILD_STAGE + " ";
     }
 
-    String relativeArtifactPath = "./" + buildContext.getWorkspaceDir().relativize(artifact)
-        .toString();
+    String relativeArtifactPath = "./" + buildContext.getWorkspaceDir()
+        .relativize(artifact.getPath()).toString();
     buildContext.getDockerfile().appendLine(copyStep + relativeArtifactPath + " $APP_DESTINATION");
   }
 
-  private String getBaseRuntimeImage(BuildContext buildContext, Path artifact)
-      throws BuildStepException, IOException {
+  private String getBaseRuntimeImage(BuildContext buildContext, Artifact artifact)
+      throws BuildStepException {
     RuntimeConfig runtimeConfig = buildContext.getRuntimeConfig();
 
-    // Runtime type is selected based on the file extension of the artifact. Then, the runtime image
-    // is looked up using the provided runtime config fields.
-    String extension = com.google.common.io.Files.getFileExtension(artifact.toString());
-    if (extension.equalsIgnoreCase("war")) {
+    // runtime type is selected based on the type of artifact
+
+    if (artifact.getPath().normalize().equals(buildContext.getWorkspaceDir())
+        && artifact.getType() == APP_ENGINE_EXPLODED_WAR) {
+      // If the workspace directory itself is an app engine exploded war, use the compat runtime.
+      logger.info("Using base image '{}' for App Engine exploded WAR artifact", compatImageName);
+      return compatImageName;
+
+    } else if (artifact.getType() == WAR || artifact.getType() == EXPLODED_WAR) {
       String baseImage
           = jdkServerLookup.lookupServerImage(runtimeConfig.getJdk(), runtimeConfig.getServer());
       logger.info("Using base image '{}' for WAR artifact", baseImage);
       return baseImage;
 
-    } else if (extension.equalsIgnoreCase("jar")) {
+    } else if (artifact.getType() == JAR) {
       // If the user expects a server to be involved, fail loudly.
       if (runtimeConfig.getServer() != null) {
         throw new BuildStepException("runtime_config.server configuration is not compatible with "
@@ -90,21 +88,15 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
       logger.info("Using base image '{}' for JAR artifact", baseImage);
       return baseImage;
 
-    } else if (Files.isSameFile(artifact, buildContext.getWorkspaceDir())
-        && artifact.resolve("WEB-INF").resolve("appengine-web.xml").toFile().exists()) {
-      // If the workspace directory itself is an exploded war, use the compat runtime.
-      logger.info("Using base image '{}' for App Engine exploded WAR artifact", compatImageName);
-      return compatImageName;
-
     } else {
-      throw new BuildStepException("Unrecognized artifact: '" + artifact + "'. A .jar or .war "
-          + "artifact was expected.");
+      throw new BuildStepException("Unable to select a base image for the artifact of type "
+          + artifact.getType() + " at path " + artifact.getPath());
     }
   }
 
   /**
    * Returns the artifact to add to the runtime docker image.
    */
-  protected abstract Path getArtifact(BuildContext buildContext) throws BuildStepException;
+  protected abstract Artifact getArtifact(BuildContext buildContext) throws BuildStepException;
 
 }

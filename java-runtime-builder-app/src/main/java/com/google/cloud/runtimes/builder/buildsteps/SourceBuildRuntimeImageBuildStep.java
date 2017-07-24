@@ -16,12 +16,11 @@
 
 package com.google.cloud.runtimes.builder.buildsteps;
 
+import com.google.cloud.runtimes.builder.config.domain.Artifact;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.injection.CompatDockerImage;
 import com.google.inject.Inject;
-
-import java.nio.file.Path;
 
 public class SourceBuildRuntimeImageBuildStep extends RuntimeImageBuildStep {
 
@@ -32,7 +31,7 @@ public class SourceBuildRuntimeImageBuildStep extends RuntimeImageBuildStep {
   }
 
   @Override
-  protected Path getArtifact(BuildContext buildContext) {
+  protected Artifact getArtifact(BuildContext buildContext) {
     String providedArtifactPath = buildContext.getRuntimeConfig().getArtifact();
 
     // Require that the artifact name is explicitly provided by the user.
@@ -41,7 +40,7 @@ public class SourceBuildRuntimeImageBuildStep extends RuntimeImageBuildStep {
           + "from source, the path to the artifact must be specified in the runtime_config.artifact"
           + " field.");
     }
-    return buildContext.getWorkspaceDir().resolve(providedArtifactPath);
+    return Artifact.fromPath(buildContext.getWorkspaceDir().resolve(providedArtifactPath));
   }
 
 }

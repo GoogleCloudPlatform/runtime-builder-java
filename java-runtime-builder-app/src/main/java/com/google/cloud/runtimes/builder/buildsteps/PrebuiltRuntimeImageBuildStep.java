@@ -17,6 +17,7 @@
 package com.google.cloud.runtimes.builder.buildsteps;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+import com.google.cloud.runtimes.builder.config.domain.Artifact;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
@@ -29,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
 
@@ -39,16 +41,24 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
   }
 
   @Override
-  protected Path getArtifact(BuildContext buildContext) throws BuildStepException {
+  protected Artifact getArtifact(BuildContext buildContext) throws BuildStepException {
     String providedArtifactPath = buildContext.getRuntimeConfig().getArtifact();
     if (providedArtifactPath != null) {
       // if the artifact path is set in runtime configuration, use that value
-      return buildContext.getWorkspaceDir().resolve(providedArtifactPath);
+      return Artifact.fromPath(buildContext.getWorkspaceDir().resolve(providedArtifactPath));
     }
 
     List<Path> artifacts;
     try {
-      artifacts = findArtifacts(buildContext.getWorkspaceDir());
+      // potential artifacts include all files at the root of the workspace and the workspace itself
+      Stream<Path> potentialArtifacts = Stream.concat(
+          Stream.of(buildContext.getWorkspaceDir()),
+          Files.list(buildContext.getWorkspaceDir()));
+
+      // filter out non-valid artifacts
+      artifacts = potentialArtifacts
+          .filter(Artifact::isAnArtifact)
+          .collect(Collectors.toList());
     } catch (IOException e) {
       throw new BuildStepException(e);
     }
@@ -58,29 +68,8 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
     } else if (artifacts.size() > 1) {
       throw new TooManyArtifactsException(artifacts);
     } else {
-      return artifacts.get(0);
+      return Artifact.fromPath(artifacts.get(0));
     }
   }
 
-  /*
-   * Searches non-recursively for deployable artifacts in the given directory. Potential artifacts
-   * include:
-   * - files or directories ending in .jar or .war
-   * - the current directory itself, if it is an exploded war
-   */
-  private List<Path> findArtifacts(Path searchDir) throws IOException {
-    List<Path> artifacts = Files.list(searchDir)
-        .filter(path -> {
-          String extension = com.google.common.io.Files.getFileExtension(path.toString());
-          return extension.equalsIgnoreCase("war") || extension.equalsIgnoreCase("jar");
-        })
-        .collect(Collectors.toList());
-
-    // If the search directory contains a compat deployment descriptor, it is a valid artifact
-    if (Files.exists(searchDir.resolve("WEB-INF").resolve("appengine-web.xml"))) {
-      artifacts.add(searchDir);
-    }
-
-    return artifacts;
-  }
 }

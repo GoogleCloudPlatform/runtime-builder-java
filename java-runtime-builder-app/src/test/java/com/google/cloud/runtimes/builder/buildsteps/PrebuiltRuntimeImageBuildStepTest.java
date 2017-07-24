@@ -2,6 +2,8 @@ package com.google.cloud.runtimes.builder.buildsteps;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -127,7 +129,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
     runtimeConfig.setServer("custom_server");
     BuildContext buildContext = new BuildContext(runtimeConfig, workspace);
 
-    assertEquals(workspace.resolve("foo.jar"), prebuiltRuntimeImageBuildStep.getArtifact(buildContext));
+    assertEquals(workspace.resolve("foo.jar"), prebuiltRuntimeImageBuildStep.getArtifact(buildContext).getPath());
 
     prebuiltRuntimeImageBuildStep.run(buildContext);
   }
@@ -159,6 +161,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
   public void testCompatArtifact() throws IOException, BuildStepException {
     Path workspace = new TestWorkspaceBuilder()
         .file("WEB-INF/appengine-web.xml").build()
+        .file("WEB-INF/web.xml").build()
         .build();
     BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace);
     prebuiltRuntimeImageBuildStep.run(buildContext);
@@ -168,13 +171,20 @@ public class PrebuiltRuntimeImageBuildStepTest {
     assertTrue(dockerfile.contains("COPY ./ $APP_DESTINATION"));
   }
 
-  @Test(expected = ArtifactNotFoundException.class)
+  @Test
   public void testNonCompatExplodedWarArtifactAtRoot() throws IOException, BuildStepException {
     Path workspace = new TestWorkspaceBuilder()
         .file("WEB-INF/web.xml").build()
         .build();
     BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace);
+
+    String serverRuntime = "server-runtime";
+    when(jdkServerLookup.lookupServerImage(isNull(), isNull())).thenReturn(serverRuntime);
     prebuiltRuntimeImageBuildStep.run(buildContext);
+
+    String dockerfile = buildContext.getDockerfile().toString();
+    assertTrue(dockerfile.startsWith("FROM " + serverRuntime + "\n"));
+    assertTrue(dockerfile.contains("COPY ./ $APP_DESTINATION"));
   }
 
   @Test

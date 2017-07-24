@@ -24,11 +24,16 @@ import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public abstract class RuntimeImageBuildStep implements BuildStep {
+
+  private final Logger logger = LoggerFactory.getLogger(RuntimeImageBuildStep.class);
 
   private final JdkServerLookup jdkServerLookup;
   private final String compatImageName;
@@ -40,9 +45,12 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
 
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
+    Path artifact = getArtifact(buildContext);
+    logger.debug("Found Java artifact {}", artifact);
+
     String baseImage;
     try {
-      baseImage = getBaseRuntimeImage(buildContext);
+      baseImage = getBaseRuntimeImage(buildContext, artifact);
     } catch (IOException e) {
       throw new BuildStepException("An error was encountered while searching for an artifact. "
           + "Please try again later.", e);
@@ -54,14 +62,13 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
       copyStep += "--from=" + DOCKERFILE_BUILD_STAGE + " ";
     }
 
-    String relativeArtifactPath = "./" + buildContext.getWorkspaceDir()
-        .relativize(getArtifact(buildContext)).toString();
+    String relativeArtifactPath = "./" + buildContext.getWorkspaceDir().relativize(artifact)
+        .toString();
     buildContext.getDockerfile().appendLine(copyStep + relativeArtifactPath + " $APP_DESTINATION");
   }
 
-  private String getBaseRuntimeImage(BuildContext buildContext)
+  private String getBaseRuntimeImage(BuildContext buildContext, Path artifact)
       throws BuildStepException, IOException {
-    Path artifact = getArtifact(buildContext);
     RuntimeConfig runtimeConfig = buildContext.getRuntimeConfig();
 
     // Runtime type is selected based on the file extension of the artifact. Then, the runtime image

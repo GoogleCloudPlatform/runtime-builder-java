@@ -24,9 +24,6 @@ import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import com.google.cloud.runtimes.builder.injection.CompatDockerImage;
 import com.google.inject.Inject;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,8 +31,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
-
-  private final Logger logger = LoggerFactory.getLogger(RuntimeImageBuildStep.class);
 
   @Inject
   PrebuiltRuntimeImageBuildStep(JdkServerLookup jdkServerLookup,
@@ -63,9 +58,7 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
     } else if (artifacts.size() > 1) {
       throw new TooManyArtifactsException(artifacts);
     } else {
-      Path artifact = artifacts.get(0);
-      logger.debug("Found Java artifact {}", artifact);
-      return artifact;
+      return artifacts.get(0);
     }
   }
 

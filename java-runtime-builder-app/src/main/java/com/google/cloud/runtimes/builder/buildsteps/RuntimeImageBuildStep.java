@@ -50,14 +50,21 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
     logger.debug("Found Java artifact {}", artifact);
 
     buildContext.getDockerfile().appendLine("FROM " + getBaseRuntimeImage(buildContext, artifact));
-    String copyStep = "COPY ";
+    String copyStep = "COPY";
     if (buildContext.isSourceBuild()) {
-      copyStep += "--from=" + DOCKERFILE_BUILD_STAGE + " ";
+      copyStep += " --from=" + DOCKERFILE_BUILD_STAGE;
     }
 
     String relativeArtifactPath = "./" + buildContext.getWorkspaceDir()
         .relativize(artifact.getPath()).toString();
-    buildContext.getDockerfile().appendLine(copyStep + relativeArtifactPath + " $APP_DESTINATION");
+
+    // compat runtime requires a special app destination
+    String artifactDestination = artifact.getType() == APP_ENGINE_EXPLODED_WAR
+        ? "/app/"
+        : "$APP_DESTINATION";
+
+    buildContext.getDockerfile().appendLine(copyStep + " " + relativeArtifactPath + " "
+        + artifactDestination);
   }
 
   private String getBaseRuntimeImage(BuildContext buildContext, Artifact artifact)

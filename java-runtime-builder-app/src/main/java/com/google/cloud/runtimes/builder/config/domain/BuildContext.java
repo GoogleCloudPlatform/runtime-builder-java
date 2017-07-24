@@ -136,7 +136,6 @@ public class BuildContext {
   private void writeDockerIgnore() throws IOException {
     // If there's nothing to write, return
     if (dockerignore.getLines().size() < 1) {
-      logger.debug("Skipping .dockerignore generation - nothing to write!");
       return;
     }
 
@@ -157,7 +156,6 @@ public class BuildContext {
 
     // Make sure there are lines remaining before proceeding
     if (dockerignore.getLines().size() < 1) {
-      logger.debug("Skipping .dockerignore generation - nothing to write!");
       return;
     }
 

@@ -75,7 +75,10 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
     // is looked up using the provided runtime config fields.
     String extension = com.google.common.io.Files.getFileExtension(artifact.toString());
     if (extension.equalsIgnoreCase("war")) {
-      return jdkServerLookup.lookupServerImage(runtimeConfig.getJdk(), runtimeConfig.getServer());
+      String baseImage
+          = jdkServerLookup.lookupServerImage(runtimeConfig.getJdk(), runtimeConfig.getServer());
+      logger.info("Using base image '{}' for WAR artifact", baseImage);
+      return baseImage;
 
     } else if (extension.equalsIgnoreCase("jar")) {
       // If the user expects a server to be involved, fail loudly.
@@ -83,11 +86,14 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
         throw new BuildStepException("runtime_config.server configuration is not compatible with "
             + ".jar artifacts. To use a web server runtime, use a .war artifact instead.");
       }
-      return jdkServerLookup.lookupJdkImage(runtimeConfig.getJdk());
+      String baseImage = jdkServerLookup.lookupJdkImage(runtimeConfig.getJdk());
+      logger.info("Using base image '{}' for JAR artifact", baseImage);
+      return baseImage;
 
     } else if (Files.isSameFile(artifact, buildContext.getWorkspaceDir())
         && artifact.resolve("WEB-INF").resolve("appengine-web.xml").toFile().exists()) {
       // If the workspace directory itself is an exploded war, use the compat runtime.
+      logger.info("Using base image '{}' for App Engine exploded WAR artifact", compatImageName);
       return compatImageName;
 
     } else {

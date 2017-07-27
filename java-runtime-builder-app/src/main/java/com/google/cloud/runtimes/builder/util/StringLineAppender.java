@@ -16,6 +16,7 @@
 
 package com.google.cloud.runtimes.builder.util;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -25,6 +26,11 @@ import java.util.List;
 public class StringLineAppender {
 
   private List<String> lines;
+
+  public StringLineAppender(String... initalLines) {
+    lines = new LinkedList<>();
+    Arrays.stream(initalLines).forEach(this::appendLine);
+  }
 
   public StringLineAppender() {
     lines = new LinkedList<>();

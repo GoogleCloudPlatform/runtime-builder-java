@@ -79,7 +79,8 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
       logger.info("Using base image '{}' for App Engine exploded WAR artifact", compatImageName);
       return compatImageName;
 
-    } else if (artifact.getType() == WAR || artifact.getType() == EXPLODED_WAR) {
+    } else if (artifact.getType() == WAR || artifact.getType() == EXPLODED_WAR
+        || artifact.getType() == APP_ENGINE_EXPLODED_WAR) {
       String baseImage
           = jdkServerLookup.lookupServerImage(runtimeConfig.getJdk(), runtimeConfig.getServer());
       logger.info("Using base image '{}' for WAR artifact", baseImage);

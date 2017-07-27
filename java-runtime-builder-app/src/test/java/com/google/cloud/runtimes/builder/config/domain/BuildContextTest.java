@@ -21,6 +21,9 @@ public class BuildContextTest {
 
   private Path workspace;
 
+  private static final String DOCKER_IGNORE_PREAMBLE = "Dockerfile\n"
+      + ".dockerignore\n";
+
   @Before
   public void before() throws IOException {
     // initialize to empty dir
@@ -47,7 +50,7 @@ public class BuildContextTest {
 
     context.writeDockerResources();
     assertEquals("", readFile(getDockerfile()));
-    assertEquals(dockerIgnoreContents + "\n" + dockerIgnoreAppend + "\n",
+    assertEquals(dockerIgnoreContents + "\n" + DOCKER_IGNORE_PREAMBLE + dockerIgnoreAppend + "\n",
         readFile(getDockerIgnore()));
   }
 
@@ -66,7 +69,11 @@ public class BuildContextTest {
 
     context.writeDockerResources();
     assertEquals("", readFile(getDockerfile()));
-    assertEquals(dockerIgnoreContents + "\n" + dockerIgnoreAppend + "\n", readFile(getDockerIgnore()));
+
+    String expectedDockerIgnore = dockerIgnoreContents + "\n"
+        + DOCKER_IGNORE_PREAMBLE
+        + dockerIgnoreAppend + "\n";
+    assertEquals(expectedDockerIgnore, readFile(getDockerIgnore()));
   }
 
   @Test(expected = IllegalStateException.class)

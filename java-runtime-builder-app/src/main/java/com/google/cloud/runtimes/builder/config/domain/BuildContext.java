@@ -64,7 +64,8 @@ public class BuildContext {
     this.runtimeConfig = runtimeConfig;
     this.workspaceDir = workspaceDir;
     this.dockerfile = new StringLineAppender();
-    this.dockerignore = new StringLineAppender();
+    // dockerignore should always include itself and the dockerfile
+    this.dockerignore = new StringLineAppender(DOCKERFILE_NAME, DOCKERIGNORE_NAME);
 
     buildArtifactLocation = Optional.empty();
   }

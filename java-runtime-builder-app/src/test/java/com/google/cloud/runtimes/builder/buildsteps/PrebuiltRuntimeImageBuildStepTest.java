@@ -1,6 +1,8 @@
 package com.google.cloud.runtimes.builder.buildsteps;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -19,7 +21,6 @@ import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
 
 /**
  * Unit tests for {@link PrebuiltRuntimeImageBuildStep}.
@@ -29,11 +30,14 @@ public class PrebuiltRuntimeImageBuildStepTest {
   private PrebuiltRuntimeImageBuildStep prebuiltRuntimeImageBuildStep;
 
   @Mock private JdkServerLookup jdkServerLookup;
+  private String compatImageName;
 
   @Before
   public void before() {
     MockitoAnnotations.initMocks(this);
-    prebuiltRuntimeImageBuildStep = new PrebuiltRuntimeImageBuildStep(jdkServerLookup);
+    compatImageName = "test-compat-image";
+    prebuiltRuntimeImageBuildStep
+        = new PrebuiltRuntimeImageBuildStep(jdkServerLookup, compatImageName);
   }
 
   @Test
@@ -51,7 +55,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
     prebuiltRuntimeImageBuildStep.run(buildContext);
 
     String expected = "FROM test_image\n"
-        + "COPY artifactDir/my_artifact.jar $APP_DESTINATION\n";
+        + "COPY ./artifactDir/my_artifact.jar $APP_DESTINATION\n";
     assertEquals(expected, buildContext.getDockerfile().toString());
   }
 
@@ -60,6 +64,17 @@ public class PrebuiltRuntimeImageBuildStepTest {
     Path workspace = new TestWorkspaceBuilder()
         .file("foo.war").build()
         .file("bar.war").build()
+        .build();
+
+    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace);
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+  }
+
+  @Test(expected = TooManyArtifactsException.class)
+  public void testMultipleArtifactsWithCompat() throws IOException, BuildStepException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("foo.jar").build()
+        .file("foo.war/WEB-INF/web.xml").build()
         .build();
 
     BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace);
@@ -78,7 +93,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
 
     prebuiltRuntimeImageBuildStep.run(buildContext);
     String expected = "FROM test_war_image\n"
-        + "COPY foo.war $APP_DESTINATION\n";
+        + "COPY ./foo.war $APP_DESTINATION\n";
     assertEquals(expected, buildContext.getDockerfile().toString());
   }
 
@@ -97,7 +112,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
 
     prebuiltRuntimeImageBuildStep.run(buildContext);
     String expected = "FROM custom_jdk_image\n"
-        + "COPY foo.jar $APP_DESTINATION\n";
+        + "COPY ./foo.jar $APP_DESTINATION\n";
     assertEquals(expected, buildContext.getDockerfile().toString());
   }
 
@@ -113,7 +128,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
     runtimeConfig.setServer("custom_server");
     BuildContext buildContext = new BuildContext(runtimeConfig, workspace);
 
-    assertEquals("foo.jar", prebuiltRuntimeImageBuildStep.getArtifact(buildContext));
+    assertEquals(workspace.resolve("foo.jar"), prebuiltRuntimeImageBuildStep.getArtifact(buildContext).getPath());
 
     prebuiltRuntimeImageBuildStep.run(buildContext);
   }
@@ -125,14 +140,15 @@ public class PrebuiltRuntimeImageBuildStepTest {
     prebuiltRuntimeImageBuildStep.run(buildContext);
   }
 
-  @Test(expected = BuildStepException.class)
+  @Test(expected = ArtifactNotFoundException.class)
   public void testUnrecognizedArtifact() throws IOException, BuildStepException {
-    Path workspace = new TestWorkspaceBuilder().build();
     String artifact = "foo.xyz";
+    Path workspace = new TestWorkspaceBuilder()
+        .file(artifact).build()
+        .build();
     BuildContext mockContext = mock(BuildContext.class);
     when(mockContext.getRuntimeConfig()).thenReturn(new RuntimeConfig());
     when(mockContext.getWorkspaceDir()).thenReturn(workspace);
-    when(mockContext.findArtifacts()).thenReturn(Arrays.asList(workspace.resolve(artifact)));
 
     assertEquals(artifact, prebuiltRuntimeImageBuildStep.getArtifact(mockContext));
 
@@ -140,4 +156,48 @@ public class PrebuiltRuntimeImageBuildStepTest {
     prebuiltRuntimeImageBuildStep.run(mockContext);
   }
 
+  @Test
+  public void testCompatArtifact() throws IOException, BuildStepException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("WEB-INF/appengine-web.xml").build()
+        .file("WEB-INF/web.xml").build()
+        .build();
+    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace);
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+
+    String dockerfile = buildContext.getDockerfile().toString();
+    assertTrue(dockerfile.startsWith("FROM " + compatImageName + "\n"));
+    assertTrue(dockerfile.contains("COPY ./ /app/"));
+  }
+
+  @Test
+  public void testNonCompatExplodedWarArtifactAtRoot() throws IOException, BuildStepException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("WEB-INF/web.xml").build()
+        .build();
+    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace);
+
+    String serverRuntime = "server-runtime";
+    when(jdkServerLookup.lookupServerImage(isNull(), isNull())).thenReturn(serverRuntime);
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+
+    String dockerfile = buildContext.getDockerfile().toString();
+    assertTrue(dockerfile.startsWith("FROM " + serverRuntime + "\n"));
+    assertTrue(dockerfile.contains("COPY ./ $APP_DESTINATION"));
+  }
+
+  @Test
+  public void testCompatArtifactNotAtRoot() throws IOException, BuildStepException {
+    String serverRuntime = "server_runtime_image";
+    when(jdkServerLookup.lookupServerImage(null, null)).thenReturn(serverRuntime);
+    Path workspace = new TestWorkspaceBuilder()
+        .file("foo.war/WEB-INF/web.xml").build()
+        .build();
+    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace);
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+    String dockerfile = buildContext.getDockerfile().toString();
+
+    assertTrue(dockerfile.startsWith("FROM " + serverRuntime));
+    assertTrue(dockerfile.contains("COPY " + "./foo.war $APP_DESTINATION"));
+  }
 }

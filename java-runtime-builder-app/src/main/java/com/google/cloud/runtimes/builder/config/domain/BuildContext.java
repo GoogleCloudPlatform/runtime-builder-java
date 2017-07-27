@@ -34,7 +34,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -65,7 +64,8 @@ public class BuildContext {
     this.runtimeConfig = runtimeConfig;
     this.workspaceDir = workspaceDir;
     this.dockerfile = new StringLineAppender();
-    this.dockerignore = new StringLineAppender();
+    // dockerignore should always include itself and the dockerfile
+    this.dockerignore = new StringLineAppender(DOCKERFILE_NAME, DOCKERIGNORE_NAME);
 
     buildArtifactLocation = Optional.empty();
   }
@@ -137,7 +137,6 @@ public class BuildContext {
   private void writeDockerIgnore() throws IOException {
     // If there's nothing to write, return
     if (dockerignore.getLines().size() < 1) {
-      logger.debug("Skipping .dockerignore generation - nothing to write!");
       return;
     }
 
@@ -158,7 +157,6 @@ public class BuildContext {
 
     // Make sure there are lines remaining before proceeding
     if (dockerignore.getLines().size() < 1) {
-      logger.debug("Skipping .dockerignore generation - nothing to write!");
       return;
     }
 
@@ -170,19 +168,6 @@ public class BuildContext {
       dockerignore.prependLine();
       writer.write(dockerignore.toString());
     }
-  }
-
-  /**
-   * Searches for files that look like deployable artifacts in the given directory.
-   */
-  public List<Path> findArtifacts() throws IOException {
-    return Files.list(workspaceDir)
-        // filter out files that don't end in .war or .jar
-        .filter((path) -> {
-          String extension = com.google.common.io.Files.getFileExtension(path.toString());
-          return extension.equalsIgnoreCase("war") || extension.equalsIgnoreCase("jar");
-        })
-        .collect(Collectors.toList());
   }
 
   /**

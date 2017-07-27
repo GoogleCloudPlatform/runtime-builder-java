@@ -20,6 +20,9 @@ steps:
   - '*=gcr.io/google-appengine/openjdk:8'
   - 'openjdk8=gcr.io/google-appengine/openjdk:8'
 
+  # Compat legacy runtime
+  - '--compat-runtime-image=gcr.io/google-appengine/jetty9-compat:latest'
+
   # Image to use for maven builds
   - '--maven-docker-image=gcr.io/cloud-builders/java/mvn:3.5.0-jdk-8'
 

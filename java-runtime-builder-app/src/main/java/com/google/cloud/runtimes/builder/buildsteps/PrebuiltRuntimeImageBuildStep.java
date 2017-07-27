@@ -17,34 +17,48 @@
 package com.google.cloud.runtimes.builder.buildsteps;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+import com.google.cloud.runtimes.builder.config.domain.Artifact;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
 import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
+import com.google.cloud.runtimes.builder.injection.CompatDockerImage;
 import com.google.inject.Inject;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
 
   @Inject
-  PrebuiltRuntimeImageBuildStep(JdkServerLookup jdkServerLookup) {
-    super(jdkServerLookup);
+  PrebuiltRuntimeImageBuildStep(JdkServerLookup jdkServerLookup,
+      @CompatDockerImage String compatImageName) {
+    super(jdkServerLookup, compatImageName);
   }
 
   @Override
-  protected String getArtifact(BuildContext buildContext) throws BuildStepException {
+  protected Artifact getArtifact(BuildContext buildContext) throws BuildStepException {
     String providedArtifactPath = buildContext.getRuntimeConfig().getArtifact();
     if (providedArtifactPath != null) {
       // if the artifact path is set in runtime configuration, use that value
-      return providedArtifactPath;
+      return Artifact.fromPath(buildContext.getWorkspaceDir().resolve(providedArtifactPath));
     }
 
     List<Path> artifacts;
     try {
-      artifacts = buildContext.findArtifacts();
+      // potential artifacts include all files at the root of the workspace and the workspace itself
+      Stream<Path> potentialArtifacts = Stream.concat(
+          Stream.of(buildContext.getWorkspaceDir()),
+          Files.list(buildContext.getWorkspaceDir()));
+
+      // filter out non-valid artifacts
+      artifacts = potentialArtifacts
+          .filter(Artifact::isAnArtifact)
+          .collect(Collectors.toList());
     } catch (IOException e) {
       throw new BuildStepException(e);
     }
@@ -54,7 +68,8 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
     } else if (artifacts.size() > 1) {
       throw new TooManyArtifactsException(artifacts);
     } else {
-      return buildContext.getWorkspaceDir().relativize(artifacts.get(0)).toString();
+      return Artifact.fromPath(artifacts.get(0));
     }
   }
+
 }

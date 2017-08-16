@@ -11,9 +11,13 @@ steps:
   - '*|*=gcr.io/google-appengine/jetty:9'
   - 'openjdk8|*=gcr.io/google-appengine/jetty:9'
   - 'openjdk8|jetty9=gcr.io/google-appengine/jetty:9'
+  - 'openjdk8|jetty=gcr.io/google-appengine/jetty:latest'
   - 'openjdk8|tomcat8=gcr.io/google-appengine/tomcat:8'
+  - 'openjdk8|tomcat=gcr.io/google-appengine/tomcat:latest'
   - '*|jetty9=gcr.io/google-appengine/jetty:9'
+  - '*|jetty=gcr.io/google-appengine/jetty:latest'
   - '*|tomcat8=gcr.io/google-appengine/tomcat:8'
+  - '*|tomcat=gcr.io/google-appengine/tomcat:latest'
 
   # Mappings of JDK config names to images.
   - '--jdk-runtimes-map'

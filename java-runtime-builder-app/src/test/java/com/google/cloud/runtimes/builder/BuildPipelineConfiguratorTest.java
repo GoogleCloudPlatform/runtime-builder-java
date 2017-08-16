@@ -45,7 +45,6 @@ import com.google.common.base.Objects;
 
 import com.google.common.io.Files;
 import java.nio.charset.Charset;
-import java.nio.file.Paths;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;

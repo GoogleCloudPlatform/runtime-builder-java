@@ -43,6 +43,10 @@ import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.common.base.Objects;
 
+import com.google.common.io.Files;
+import java.nio.charset.Charset;
+import java.nio.file.Paths;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -65,10 +69,10 @@ public class BuildPipelineConfiguratorTest {
   @Mock private PrebuiltRuntimeImageBuildStep prebuiltRuntimeImageBuildStep;
   @Mock private SourceBuildRuntimeImageBuildStep sourceBuildRuntimeImageBuildStep;
   @Mock private JettyOptionsBuildStep jettyOptionsBuildStep;
+  @Mock private AppYamlFinder appYamlFinder;
 
   // use the actual yaml parser and yaml finders instead of mocks
   private YamlParser<AppYaml> appYamlYamlParser = new AppYamlParser();
-  private AppYamlFinder appYamlFinder = new AppYamlFinder(Optional.empty());
   private BuildPipelineConfigurator buildPipelineConfigurator;
 
   @Before
@@ -189,6 +193,9 @@ public class BuildPipelineConfiguratorTest {
             + "  build_script: " + customScript).build()
         .build();
 
+    when(appYamlFinder.findAppYamlFile(workspace))
+        .thenReturn(Optional.of(workspace.resolve("app.yaml")));
+
     buildPipelineConfigurator.generateDockerResources(workspace);
 
     verify(buildStepFactory, times(1)).createScriptExecutionBuildStep(eq(customScript));
@@ -219,6 +226,25 @@ public class BuildPipelineConfiguratorTest {
 
     assertBuildStepsCalledWithRuntimeConfig(new RuntimeConfig(), mavenBuildStep,
         sourceBuildRuntimeImageBuildStep, jettyOptionsBuildStep);
+  }
+
+  @Test
+  public void testAppYamlIsDockerignored()
+      throws IOException, AppYamlNotFoundException, BuildStepException {
+    String relativeAppYamlPath = "foo/bar/app.yaml";
+    Path workspace = new TestWorkspaceBuilder()
+        .file(relativeAppYamlPath).withContents("env: flex").build()
+        .file("app.jar").build()
+        .build();
+
+    when(appYamlFinder.findAppYamlFile(workspace))
+        .thenReturn(Optional.of(workspace.resolve(relativeAppYamlPath)));
+
+    buildPipelineConfigurator.generateDockerResources(workspace);
+
+    List<String> dockerIgnoreLines = Files.readLines(workspace.resolve(".dockerignore").toFile(),
+        Charset.defaultCharset());
+    assertTrue(dockerIgnoreLines.contains(relativeAppYamlPath));
   }
 
 }

@@ -11,3 +11,7 @@ fileExistenceTests:
   path: '/var/lib/jetty/webapps/root/WEB-INF/appengine-web.xml'
   isDirectory: false
   shouldExist: true
+- name: 'app.yaml file is not added to the application container'
+  path: '/var/lib/jetty/webapps/root/app.yaml'
+  isDirectory: false
+  shouldExist: false

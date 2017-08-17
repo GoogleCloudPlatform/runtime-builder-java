@@ -113,7 +113,15 @@ public class BuildPipelineConfigurator {
         ? appYaml.getRuntimeConfig()
         : new RuntimeConfig();
 
-    return new BuildContext(runtimeConfig, workspaceDir);
+    BuildContext buildContext = new BuildContext(runtimeConfig, workspaceDir);
+
+    // if the path to app.yaml is known, add it to the .gitignore
+    if (pathToAppYaml.isPresent()) {
+      Path relativeAppYamlPath = workspaceDir.relativize(pathToAppYaml.get());
+      buildContext.getDockerignore().appendLine(relativeAppYamlPath.toString());
+    }
+
+    return buildContext;
   }
 
   private AppYaml parseAppYaml(Path pathToAppYaml) throws IOException {

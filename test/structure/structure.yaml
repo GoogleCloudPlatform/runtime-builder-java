@@ -14,11 +14,11 @@ commandTests:
   exitCode: '0'
 - name: 'correct java version is installed'
   command: ['java', '-version']
-  expectedError: ['openjdk version "1\.8\.0_131"']
+  expectedError: ['openjdk version "1\.8\.0_.+"']
   exitCode: '0'
 - name: 'correct javac version is installed'
   command: ['javac', '-version']
-  expectedError: ['javac 1\.8\.0_131']
+  expectedError: ['javac 1\.8\.0_.+']
   exitCode: '0'
 - name: 'M2_HOME is set'
   command: ['env']

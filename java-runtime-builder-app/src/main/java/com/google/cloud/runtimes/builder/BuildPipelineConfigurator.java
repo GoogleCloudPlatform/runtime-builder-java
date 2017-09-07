@@ -23,10 +23,10 @@ import com.google.cloud.runtimes.builder.config.AppYamlFinder;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
+import com.google.cloud.runtimes.builder.config.domain.BuildContextFactory;
 import com.google.cloud.runtimes.builder.config.domain.BuildTool;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
-import com.google.cloud.runtimes.builder.injection.DisableSourceBuild;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
@@ -50,15 +50,15 @@ public class BuildPipelineConfigurator {
   private final YamlParser<AppYaml> appYamlParser;
   private final AppYamlFinder appYamlFinder;
   private final BuildStepFactory buildStepFactory;
-  private final boolean disableSourceBuild;
+  private final BuildContextFactory buildContextFactory;
 
   @Inject
   BuildPipelineConfigurator(YamlParser<AppYaml> appYamlParser, AppYamlFinder appYamlFinder,
-      BuildStepFactory buildStepFactory, @DisableSourceBuild boolean disableSourceBuild) {
+      BuildStepFactory buildStepFactory, BuildContextFactory buildContextFactory) {
     this.appYamlParser = appYamlParser;
     this.appYamlFinder = appYamlFinder;
     this.buildStepFactory = buildStepFactory;
-    this.disableSourceBuild = disableSourceBuild;
+    this.buildContextFactory = buildContextFactory;
   }
 
   /**
@@ -71,7 +71,7 @@ public class BuildPipelineConfigurator {
 
     List<BuildStep> steps = new ArrayList<>();
 
-    if (!disableSourceBuild && buildContext.isSourceBuild()) {
+    if (buildContext.isSourceBuild()) {
       // build from source - add a compilation step
 
       String buildScript = buildContext.getRuntimeConfig().getBuildScript();
@@ -119,7 +119,7 @@ public class BuildPipelineConfigurator {
         ? appYaml.getRuntimeConfig()
         : new RuntimeConfig();
 
-    BuildContext buildContext = new BuildContext(runtimeConfig, workspaceDir);
+    BuildContext buildContext = buildContextFactory.createBuildContext(runtimeConfig, workspaceDir);
 
     // if the path to app.yaml is known, add it to the .gitignore
     if (pathToAppYaml.isPresent()) {

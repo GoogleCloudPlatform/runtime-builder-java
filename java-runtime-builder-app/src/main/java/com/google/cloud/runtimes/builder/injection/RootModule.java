@@ -21,6 +21,7 @@ import com.google.cloud.runtimes.builder.config.AppYamlFinder;
 import com.google.cloud.runtimes.builder.config.AppYamlParser;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
+import com.google.cloud.runtimes.builder.config.domain.BuildContextFactory;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
@@ -98,6 +99,8 @@ public class RootModule extends AbstractModule {
 
     install(new FactoryModuleBuilder()
         .build(BuildStepFactory.class));
+    install(new FactoryModuleBuilder()
+        .build(BuildContextFactory.class));
   }
 
   @Provides

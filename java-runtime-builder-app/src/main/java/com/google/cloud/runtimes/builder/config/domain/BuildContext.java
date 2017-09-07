@@ -38,6 +38,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Encapsulates information about the build's state. Mediates interactions with the build directory
+ * and stores build configuration.
+ */
 public class BuildContext {
 
   private static final String DOCKERFILE_NAME = "Dockerfile";

@@ -74,6 +74,8 @@ public class BuildPipelineConfiguratorTest {
   private YamlParser<AppYaml> appYamlYamlParser = new AppYamlParser();
   private BuildPipelineConfigurator buildPipelineConfigurator;
 
+  private boolean disableSourceBuild;
+
   @Before
   public void setup() throws BuildStepException {
     MockitoAnnotations.initMocks(this);
@@ -88,8 +90,14 @@ public class BuildPipelineConfiguratorTest {
         .thenReturn(sourceBuildRuntimeImageBuildStep);
     when(buildStepFactory.createJettyOptionsBuildStep()).thenReturn(jettyOptionsBuildStep);
 
-    buildPipelineConfigurator
-        = new BuildPipelineConfigurator(appYamlYamlParser, appYamlFinder, buildStepFactory);
+    disableSourceBuild = false;
+
+    buildPipelineConfigurator = initConfigurator();
+  }
+
+  private BuildPipelineConfigurator initConfigurator() {
+    return new BuildPipelineConfigurator(appYamlYamlParser, appYamlFinder, buildStepFactory,
+        disableSourceBuild);
   }
 
   private void assertBuildStepsCalledWithRuntimeConfig(RuntimeConfig expected,
@@ -244,6 +252,28 @@ public class BuildPipelineConfiguratorTest {
     List<String> dockerIgnoreLines = Files.readLines(workspace.resolve(".dockerignore").toFile(),
         Charset.defaultCharset());
     assertTrue(dockerIgnoreLines.contains(relativeAppYamlPath));
+  }
+
+  @Test
+  public void testSourceBuildDisable()
+      throws BuildStepException, IOException, AppYamlNotFoundException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("pom.xml").build()
+        .file("foo.war").build()
+        .build();
+
+    // create the pipeline configurator with source builds disabled
+    disableSourceBuild = true;
+    buildPipelineConfigurator = initConfigurator();
+
+    buildPipelineConfigurator.generateDockerResources(workspace);
+
+    verify(buildStepFactory, times(1)).createPrebuiltRuntimeImageBuildStep();
+    verify(buildStepFactory, times(1)).createJettyOptionsBuildStep();
+    verifyNoMoreInteractions(buildStepFactory);
+
+    assertBuildStepsCalledWithRuntimeConfig(new RuntimeConfig(), prebuiltRuntimeImageBuildStep,
+        jettyOptionsBuildStep);
   }
 
 }

@@ -44,6 +44,7 @@ public class RootModule extends AbstractModule {
   private final String compatImage;
   private final String mavenDockerImage;
   private final String gradleDockerImage;
+  private final boolean disableSourceBuild;
 
   private static final String CONFIG_YAML_ENV_VAR = "GAE_APPLICATION_YAML_PATH";
 
@@ -55,9 +56,10 @@ public class RootModule extends AbstractModule {
    * @param compatImage compat runtime docker image
    * @param mavenDockerImage maven builder docker image
    * @param gradleDockerImage gradle builder docker image
+   * @param disableSourceBuild disables the building of images from source
    */
   public RootModule(String[] jdkMappings, String[] serverMappings, String compatImage,
-      String mavenDockerImage, String gradleDockerImage) {
+      String mavenDockerImage, String gradleDockerImage, boolean disableSourceBuild) {
     Preconditions.checkNotNull(jdkMappings);
     Preconditions.checkNotNull(serverMappings);
     Preconditions.checkNotNull(compatImage);
@@ -69,6 +71,7 @@ public class RootModule extends AbstractModule {
     this.compatImage = compatImage;
     this.mavenDockerImage = mavenDockerImage;
     this.gradleDockerImage = gradleDockerImage;
+    this.disableSourceBuild = disableSourceBuild;
   }
 
   @Override
@@ -85,6 +88,9 @@ public class RootModule extends AbstractModule {
     bind(String.class)
         .annotatedWith(GradleDockerImage.class)
         .toInstance(gradleDockerImage);
+    bind(Boolean.class)
+        .annotatedWith(DisableSourceBuild.class)
+        .toInstance(disableSourceBuild);
 
     bind(new TypeLiteral<YamlParser<AppYaml>>(){})
         .to(AppYamlParser.class);

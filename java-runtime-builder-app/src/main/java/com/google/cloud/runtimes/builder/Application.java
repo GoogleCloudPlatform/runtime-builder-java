@@ -77,6 +77,12 @@ public class Application {
         .longOpt("gradle-docker-image")
         .desc("Docker image to use for gradle builds")
         .build());
+
+    CLI_OPTIONS.addOption(Option.builder("n")
+        .hasArg(false)
+        .longOpt("no-source-build")
+        .desc("Disable building from source")
+        .build());
   }
 
   /**
@@ -90,19 +96,15 @@ public class Application {
     String compatImage = cmd.getOptionValue("c");
     String mavenImage = cmd.getOptionValue("m");
     String gradleImage = cmd.getOptionValue("g");
+    boolean disableSourceBuild = cmd.hasOption("n");
 
-    Injector injector
-        = buildInjector(jdkMappings, serverMappings, compatImage, mavenImage, gradleImage);
+    Injector injector = Guice.createInjector(
+        new RootModule(jdkMappings, serverMappings, compatImage, mavenImage, gradleImage,
+            disableSourceBuild));
 
     // Perform dependency injection and run the application
     Path workspaceDir  = Paths.get(System.getProperty("user.dir"));
     injector.getInstance(BuildPipelineConfigurator.class).generateDockerResources(workspaceDir);
-  }
-
-  private static Injector buildInjector(String[] jdkMappings, String[] serverMappings,
-      String compatImage, String mavenImage, String gradleImage) {
-    return Guice.createInjector(
-        new RootModule(jdkMappings, serverMappings, compatImage, mavenImage, gradleImage));
   }
 
   private static CommandLine parse(String[] args) {

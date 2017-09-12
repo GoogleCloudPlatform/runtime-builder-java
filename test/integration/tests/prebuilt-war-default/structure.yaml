@@ -1,0 +1,13 @@
+schemaVersion: 1.0.0
+
+commandTests:
+- name: 'correct java version is installed'
+  command: ['java', '-version']
+  expectedError: ['openjdk version "1\.8\.0_131"']
+  exitCode: '0'
+
+fileExistenceTests:
+- name: 'test application exists'
+  path: '/var/lib/jetty/webapps/root.war'
+  isDirectory: false
+  shouldExist: true

@@ -37,6 +37,7 @@ fi
 DIR=$(dirname $0)
 PROJECT_ROOT=$DIR/../..
 TEST_APPS_ROOT=$PROJECT_ROOT/test/integration/test_resources
+DISABLE_SOURCE_BUILD="false"
 
 # locate test configuration files in the provided test directory
 REPO_CFG_FILE=$TEST_DIR/repo.cfg
@@ -66,17 +67,20 @@ if [ -f $BUILDER_CONFIG ]; then
 fi
 cp $STRUCTURE_TEST_CONFIG $TEST_STAGING_DIR
 
-# escape special characters in the builder image string so we can use it as a sed substitution below
-ESCAPED_IMG_UNDER_TEST=$(echo $IMAGE_UNDER_TEST | sed -e 's/[\/&]/\\&/g')
-
 # prepare the build pipeline config file for the test
 mkdir -p $PROJECT_ROOT/target
 PIPELINE_CONFIG=$PROJECT_ROOT/target/java_templated.yaml
 cp $PROJECT_ROOT/java.yaml $PIPELINE_CONFIG
 # replace the builder image name
-sed -i -e "s/gcr.io\/gcp-runtimes\/java\/runtime-builder\:latest/$ESCAPED_IMG_UNDER_TEST/" $PIPELINE_CONFIG
+sed -i -e "s%gcr.io/gcp-runtimes/java/runtime-builder:latest%$IMAGE_UNDER_TEST%" $PIPELINE_CONFIG
 # remove the image push step
 sed -i -e "s/^images.*$//" $PIPELINE_CONFIG
+
+if [ "$DISABLE_SOURCE_BUILD" = "false" ]; then
+  # remove the --no-source-build flag, if it exists
+  sed -i -e "s/^.*--no-source-build.*$//" $PIPELINE_CONFIG
+fi
+
 # append structure tests to the build
 cat $DIR/structure_test_build_step.yaml.in >> $PIPELINE_CONFIG
 

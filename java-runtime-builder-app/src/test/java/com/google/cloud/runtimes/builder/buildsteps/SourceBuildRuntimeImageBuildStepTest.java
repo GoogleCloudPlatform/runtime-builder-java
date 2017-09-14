@@ -9,13 +9,11 @@ import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
-
+import java.io.IOException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import java.io.IOException;
 
 /**
  * Unit tests for {@link SourceBuildRuntimeImageBuildStep}.
@@ -48,7 +46,7 @@ public class SourceBuildRuntimeImageBuildStepTest {
   }
 
   private BuildContext initBuildContext() throws IOException {
-    return new BuildContext(runtimeConfig, new TestWorkspaceBuilder().build());
+    return new BuildContext(runtimeConfig, new TestWorkspaceBuilder().build(), false);
   }
 
   @Test(expected = IllegalStateException.class)

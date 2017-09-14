@@ -20,9 +20,13 @@ import static java.nio.file.StandardOpenOption.APPEND;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.WRITE;
 
+import com.google.cloud.runtimes.builder.injection.DisableSourceBuild;
 import com.google.cloud.runtimes.builder.util.StringLineAppender;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +42,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Encapsulates information about the build's state. Mediates interactions with the build directory
+ * and stores build configuration.
+ */
 public class BuildContext {
 
   private static final String DOCKERFILE_NAME = "Dockerfile";
@@ -49,6 +57,7 @@ public class BuildContext {
   private final Path workspaceDir;
   private final StringLineAppender dockerfile;
   private final StringLineAppender dockerignore;
+  private final boolean disableSourceBuild;
 
   private Optional<Path> buildArtifactLocation;
 
@@ -58,7 +67,10 @@ public class BuildContext {
    * @param runtimeConfig runtime configuration object provided by the user
    * @param workspaceDir the directory in which the build will take place
    */
-  public BuildContext(RuntimeConfig runtimeConfig, Path workspaceDir) {
+  @Inject
+  @VisibleForTesting
+  public BuildContext(@Assisted RuntimeConfig runtimeConfig, @Assisted Path workspaceDir,
+      @DisableSourceBuild boolean disableSourceBuild) {
     Preconditions.checkArgument(Files.isDirectory(workspaceDir));
 
     this.runtimeConfig = runtimeConfig;
@@ -66,6 +78,7 @@ public class BuildContext {
     this.dockerfile = new StringLineAppender();
     // dockerignore should always include itself and the dockerfile
     this.dockerignore = new StringLineAppender(DOCKERFILE_NAME, DOCKERIGNORE_NAME);
+    this.disableSourceBuild = disableSourceBuild;
 
     buildArtifactLocation = Optional.empty();
   }
@@ -100,7 +113,8 @@ public class BuildContext {
    */
   public boolean isSourceBuild() {
     try {
-      return !Strings.isNullOrEmpty(runtimeConfig.getBuildScript()) || getBuildTool().isPresent();
+      return !disableSourceBuild && (!Strings.isNullOrEmpty(runtimeConfig.getBuildScript())
+          || getBuildTool().isPresent());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

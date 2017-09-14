@@ -5,14 +5,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Unit tests for {@link BuildContext}.
@@ -20,6 +18,8 @@ import java.nio.file.Path;
 public class BuildContextTest {
 
   private Path workspace;
+  private RuntimeConfig runtimeConfig;
+  private boolean disableSourceBuild;
 
   private static final String DOCKER_IGNORE_PREAMBLE = "Dockerfile\n"
       + ".dockerignore\n";
@@ -28,11 +28,17 @@ public class BuildContextTest {
   public void before() throws IOException {
     // initialize to empty dir
     workspace = new TestWorkspaceBuilder().build();
+    runtimeConfig = new RuntimeConfig();
+    disableSourceBuild = false;
+  }
+
+  private BuildContext initBuildContext() {
+    return new BuildContext(runtimeConfig, workspace, disableSourceBuild);
   }
 
   @Test
   public void testWriteDockerFilesWithEmptyBuffers() throws IOException {
-    new BuildContext(new RuntimeConfig(), workspace).writeDockerResources();
+    initBuildContext().writeDockerResources();
     assertEquals("", readFile(getDockerfile()));
     assertFalse(Files.exists(workspace.resolve(".dockerfile")));
   }
@@ -44,7 +50,7 @@ public class BuildContextTest {
         .file(".dockerignore").withContents(dockerIgnoreContents).build()
         .build();
 
-    BuildContext context = new BuildContext(new RuntimeConfig(), workspace);
+    BuildContext context = initBuildContext();
     String dockerIgnoreAppend = "more_paths";
     context.getDockerignore().appendLine(dockerIgnoreAppend);
 
@@ -62,7 +68,7 @@ public class BuildContextTest {
         .file(".dockerignore").withContents(dockerIgnoreContents).build()
         .build();
 
-    BuildContext context = new BuildContext(new RuntimeConfig(), workspace);
+    BuildContext context = initBuildContext();
     String dockerIgnoreAppend = "more_paths";
     context.getDockerignore().appendLine(dockerIgnoreAppend);
     context.getDockerignore().appendLine(commonIgnoreLine);
@@ -82,15 +88,14 @@ public class BuildContextTest {
         .file("Dockerfile").withContents("FROM foo\n").build()
         .build();
 
-    BuildContext context = new BuildContext(new RuntimeConfig(), workspace);
+    BuildContext context = initBuildContext();
     context.writeDockerResources();
   }
 
   @Test
   public void testIsSourceBuildWithBuildScript() {
-    RuntimeConfig config = new RuntimeConfig();
-    config.setBuildScript("build script");
-    assertTrue(new BuildContext(config, workspace).isSourceBuild());
+    runtimeConfig.setBuildScript("build script");
+    assertTrue(initBuildContext().isSourceBuild());
   }
 
   @Test
@@ -98,7 +103,7 @@ public class BuildContextTest {
     workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()
         .build();
-    assertTrue(new BuildContext(new RuntimeConfig(), workspace).isSourceBuild());
+    assertTrue(initBuildContext().isSourceBuild());
   }
 
   @Test
@@ -106,12 +111,21 @@ public class BuildContextTest {
     workspace = new TestWorkspaceBuilder()
         .file("build.gradle").build()
         .build();
-    assertTrue(new BuildContext(new RuntimeConfig(), workspace).isSourceBuild());
+    assertTrue(initBuildContext().isSourceBuild());
+  }
+
+  @Test
+  public void testIsSourceBuildDisabled() throws IOException {
+    disableSourceBuild = true;
+    workspace = new TestWorkspaceBuilder()
+        .file("build.gradle").build()
+        .build();
+    assertFalse(initBuildContext().isSourceBuild());
   }
 
   @Test
   public void testGetBuildToolWithNone() throws IOException {
-    assertFalse(new BuildContext(new RuntimeConfig(), workspace).getBuildTool().isPresent());
+    assertFalse(initBuildContext().getBuildTool().isPresent());
   }
 
   @Test
@@ -122,7 +136,7 @@ public class BuildContextTest {
         .build();
 
     assertEquals(BuildTool.MAVEN,
-        new BuildContext(new RuntimeConfig(), workspace).getBuildTool().get());
+        initBuildContext().getBuildTool().get());
   }
 
   @Test
@@ -132,7 +146,7 @@ public class BuildContextTest {
         .build();
 
     assertEquals(BuildTool.MAVEN,
-        new BuildContext(new RuntimeConfig(), workspace).getBuildTool().get());
+        initBuildContext().getBuildTool().get());
   }
 
   @Test
@@ -142,7 +156,7 @@ public class BuildContextTest {
         .build();
 
     assertEquals(BuildTool.GRADLE,
-        new BuildContext(new RuntimeConfig(), workspace).getBuildTool().get());
+        initBuildContext().getBuildTool().get());
   }
 
   private Path getDockerfile() {

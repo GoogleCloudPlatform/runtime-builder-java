@@ -6,10 +6,8 @@ import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
-
-import org.junit.Test;
-
 import java.io.IOException;
+import org.junit.Test;
 
 /**
  * Unit tests for {@link JettyOptionsBuildStep}.
@@ -44,7 +42,7 @@ public class JettyOptionsBuildStepTest {
   }
 
   private BuildContext initBuildContext(RuntimeConfig runtimeConfig) throws IOException {
-    return new BuildContext(runtimeConfig, new TestWorkspaceBuilder().build());
+    return new BuildContext(runtimeConfig, new TestWorkspaceBuilder().build(), false);
   }
 
 }

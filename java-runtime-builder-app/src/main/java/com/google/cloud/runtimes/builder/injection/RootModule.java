@@ -21,6 +21,7 @@ import com.google.cloud.runtimes.builder.config.AppYamlFinder;
 import com.google.cloud.runtimes.builder.config.AppYamlParser;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
+import com.google.cloud.runtimes.builder.config.domain.BuildContextFactory;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.common.base.Preconditions;
 import com.google.inject.AbstractModule;
@@ -44,6 +45,7 @@ public class RootModule extends AbstractModule {
   private final String compatImage;
   private final String mavenDockerImage;
   private final String gradleDockerImage;
+  private final boolean disableSourceBuild;
 
   private static final String CONFIG_YAML_ENV_VAR = "GAE_APPLICATION_YAML_PATH";
 
@@ -55,9 +57,10 @@ public class RootModule extends AbstractModule {
    * @param compatImage compat runtime docker image
    * @param mavenDockerImage maven builder docker image
    * @param gradleDockerImage gradle builder docker image
+   * @param disableSourceBuild disables the building of images from source
    */
   public RootModule(String[] jdkMappings, String[] serverMappings, String compatImage,
-      String mavenDockerImage, String gradleDockerImage) {
+      String mavenDockerImage, String gradleDockerImage, boolean disableSourceBuild) {
     Preconditions.checkNotNull(jdkMappings);
     Preconditions.checkNotNull(serverMappings);
     Preconditions.checkNotNull(compatImage);
@@ -69,6 +72,7 @@ public class RootModule extends AbstractModule {
     this.compatImage = compatImage;
     this.mavenDockerImage = mavenDockerImage;
     this.gradleDockerImage = gradleDockerImage;
+    this.disableSourceBuild = disableSourceBuild;
   }
 
   @Override
@@ -85,6 +89,9 @@ public class RootModule extends AbstractModule {
     bind(String.class)
         .annotatedWith(GradleDockerImage.class)
         .toInstance(gradleDockerImage);
+    bind(Boolean.class)
+        .annotatedWith(DisableSourceBuild.class)
+        .toInstance(disableSourceBuild);
 
     bind(new TypeLiteral<YamlParser<AppYaml>>(){})
         .to(AppYamlParser.class);
@@ -92,6 +99,8 @@ public class RootModule extends AbstractModule {
 
     install(new FactoryModuleBuilder()
         .build(BuildStepFactory.class));
+    install(new FactoryModuleBuilder()
+        .build(BuildContextFactory.class));
   }
 
   @Provides

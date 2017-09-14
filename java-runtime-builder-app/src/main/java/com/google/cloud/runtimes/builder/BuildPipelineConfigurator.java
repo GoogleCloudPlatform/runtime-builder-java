@@ -23,6 +23,7 @@ import com.google.cloud.runtimes.builder.config.AppYamlFinder;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
+import com.google.cloud.runtimes.builder.config.domain.BuildContextFactory;
 import com.google.cloud.runtimes.builder.config.domain.BuildTool;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
@@ -49,13 +50,15 @@ public class BuildPipelineConfigurator {
   private final YamlParser<AppYaml> appYamlParser;
   private final AppYamlFinder appYamlFinder;
   private final BuildStepFactory buildStepFactory;
+  private final BuildContextFactory buildContextFactory;
 
   @Inject
   BuildPipelineConfigurator(YamlParser<AppYaml> appYamlParser, AppYamlFinder appYamlFinder,
-      BuildStepFactory buildStepFactory) {
+      BuildStepFactory buildStepFactory, BuildContextFactory buildContextFactory) {
     this.appYamlParser = appYamlParser;
     this.appYamlFinder = appYamlFinder;
     this.buildStepFactory = buildStepFactory;
+    this.buildContextFactory = buildContextFactory;
   }
 
   /**
@@ -68,20 +71,23 @@ public class BuildPipelineConfigurator {
 
     List<BuildStep> steps = new ArrayList<>();
 
-    String buildScript = buildContext.getRuntimeConfig().getBuildScript();
-    if (!Strings.isNullOrEmpty(buildScript)) {
-      // the user has specified a custom command to build the project
-      steps.add(buildStepFactory.createScriptExecutionBuildStep(buildScript));
-    } else {
-      // search for build files in the workspace
-      buildContext.getBuildTool()
-          .ifPresent(buildTool ->
-              steps.add(getBuildStepForTool(buildTool)));
-    }
-
     if (buildContext.isSourceBuild()) {
+      // build from source - add a compilation step
+
+      String buildScript = buildContext.getRuntimeConfig().getBuildScript();
+      if (!Strings.isNullOrEmpty(buildScript)) {
+        // the user has specified a custom command to build the project
+        steps.add(buildStepFactory.createScriptExecutionBuildStep(buildScript));
+      } else {
+        // search for build files in the workspace
+        buildContext.getBuildTool()
+            .ifPresent(buildTool ->
+                steps.add(getBuildStepForTool(buildTool)));
+      }
       steps.add(buildStepFactory.createSourceBuildRuntimeImageStep());
+
     } else {
+      // no compilation step is required
       steps.add(buildStepFactory.createPrebuiltRuntimeImageBuildStep());
     }
 
@@ -113,7 +119,7 @@ public class BuildPipelineConfigurator {
         ? appYaml.getRuntimeConfig()
         : new RuntimeConfig();
 
-    BuildContext buildContext = new BuildContext(runtimeConfig, workspaceDir);
+    BuildContext buildContext = buildContextFactory.createBuildContext(runtimeConfig, workspaceDir);
 
     // if the path to app.yaml is known, add it to the .gitignore
     if (pathToAppYaml.isPresent()) {

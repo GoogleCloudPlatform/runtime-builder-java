@@ -17,6 +17,7 @@
 package com.google.cloud.runtimes.builder;
 
 import static junit.framework.TestCase.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -39,22 +40,21 @@ import com.google.cloud.runtimes.builder.config.AppYamlParser;
 import com.google.cloud.runtimes.builder.config.YamlParser;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
+import com.google.cloud.runtimes.builder.config.domain.BuildContextFactory;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.common.base.Objects;
-
 import com.google.common.io.Files;
+import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Optional;
 
 /**
  * Unit tests for {@link BuildPipelineConfigurator}
@@ -62,6 +62,7 @@ import java.util.Optional;
 public class BuildPipelineConfiguratorTest {
 
   @Mock private BuildStepFactory buildStepFactory;
+  @Mock private BuildContextFactory buildContextFactory;
   @Mock private MavenBuildStep mavenBuildStep;
   @Mock private GradleBuildStep gradleBuildStep;
   @Mock private ScriptExecutionBuildStep scriptExecutionBuildStep;
@@ -73,6 +74,8 @@ public class BuildPipelineConfiguratorTest {
   // use the actual yaml parser and yaml finders instead of mocks
   private YamlParser<AppYaml> appYamlYamlParser = new AppYamlParser();
   private BuildPipelineConfigurator buildPipelineConfigurator;
+
+  private boolean disableSourceBuild;
 
   @Before
   public void setup() throws BuildStepException {
@@ -86,10 +89,23 @@ public class BuildPipelineConfiguratorTest {
         .thenReturn(prebuiltRuntimeImageBuildStep);
     when(buildStepFactory.createSourceBuildRuntimeImageStep())
         .thenReturn(sourceBuildRuntimeImageBuildStep);
-    when(buildStepFactory.createJettyOptionsBuildStep()).thenReturn(jettyOptionsBuildStep);
+    when(buildStepFactory.createJettyOptionsBuildStep())
+        .thenReturn(jettyOptionsBuildStep);
 
-    buildPipelineConfigurator
-        = new BuildPipelineConfigurator(appYamlYamlParser, appYamlFinder, buildStepFactory);
+    disableSourceBuild = false;
+
+    // mock the behavior of guice's assisted inject by passing factory method args to the
+    // constructor of BuildContext
+    when(buildContextFactory.createBuildContext(any(), any()))
+        .then(invocation -> new BuildContext(invocation.getArgument(0), invocation.getArgument(1),
+            disableSourceBuild));
+
+    buildPipelineConfigurator = initConfigurator();
+  }
+
+  private BuildPipelineConfigurator initConfigurator() {
+    return new BuildPipelineConfigurator(appYamlYamlParser, appYamlFinder, buildStepFactory,
+        buildContextFactory);
   }
 
   private void assertBuildStepsCalledWithRuntimeConfig(RuntimeConfig expected,
@@ -244,6 +260,28 @@ public class BuildPipelineConfiguratorTest {
     List<String> dockerIgnoreLines = Files.readLines(workspace.resolve(".dockerignore").toFile(),
         Charset.defaultCharset());
     assertTrue(dockerIgnoreLines.contains(relativeAppYamlPath));
+  }
+
+  @Test
+  public void testSourceBuildDisable()
+      throws BuildStepException, IOException, AppYamlNotFoundException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("pom.xml").build()
+        .file("foo.war").build()
+        .build();
+
+    // create the pipeline configurator with source builds disabled
+    disableSourceBuild = true;
+    buildPipelineConfigurator = initConfigurator();
+
+    buildPipelineConfigurator.generateDockerResources(workspace);
+
+    verify(buildStepFactory, times(1)).createPrebuiltRuntimeImageBuildStep();
+    verify(buildStepFactory, times(1)).createJettyOptionsBuildStep();
+    verifyNoMoreInteractions(buildStepFactory);
+
+    assertBuildStepsCalledWithRuntimeConfig(new RuntimeConfig(), prebuiltRuntimeImageBuildStep,
+        jettyOptionsBuildStep);
   }
 
 }

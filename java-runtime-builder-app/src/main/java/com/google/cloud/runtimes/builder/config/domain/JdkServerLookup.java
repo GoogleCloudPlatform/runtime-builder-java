@@ -17,6 +17,7 @@
 package com.google.cloud.runtimes.builder.config.domain;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,9 +76,9 @@ public class JdkServerLookup {
     }
 
     if (!jdkRuntimeMap.containsKey(jdk)) {
-      log.error("JDK '{}' not recognized. Supported JDK values are: {}", jdk,
-          getAvailableJdks());
-      throw new IllegalArgumentException(String.format("Invalid jdk: %s", jdk));
+      throw new IllegalArgumentException(String.format("The provided runtime_config.jdk option '%s'"
+          + " is invalid for JAR deployments. Please use a supported jdk option: %s",
+          Strings.nullToEmpty(jdk), getAvailableJdks()));
     }
     return jdkRuntimeMap.get(jdk);
   }
@@ -85,7 +86,8 @@ public class JdkServerLookup {
   private List<String> getAvailableJdks() {
     return jdkRuntimeMap.keySet()
         .stream()
-        .filter((key) -> !key.equals(KEY_WILDCARD))
+        .filter((key) -> !key.contains(KEY_WILDCARD))
+        .map(key -> "'" + key + "'")
         .collect(Collectors.toList());
   }
 
@@ -108,9 +110,11 @@ public class JdkServerLookup {
     String key = buildServerMapKey(jdk, serverType);
 
     if (!serverRuntimeMap.containsKey(key)) {
-      log.error("An invalid server and/or jdk was configured. Supported jdk/server combinations "
-          + "are: {}.", getAvailableJdkServerPairs());
-      throw new IllegalArgumentException(String.format("Invalid jdk/server combination: %s", key));
+      throw new IllegalArgumentException(String.format("The provided runtime_config.jdk and "
+          + "runtime_config.server configuration (runtime_config.jdk: '%s', "
+          + "runtime_config.server: '%s') is invalid for WAR deployments. Please use a supported "
+          + "jdk/server combination: %s", Strings.nullToEmpty(jdk), Strings.nullToEmpty(serverType),
+          getAvailableJdkServerPairs()));
     }
     return serverRuntimeMap.get(key);
   }
@@ -119,8 +123,8 @@ public class JdkServerLookup {
     return serverRuntimeMap.keySet()
         .stream()
         .filter((key) -> !key.contains(KEY_WILDCARD))
-        .map((key) -> key.split(KEY_DELIMITER))
-        .map((split) -> "(" + split[0] + ", " + split[1] + ")")
+        .map((key) -> key.split("\\" + KEY_DELIMITER))
+        .map((split) -> split[0] + "/" + split[1])
         .collect(Collectors.toList());
   }
 

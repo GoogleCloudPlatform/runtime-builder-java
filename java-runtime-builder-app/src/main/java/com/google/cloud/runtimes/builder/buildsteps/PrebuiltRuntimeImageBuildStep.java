@@ -50,13 +50,15 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
 
     List<Path> artifacts;
     try {
-      // potential artifacts include all files at the root of the workspace and the workspace itself
-      Stream<Path> potentialArtifacts = Stream.concat(
-          Stream.of(buildContext.getWorkspaceDir()),
-          Files.list(buildContext.getWorkspaceDir()));
+      artifacts =
+          // potential artifacts include all files at the root of the workspace,
+          // and the workspace itself
+          Stream.concat(
+              Stream.of(buildContext.getWorkspaceDir()),
+              Files.list(buildContext.getWorkspaceDir())
+          )
 
-      // filter out non-valid artifacts
-      artifacts = potentialArtifacts
+          // filter out non-valid artifacts
           .filter(Artifact::isAnArtifact)
           .collect(Collectors.toList());
     } catch (IOException e) {

@@ -47,7 +47,7 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
     Artifact artifact = getArtifact(buildContext);
-    logger.debug("Found Java artifact {}", artifact);
+    logger.debug("Identified Java artifact for deployment {}", artifact);
 
     buildContext.getDockerfile().appendLine("FROM " + getBaseRuntimeImage(buildContext, artifact));
     String copyStep = "COPY";
@@ -90,7 +90,7 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
       // If the user expects a server to be involved, fail loudly.
       if (runtimeConfig.getServer() != null) {
         throw new BuildStepException("runtime_config.server configuration is not compatible with "
-            + ".jar artifacts. To use a web server runtime, use a .war artifact instead.");
+            + "JAR artifacts. To use a web server runtime, use a WAR artifact instead.");
       }
       String baseImage = jdkServerLookup.lookupJdkImage(runtimeConfig.getJdk());
       logger.info("Using base image '{}' for JAR artifact", baseImage);

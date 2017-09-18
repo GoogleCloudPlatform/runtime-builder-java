@@ -26,7 +26,8 @@ public class RuntimeConfig {
   private String server;
   private String buildScript;
   private String artifact;
-  private boolean jettyQuickstart;
+  private boolean jettyQuickstart = false;
+  private BetaSettings betaSettings = new BetaSettings();
 
   public String getJdk() {
     return jdk;
@@ -68,5 +69,28 @@ public class RuntimeConfig {
   @JsonProperty("jetty_quickstart")
   public void setJettyQuickstart(boolean jettyQuickstart) {
     this.jettyQuickstart = jettyQuickstart;
+  }
+
+  public BetaSettings getBetaSettings() {
+    return betaSettings;
+  }
+
+  @JsonProperty("beta_settings")
+  public void setBetaSettings(BetaSettings betaSettings) {
+    this.betaSettings = betaSettings;
+  }
+
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  static class BetaSettings {
+    private boolean enableAppEngineApis = false;
+
+    public boolean isEnableAppEngineApis() {
+      return enableAppEngineApis;
+    }
+
+    @JsonProperty("enable_app_engine_apis")
+    public void setEnableAppEngineApis(boolean enableAppEngineApis) {
+      this.enableAppEngineApis = enableAppEngineApis;
+    }
   }
 }

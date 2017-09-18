@@ -121,6 +121,16 @@ public class BuildContext {
   }
 
   /**
+   * Returns whether or not a compat runtime was requested in the user's configuration.
+   *
+   * @return true if the user has explicitly requested a compat runtime
+   */
+  public boolean isForceCompatRuntime() {
+    return runtimeConfig.getBetaSettings() != null
+        && runtimeConfig.getBetaSettings().isEnableAppEngineApis();
+  }
+
+  /**
    * Writes the contents of Dockerfile and .dockerignore buffers to files. If a .dockerignore file
    * already exists, the .dockerignore buffer will be appended to it.
    *

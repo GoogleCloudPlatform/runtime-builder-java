@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
+import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig.BetaSettings;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -157,6 +158,28 @@ public class BuildContextTest {
 
     assertEquals(BuildTool.GRADLE,
         initBuildContext().getBuildTool().get());
+  }
+
+  @Test
+  public void testIsForceCompatRuntimeWithNullBetaSettings() {
+    runtimeConfig.setBetaSettings(null);
+    assertFalse(initBuildContext().isForceCompatRuntime());
+  }
+
+  @Test
+  public void testIsForceCompatRuntimeWithBetaSettingsFalse() {
+    BetaSettings betaSettings = new BetaSettings();
+    betaSettings.setEnableAppEngineApis(false);
+    runtimeConfig.setBetaSettings(betaSettings);
+    assertFalse(initBuildContext().isForceCompatRuntime());
+  }
+
+  @Test
+  public void testIsForceCompatRuntimeWithBetaSettingsTrue() {
+    BetaSettings betaSettings = new BetaSettings();
+    betaSettings.setEnableAppEngineApis(true);
+    runtimeConfig.setBetaSettings(betaSettings);
+    assertTrue(initBuildContext().isForceCompatRuntime());
   }
 
   private Path getDockerfile() {

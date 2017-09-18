@@ -8,10 +8,11 @@ import static org.mockito.Mockito.when;
 
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+import com.google.cloud.runtimes.builder.config.domain.AppYaml;
+import com.google.cloud.runtimes.builder.config.domain.BetaSettings;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
-import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig.BetaSettings;
 import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
 import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import java.io.IOException;
@@ -46,7 +47,9 @@ public class PrebuiltRuntimeImageBuildStepTest {
     String configuredArtifactPath = "artifactDir/my_artifact.jar";
     RuntimeConfig runtimeConfig = new RuntimeConfig();
     runtimeConfig.setArtifact(configuredArtifactPath);
-    BuildContext buildContext = new BuildContext(runtimeConfig, workspace, false);
+    AppYaml appYaml = new AppYaml();
+    appYaml.setRuntimeConfig(runtimeConfig);
+    BuildContext buildContext = new BuildContext(appYaml, workspace, false);
 
     String image = "test_image";
     when(jdkServerLookup.lookupJdkImage(null)).thenReturn(image);
@@ -65,7 +68,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
         .file("bar.war").build()
         .build();
 
-    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace, false);
+    BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
     prebuiltRuntimeImageBuildStep.run(buildContext);
   }
 
@@ -76,7 +79,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
         .file("foo.war/WEB-INF/web.xml").build()
         .build();
 
-    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace, false);
+    BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
     prebuiltRuntimeImageBuildStep.run(buildContext);
   }
 
@@ -86,7 +89,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
         .file("foo.war").build()
         .build();
 
-    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace, false);
+    BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
     String image = "test_war_image";
     when(jdkServerLookup.lookupServerImage(null, null)).thenReturn(image);
 
@@ -104,7 +107,9 @@ public class PrebuiltRuntimeImageBuildStepTest {
 
     RuntimeConfig runtimeConfig = new RuntimeConfig();
     runtimeConfig.setJdk("custom_jdk");
-    BuildContext buildContext = new BuildContext(runtimeConfig, workspace, false);
+    AppYaml appYaml = new AppYaml();
+    appYaml.setRuntimeConfig(runtimeConfig);
+    BuildContext buildContext = new BuildContext(appYaml, workspace, false);
 
     String image = "custom_jdk_image";
     when(jdkServerLookup.lookupJdkImage("custom_jdk")).thenReturn(image);
@@ -125,7 +130,9 @@ public class PrebuiltRuntimeImageBuildStepTest {
     RuntimeConfig runtimeConfig = new RuntimeConfig();
     runtimeConfig.setJdk("custom_jdk");
     runtimeConfig.setServer("custom_server");
-    BuildContext buildContext = new BuildContext(runtimeConfig, workspace, false);
+    AppYaml appYaml = new AppYaml();
+    appYaml.setRuntimeConfig(runtimeConfig);
+    BuildContext buildContext = new BuildContext(appYaml, workspace, false);
 
     assertEquals(workspace.resolve("foo.jar"), prebuiltRuntimeImageBuildStep.getArtifact(buildContext).getPath());
 
@@ -135,7 +142,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
   @Test(expected = ArtifactNotFoundException.class)
   public void testNoArtifacts() throws IOException, BuildStepException {
     Path workspace = new TestWorkspaceBuilder().build();
-    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace, false);
+    BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
     prebuiltRuntimeImageBuildStep.run(buildContext);
   }
 
@@ -161,7 +168,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
         .file("WEB-INF/appengine-web.xml").build()
         .file("WEB-INF/web.xml").build()
         .build();
-    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace, false);
+    BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
     prebuiltRuntimeImageBuildStep.run(buildContext);
 
     String dockerfile = buildContext.getDockerfile().toString();
@@ -174,7 +181,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
     Path workspace = new TestWorkspaceBuilder()
         .file("WEB-INF/web.xml").build()
         .build();
-    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace, false);
+    BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
 
     String serverRuntime = "server-runtime";
     when(jdkServerLookup.lookupServerImage(isNull(), isNull())).thenReturn(serverRuntime);
@@ -192,7 +199,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
     Path workspace = new TestWorkspaceBuilder()
         .file("foo.war/WEB-INF/web.xml").build()
         .build();
-    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace, false);
+    BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
     prebuiltRuntimeImageBuildStep.run(buildContext);
     String dockerfile = buildContext.getDockerfile().toString();
 
@@ -208,9 +215,9 @@ public class PrebuiltRuntimeImageBuildStepTest {
 
     BetaSettings betaSettings = new BetaSettings();
     betaSettings.setEnableAppEngineApis(true);
-    RuntimeConfig runtimeConfig = new RuntimeConfig();
-    runtimeConfig.setBetaSettings(betaSettings);
-    BuildContext buildContext = new BuildContext(runtimeConfig, workspace, false);
+    AppYaml appYaml = new AppYaml();
+    appYaml.setBetaSettings(betaSettings);
+    BuildContext buildContext = new BuildContext(appYaml, workspace, false);
 
     prebuiltRuntimeImageBuildStep.run(buildContext);
   }
@@ -224,9 +231,9 @@ public class PrebuiltRuntimeImageBuildStepTest {
 
     BetaSettings betaSettings = new BetaSettings();
     betaSettings.setEnableAppEngineApis(true);
-    RuntimeConfig runtimeConfig = new RuntimeConfig();
-    runtimeConfig.setBetaSettings(betaSettings);
-    BuildContext buildContext = new BuildContext(runtimeConfig, workspace, false);
+    AppYaml appYaml = new AppYaml();
+    appYaml.setBetaSettings(betaSettings);
+    BuildContext buildContext = new BuildContext(appYaml, workspace, false);
 
     prebuiltRuntimeImageBuildStep.run(buildContext);
 

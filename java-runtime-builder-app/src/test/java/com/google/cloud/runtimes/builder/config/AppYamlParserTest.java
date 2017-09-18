@@ -17,11 +17,13 @@
 package com.google.cloud.runtimes.builder.config;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 
+import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -60,7 +62,8 @@ public class AppYamlParserTest {
   @Test
   public void testParse_defaultAppYaml() throws IOException {
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE);
-    assertNull(result.getRuntimeConfig());
+    assertNotNull(result.getRuntimeConfig());
+    assertNotNull(result.getBetaSettings());
   }
 
   @Test

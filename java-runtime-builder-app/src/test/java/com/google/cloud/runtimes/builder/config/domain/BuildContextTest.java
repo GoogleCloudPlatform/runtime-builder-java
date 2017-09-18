@@ -5,7 +5,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
-import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig.BetaSettings;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,6 +19,7 @@ public class BuildContextTest {
 
   private Path workspace;
   private RuntimeConfig runtimeConfig;
+  private BetaSettings betaSettings;
   private boolean disableSourceBuild;
 
   private static final String DOCKER_IGNORE_PREAMBLE = "Dockerfile\n"
@@ -30,11 +30,15 @@ public class BuildContextTest {
     // initialize to empty dir
     workspace = new TestWorkspaceBuilder().build();
     runtimeConfig = new RuntimeConfig();
+    betaSettings = new BetaSettings();
     disableSourceBuild = false;
   }
 
   private BuildContext initBuildContext() {
-    return new BuildContext(runtimeConfig, workspace, disableSourceBuild);
+    AppYaml appYaml = new AppYaml();
+    appYaml.setRuntimeConfig(runtimeConfig);
+    appYaml.setBetaSettings(betaSettings);
+    return new BuildContext(appYaml, workspace, disableSourceBuild);
   }
 
   @Test
@@ -161,24 +165,14 @@ public class BuildContextTest {
   }
 
   @Test
-  public void testIsForceCompatRuntimeWithNullBetaSettings() {
-    runtimeConfig.setBetaSettings(null);
-    assertFalse(initBuildContext().isForceCompatRuntime());
-  }
-
-  @Test
   public void testIsForceCompatRuntimeWithBetaSettingsFalse() {
-    BetaSettings betaSettings = new BetaSettings();
     betaSettings.setEnableAppEngineApis(false);
-    runtimeConfig.setBetaSettings(betaSettings);
     assertFalse(initBuildContext().isForceCompatRuntime());
   }
 
   @Test
   public void testIsForceCompatRuntimeWithBetaSettingsTrue() {
-    BetaSettings betaSettings = new BetaSettings();
     betaSettings.setEnableAppEngineApis(true);
-    runtimeConfig.setBetaSettings(betaSettings);
     assertTrue(initBuildContext().isForceCompatRuntime());
   }
 

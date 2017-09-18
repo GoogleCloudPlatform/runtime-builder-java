@@ -25,7 +25,6 @@ import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.BuildContextFactory;
 import com.google.cloud.runtimes.builder.config.domain.BuildTool;
-import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
@@ -108,18 +107,11 @@ public class BuildPipelineConfigurator {
     // locate and deserialize configuration files
     Optional<Path> pathToAppYaml = appYamlFinder.findAppYamlFile(workspaceDir);
 
-    AppYaml appYaml;
-    if (pathToAppYaml.isPresent()) {
-      appYaml = parseAppYaml(pathToAppYaml.get());
-    } else {
-      appYaml = new AppYaml();
-    }
+    AppYaml appYaml = pathToAppYaml.isPresent()
+        ? parseAppYaml(pathToAppYaml.get())
+        : new AppYaml();
 
-    RuntimeConfig runtimeConfig = appYaml.getRuntimeConfig() != null
-        ? appYaml.getRuntimeConfig()
-        : new RuntimeConfig();
-
-    BuildContext buildContext = buildContextFactory.createBuildContext(runtimeConfig, workspaceDir);
+    BuildContext buildContext = buildContextFactory.createBuildContext(appYaml, workspaceDir);
 
     // if the path to app.yaml is known, add it to the .gitignore
     if (pathToAppYaml.isPresent()) {

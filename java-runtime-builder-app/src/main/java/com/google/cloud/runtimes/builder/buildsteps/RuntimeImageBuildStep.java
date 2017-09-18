@@ -47,9 +47,10 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
     Artifact artifact = getArtifact(buildContext);
-    logger.debug("Identified Java artifact for deployment {}", artifact);
+    logger.info("Identified Java artifact for deployment {}", artifact);
 
-    buildContext.getDockerfile().appendLine("FROM " + getBaseRuntimeImage(buildContext, artifact));
+    String baseRuntimeImage = getBaseRuntimeImage(buildContext, artifact);
+    buildContext.getDockerfile().appendLine("FROM " + baseRuntimeImage);
     String copyStep = "COPY";
     if (buildContext.isSourceBuild()) {
       copyStep += " --from=" + DOCKERFILE_BUILD_STAGE;
@@ -59,7 +60,7 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
         .relativize(artifact.getPath()).toString();
 
     // compat runtime requires a special app destination
-    String artifactDestination = artifact.getType() == APP_ENGINE_EXPLODED_WAR
+    String artifactDestination = baseRuntimeImage.equals(compatImageName)
         ? "/app/"
         : "$APP_DESTINATION";
 
@@ -86,14 +87,12 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
 
     // Select runtime based on artifact type
 
-    if (artifact.getPath().normalize().equals(buildContext.getWorkspaceDir())
-        && artifact.getType() == APP_ENGINE_EXPLODED_WAR) {
-      // If the workspace directory itself is an app engine exploded war, use the compat runtime.
-      logger.info("Using base image '{}' for App Engine exploded WAR artifact", compatImageName);
+    if (artifact.getType() == APP_ENGINE_EXPLODED_WAR || artifact.getType() == EXPLODED_WAR) {
+      // Use the compat runtime for exploded war artifacts.
+      logger.info("Using base image '{}' for exploded WAR artifact", compatImageName);
       return compatImageName;
 
-    } else if (artifact.getType() == WAR || artifact.getType() == EXPLODED_WAR
-        || artifact.getType() == APP_ENGINE_EXPLODED_WAR) {
+    } else if (artifact.getType() == WAR) {
       String baseImage
           = jdkServerLookup.lookupServerImage(runtimeConfig.getJdk(), runtimeConfig.getServer());
       logger.info("Using base image '{}' for WAR artifact", baseImage);

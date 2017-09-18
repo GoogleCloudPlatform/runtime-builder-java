@@ -2,7 +2,6 @@ package com.google.cloud.runtimes.builder.buildsteps;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -183,13 +182,11 @@ public class PrebuiltRuntimeImageBuildStepTest {
         .build();
     BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
 
-    String serverRuntime = "server-runtime";
-    when(jdkServerLookup.lookupServerImage(isNull(), isNull())).thenReturn(serverRuntime);
     prebuiltRuntimeImageBuildStep.run(buildContext);
 
     String dockerfile = buildContext.getDockerfile().toString();
-    assertTrue(dockerfile.startsWith("FROM " + serverRuntime + "\n"));
-    assertTrue(dockerfile.contains("COPY ./ $APP_DESTINATION"));
+    assertTrue(dockerfile.startsWith("FROM " + compatImageName + "\n"));
+    assertTrue(dockerfile.contains("COPY ./ /app/"));
   }
 
   @Test
@@ -203,8 +200,8 @@ public class PrebuiltRuntimeImageBuildStepTest {
     prebuiltRuntimeImageBuildStep.run(buildContext);
     String dockerfile = buildContext.getDockerfile().toString();
 
-    assertTrue(dockerfile.startsWith("FROM " + serverRuntime));
-    assertTrue(dockerfile.contains("COPY " + "./foo.war $APP_DESTINATION"));
+    assertTrue(dockerfile.startsWith("FROM " + compatImageName));
+    assertTrue(dockerfile.contains("COPY " + "./foo.war /app/"));
   }
 
   @Test(expected = BuildStepException.class)

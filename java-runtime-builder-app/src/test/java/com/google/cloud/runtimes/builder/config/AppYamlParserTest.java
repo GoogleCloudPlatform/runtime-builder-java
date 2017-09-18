@@ -23,7 +23,6 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 
-import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import org.junit.Before;
 import org.junit.Test;
 

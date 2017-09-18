@@ -11,6 +11,7 @@ import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
+import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig.BetaSettings;
 import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
 import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import java.io.IOException;
@@ -197,5 +198,40 @@ public class PrebuiltRuntimeImageBuildStepTest {
 
     assertTrue(dockerfile.startsWith("FROM " + serverRuntime));
     assertTrue(dockerfile.contains("COPY " + "./foo.war $APP_DESTINATION"));
+  }
+
+  @Test(expected = BuildStepException.class)
+  public void testForceCompatRuntimeWithWrongArtifactType() throws BuildStepException, IOException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("foo.jar").build()
+        .build();
+
+    BetaSettings betaSettings = new BetaSettings();
+    betaSettings.setEnableAppEngineApis(true);
+    RuntimeConfig runtimeConfig = new RuntimeConfig();
+    runtimeConfig.setBetaSettings(betaSettings);
+    BuildContext buildContext = new BuildContext(runtimeConfig, workspace, false);
+
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+  }
+
+  @Test
+  public void testForceCompatRuntime() throws BuildStepException, IOException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("WEB-INF/web.xml").build()
+        .file("WEB-INF/appengine-web.xml").build()
+        .build();
+
+    BetaSettings betaSettings = new BetaSettings();
+    betaSettings.setEnableAppEngineApis(true);
+    RuntimeConfig runtimeConfig = new RuntimeConfig();
+    runtimeConfig.setBetaSettings(betaSettings);
+    BuildContext buildContext = new BuildContext(runtimeConfig, workspace, false);
+
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+
+    String dockerfile = buildContext.getDockerfile().toString();
+    assertTrue(dockerfile.startsWith("FROM " + compatImageName));
+    assertTrue(dockerfile.contains("COPY ./ /app/"));
   }
 }

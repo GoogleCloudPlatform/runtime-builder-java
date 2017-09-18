@@ -81,7 +81,7 @@ public class RuntimeConfig {
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
-  static class BetaSettings {
+  public static class BetaSettings {
     private boolean enableAppEngineApis = false;
 
     public boolean isEnableAppEngineApis() {

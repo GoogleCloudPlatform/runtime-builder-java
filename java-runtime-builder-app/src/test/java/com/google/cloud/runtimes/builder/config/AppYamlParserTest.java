@@ -17,6 +17,7 @@
 package com.google.cloud.runtimes.builder.config;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -61,15 +62,63 @@ public class AppYamlParserTest {
   @Test
   public void testParse_defaultAppYaml() throws IOException {
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE);
+
     assertNotNull(result.getRuntimeConfig());
     assertNotNull(result.getBetaSettings());
+
+    assertNull(result.getRuntimeConfig().getServer());
+    assertFalse(result.getRuntimeConfig().getJettyQuickstart());
+    assertNull(result.getRuntimeConfig().getBuildScript());
+    assertNull(result.getRuntimeConfig().getArtifact());
+    assertNull(result.getRuntimeConfig().getJdk());
+
+    assertFalse(result.getBetaSettings().isEnableAppEngineApis());
+  }
+
+  @Test
+  public void testParseEnableAppEngineApisFalse() throws IOException {
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
+        + "beta_settings:\n"
+        + "  enable_app_engine_apis: false");
+    assertFalse(result.getBetaSettings().isEnableAppEngineApis());
+  }
+
+  @Test
+  public void testParseEnableAppEngineApisUpperFalse() throws IOException {
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
+        + "beta_settings:\n"
+        + "  enable_app_engine_apis: False");
+    assertFalse(result.getBetaSettings().isEnableAppEngineApis());
+  }
+
+  @Test
+  public void testParseEnableAppEngineApisTrue() throws IOException {
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
+        + "beta_settings:\n"
+        + "  enable_app_engine_apis: true");
+    assertTrue(result.getBetaSettings().isEnableAppEngineApis());
+  }
+
+  @Test
+  public void testParseEnableAppEngineApisUpperTrue() throws IOException {
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
+        + "beta_settings:\n"
+        + "  enable_app_engine_apis: True");
+    assertTrue(result.getBetaSettings().isEnableAppEngineApis());
+  }
+
+  @Test
+  public void testParseEmptyBetaSettings() throws IOException {
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
+        + "beta_settings:\n");
+    assertFalse(result.getBetaSettings().isEnableAppEngineApis());
   }
 
   @Test
   public void testParse_emptyRuntimeConfig() throws IOException {
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "runtime_config:\n");
-    assertNull(result.getRuntimeConfig());
+    assertNotNull(result.getRuntimeConfig());
   }
 
   @Test

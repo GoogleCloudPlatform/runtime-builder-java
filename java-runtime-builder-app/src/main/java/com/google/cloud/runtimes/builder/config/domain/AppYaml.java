@@ -24,6 +24,7 @@ public class AppYaml {
 
   private RuntimeConfig runtimeConfig = new RuntimeConfig();
   private BetaSettings betaSettings = new BetaSettings();
+  private boolean vm;
 
   @JsonProperty("runtime_config")
   public RuntimeConfig getRuntimeConfig() {
@@ -41,5 +42,13 @@ public class AppYaml {
 
   public void setBetaSettings(BetaSettings betaSettings) {
     this.betaSettings = betaSettings;
+  }
+
+  public boolean getVm() {
+    return vm;
+  }
+
+  public void setVm(boolean vm) {
+    this.vm = vm;
   }
 }

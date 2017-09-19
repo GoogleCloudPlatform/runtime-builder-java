@@ -43,6 +43,7 @@ public class RootModule extends AbstractModule {
   private final String[] jdkMappings;
   private final String[] serverMappings;
   private final String compatImage;
+  private final String legacyCompatImage;
   private final String mavenDockerImage;
   private final String gradleDockerImage;
   private final boolean disableSourceBuild;
@@ -55,21 +56,25 @@ public class RootModule extends AbstractModule {
    * @param jdkMappings mappings between supported jdk versions and docker images
    * @param serverMappings mappings between supported jdk versions, server types, and docker images
    * @param compatImage compat runtime docker image
+   * @param legacyCompatImage legacy compat runtime docker image
    * @param mavenDockerImage maven builder docker image
    * @param gradleDockerImage gradle builder docker image
    * @param disableSourceBuild disables the building of images from source
    */
   public RootModule(String[] jdkMappings, String[] serverMappings, String compatImage,
-      String mavenDockerImage, String gradleDockerImage, boolean disableSourceBuild) {
+      String legacyCompatImage, String mavenDockerImage, String gradleDockerImage,
+      boolean disableSourceBuild) {
     Preconditions.checkNotNull(jdkMappings);
     Preconditions.checkNotNull(serverMappings);
     Preconditions.checkNotNull(compatImage);
+    Preconditions.checkNotNull(legacyCompatImage);
     Preconditions.checkNotNull(mavenDockerImage);
     Preconditions.checkNotNull(gradleDockerImage);
 
     this.jdkMappings = jdkMappings;
     this.serverMappings = serverMappings;
     this.compatImage = compatImage;
+    this.legacyCompatImage = legacyCompatImage;
     this.mavenDockerImage = mavenDockerImage;
     this.gradleDockerImage = gradleDockerImage;
     this.disableSourceBuild = disableSourceBuild;
@@ -83,6 +88,9 @@ public class RootModule extends AbstractModule {
     bind(String.class)
         .annotatedWith(CompatDockerImage.class)
         .toInstance(compatImage);
+    bind(String.class)
+        .annotatedWith(LegacyCompatDockerImage.class)
+        .toInstance(legacyCompatImage);
     bind(String.class)
         .annotatedWith(MavenDockerImage.class)
         .toInstance(mavenDockerImage);

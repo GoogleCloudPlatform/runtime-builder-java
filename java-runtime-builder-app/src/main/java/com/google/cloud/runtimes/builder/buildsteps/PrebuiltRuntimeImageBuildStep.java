@@ -23,6 +23,7 @@ import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
 import com.google.cloud.runtimes.builder.exception.TooManyArtifactsException;
 import com.google.cloud.runtimes.builder.injection.CompatDockerImage;
+import com.google.cloud.runtimes.builder.injection.LegacyCompatDockerImage;
 import com.google.inject.Inject;
 
 import java.io.IOException;
@@ -36,8 +37,9 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
 
   @Inject
   PrebuiltRuntimeImageBuildStep(JdkServerLookup jdkServerLookup,
-      @CompatDockerImage String compatImageName) {
-    super(jdkServerLookup, compatImageName);
+      @CompatDockerImage String compatImageName,
+      @LegacyCompatDockerImage String legacyCompatImageName) {
+    super(jdkServerLookup, compatImageName, legacyCompatImageName);
   }
 
   @Override

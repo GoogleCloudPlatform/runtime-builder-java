@@ -37,10 +37,13 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
 
   private final JdkServerLookup jdkServerLookup;
   private final String compatImageName;
+  private final String legacyCompatImageName;
 
-  protected RuntimeImageBuildStep(JdkServerLookup jdkServerLookup, String compatImageName) {
+  protected RuntimeImageBuildStep(JdkServerLookup jdkServerLookup, String compatImageName,
+      String legacyCompatImageName) {
     this.jdkServerLookup = jdkServerLookup;
     this.compatImageName = compatImageName;
+    this.legacyCompatImageName = legacyCompatImageName;
   }
 
   @Override
@@ -82,9 +85,17 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
     // Select runtime based on artifact type
 
     if (artifact.getType() == EXPLODED_WAR) {
-      // Use the compat runtime for exploded war artifacts.
-      logger.info("Using base image '{}' for exploded WAR artifact", compatImageName);
-      return compatImageName;
+      // Use a compat runtime for exploded war artifacts.
+
+      if (buildContext.isManagedVmEnv()) {
+        logger.info("Using base image '{}' for exploded WAR artifact in the 'vm: true' environment",
+            legacyCompatImageName);
+        return legacyCompatImageName;
+
+      } else {
+        logger.info("Using base image '{}' for exploded WAR artifact", compatImageName);
+        return compatImageName;
+      }
 
     } else if (artifact.getType() == WAR) {
       String baseImage

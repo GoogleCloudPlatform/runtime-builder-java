@@ -30,13 +30,15 @@ public class PrebuiltRuntimeImageBuildStepTest {
 
   @Mock private JdkServerLookup jdkServerLookup;
   private String compatImageName;
+  private String legacyCompatImageName;
 
   @Before
   public void before() {
     MockitoAnnotations.initMocks(this);
     compatImageName = "test-compat-image";
     prebuiltRuntimeImageBuildStep
-        = new PrebuiltRuntimeImageBuildStep(jdkServerLookup, compatImageName);
+        = new PrebuiltRuntimeImageBuildStep(jdkServerLookup, compatImageName,
+        legacyCompatImageName);
   }
 
   @Test

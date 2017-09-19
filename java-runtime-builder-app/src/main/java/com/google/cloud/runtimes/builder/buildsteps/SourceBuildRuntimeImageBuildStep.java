@@ -20,14 +20,16 @@ import com.google.cloud.runtimes.builder.config.domain.Artifact;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.injection.CompatDockerImage;
+import com.google.cloud.runtimes.builder.injection.LegacyCompatDockerImage;
 import com.google.inject.Inject;
 
 public class SourceBuildRuntimeImageBuildStep extends RuntimeImageBuildStep {
 
   @Inject
   SourceBuildRuntimeImageBuildStep(JdkServerLookup jdkServerLookup,
-      @CompatDockerImage String compatImage) {
-    super(jdkServerLookup, compatImage);
+      @CompatDockerImage String compatImage,
+      @LegacyCompatDockerImage String legacyCompatImageName) {
+    super(jdkServerLookup, compatImage, legacyCompatImageName);
   }
 
   @Override

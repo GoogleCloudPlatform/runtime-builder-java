@@ -73,6 +73,8 @@ public class AppYamlParserTest {
     assertNull(result.getRuntimeConfig().getJdk());
 
     assertFalse(result.getBetaSettings().isEnableAppEngineApis());
+
+    assertFalse(result.getVm());
   }
 
   @Test
@@ -151,6 +153,30 @@ public class AppYamlParserTest {
       + "runtime_config:\n"
       + "  server: \"tomcat\"");
     assertTrue(result.getRuntimeConfig().getServer().equals("tomcat"));
+  }
+
+  @Test
+  public void testParseVmEmpty() throws IOException {
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE);
+    assertFalse(result.getVm());
+  }
+
+  @Test
+  public void testParseVmDefault() throws IOException {
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE);
+    assertFalse(result.getVm());
+  }
+
+  @Test
+  public void testParseVmTrue() throws IOException {
+    AppYaml result = parseFileWithContents("vm: true");
+    assertTrue(result.getVm());
+  }
+
+  @Test
+  public void testParseVmFalse() throws IOException {
+    AppYaml result = parseFileWithContents("vm: False");
+    assertFalse(result.getVm());
   }
 
 }

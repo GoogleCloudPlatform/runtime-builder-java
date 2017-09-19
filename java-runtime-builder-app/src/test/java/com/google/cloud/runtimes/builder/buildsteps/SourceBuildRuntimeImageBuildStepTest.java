@@ -29,6 +29,7 @@ public class SourceBuildRuntimeImageBuildStepTest {
   private static final String TEST_JDK_RUNTIME = "test_jdk_runtime";
   private static final String TEST_SERVER_RUNTIME = "test_server_runtime";
   private static final String TEST_COMPAT_RUNTIME = "test_compat_runtime";
+  private static final String TEST_LEGACY_COMPAT_RUNTIME = "legacy_test_compat_runtime";
 
   @Before
   public void before() {
@@ -43,7 +44,8 @@ public class SourceBuildRuntimeImageBuildStepTest {
     when(jdkServerLookup.lookupServerImage(eq(runtimeConfig.getJdk()),
         eq(runtimeConfig.getServer()))).thenReturn(TEST_SERVER_RUNTIME);
 
-    buildStep = new SourceBuildRuntimeImageBuildStep(jdkServerLookup, TEST_COMPAT_RUNTIME);
+    buildStep = new SourceBuildRuntimeImageBuildStep(jdkServerLookup, TEST_COMPAT_RUNTIME,
+        TEST_LEGACY_COMPAT_RUNTIME);
   }
 
   private BuildContext initBuildContext() throws IOException {

@@ -156,12 +156,6 @@ public class AppYamlParserTest {
   }
 
   @Test
-  public void testParseVmEmpty() throws IOException {
-    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE);
-    assertFalse(result.isVm());
-  }
-
-  @Test
   public void testParseVmDefault() throws IOException {
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE);
     assertFalse(result.isVm());

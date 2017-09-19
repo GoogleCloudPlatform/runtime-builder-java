@@ -135,7 +135,7 @@ public class BuildContext {
    * Returns whether or not the user has selected to run in the deprecated "managed VM" environment.
    */
   public boolean isManagedVmEnv() {
-    return appYaml.getVm();
+    return appYaml.isVm();
   }
 
   /**

@@ -44,7 +44,7 @@ public class AppYaml {
     this.betaSettings = betaSettings;
   }
 
-  public boolean getVm() {
+  public boolean isVm() {
     return vm;
   }
 

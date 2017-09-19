@@ -74,7 +74,7 @@ public class AppYamlParserTest {
 
     assertFalse(result.getBetaSettings().isEnableAppEngineApis());
 
-    assertFalse(result.getVm());
+    assertFalse(result.isVm());
   }
 
   @Test
@@ -158,25 +158,25 @@ public class AppYamlParserTest {
   @Test
   public void testParseVmEmpty() throws IOException {
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE);
-    assertFalse(result.getVm());
+    assertFalse(result.isVm());
   }
 
   @Test
   public void testParseVmDefault() throws IOException {
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE);
-    assertFalse(result.getVm());
+    assertFalse(result.isVm());
   }
 
   @Test
   public void testParseVmTrue() throws IOException {
     AppYaml result = parseFileWithContents("vm: true");
-    assertTrue(result.getVm());
+    assertTrue(result.isVm());
   }
 
   @Test
   public void testParseVmFalse() throws IOException {
     AppYaml result = parseFileWithContents("vm: False");
-    assertFalse(result.getVm());
+    assertFalse(result.isVm());
   }
 
 }

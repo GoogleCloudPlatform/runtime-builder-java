@@ -42,7 +42,6 @@ import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.BuildContextFactory;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
-import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.common.base.Objects;
 import com.google.common.io.Files;
 import java.io.IOException;
@@ -126,8 +125,7 @@ public class BuildPipelineConfiguratorTest {
   }
 
   @Test
-  public void testPrebuiltArtifact() throws BuildStepException, IOException,
-      AppYamlNotFoundException {
+  public void testPrebuiltArtifact() throws BuildStepException, IOException {
     Path workspace = new TestWorkspaceBuilder()
         .file("foo.war").build()
         .build();
@@ -143,8 +141,7 @@ public class BuildPipelineConfiguratorTest {
   }
 
   @Test
-  public void testMavenSourceBuild() throws BuildStepException, IOException,
-      AppYamlNotFoundException {
+  public void testMavenSourceBuild() throws BuildStepException, IOException {
     Path workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()
         .build();
@@ -161,8 +158,7 @@ public class BuildPipelineConfiguratorTest {
   }
 
   @Test
-  public void testGradleSourceBuild() throws BuildStepException, IOException,
-      AppYamlNotFoundException {
+  public void testGradleSourceBuild() throws BuildStepException, IOException {
     Path workspace = new TestWorkspaceBuilder()
         .file("build.gradle").build()
         .build();
@@ -179,8 +175,7 @@ public class BuildPipelineConfiguratorTest {
   }
 
   @Test
-  public void testMavenAndGradleSourceBuild() throws BuildStepException, IOException,
-      AppYamlNotFoundException {
+  public void testMavenAndGradleSourceBuild() throws BuildStepException, IOException {
     Path workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()
         .file("build.gradle").build()
@@ -198,8 +193,7 @@ public class BuildPipelineConfiguratorTest {
   }
 
   @Test
-  public void testMavenBuildWithCustomScript() throws BuildStepException, IOException,
-      AppYamlNotFoundException {
+  public void testMavenBuildWithCustomScript() throws BuildStepException, IOException {
     String customScript = "custom mvn goals";
     Path workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()
@@ -225,8 +219,7 @@ public class BuildPipelineConfiguratorTest {
   }
 
   @Test
-  public void testPrebuiltArtifactAndMavenBuild() throws BuildStepException, IOException,
-      AppYamlNotFoundException {
+  public void testPrebuiltArtifactAndMavenBuild() throws BuildStepException, IOException {
     Path workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()
         .file("foo.war").build()
@@ -245,7 +238,7 @@ public class BuildPipelineConfiguratorTest {
 
   @Test
   public void testAppYamlIsDockerignored()
-      throws IOException, AppYamlNotFoundException, BuildStepException {
+      throws IOException, BuildStepException {
     String relativeAppYamlPath = "foo/bar/app.yaml";
     Path workspace = new TestWorkspaceBuilder()
         .file(relativeAppYamlPath).withContents("env: flex").build()
@@ -263,8 +256,7 @@ public class BuildPipelineConfiguratorTest {
   }
 
   @Test
-  public void testSourceBuildDisable()
-      throws BuildStepException, IOException, AppYamlNotFoundException {
+  public void testSourceBuildDisable() throws BuildStepException, IOException {
     Path workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()
         .file("foo.war").build()

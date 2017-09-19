@@ -25,6 +25,6 @@ import java.nio.file.Path;
  */
 public interface BuildContextFactory {
 
-  BuildContext createBuildContext(RuntimeConfig runtimeConfig, Path workspaceDir);
+  BuildContext createBuildContext(AppYaml appYaml, Path workspaceDir);
 
 }

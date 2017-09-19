@@ -2,12 +2,13 @@ package com.google.cloud.runtimes.builder.buildsteps;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+import com.google.cloud.runtimes.builder.config.domain.AppYaml;
+import com.google.cloud.runtimes.builder.config.domain.BetaSettings;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
@@ -45,7 +46,9 @@ public class PrebuiltRuntimeImageBuildStepTest {
     String configuredArtifactPath = "artifactDir/my_artifact.jar";
     RuntimeConfig runtimeConfig = new RuntimeConfig();
     runtimeConfig.setArtifact(configuredArtifactPath);
-    BuildContext buildContext = new BuildContext(runtimeConfig, workspace, false);
+    AppYaml appYaml = new AppYaml();
+    appYaml.setRuntimeConfig(runtimeConfig);
+    BuildContext buildContext = new BuildContext(appYaml, workspace, false);
 
     String image = "test_image";
     when(jdkServerLookup.lookupJdkImage(null)).thenReturn(image);
@@ -64,7 +67,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
         .file("bar.war").build()
         .build();
 
-    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace, false);
+    BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
     prebuiltRuntimeImageBuildStep.run(buildContext);
   }
 
@@ -75,7 +78,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
         .file("foo.war/WEB-INF/web.xml").build()
         .build();
 
-    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace, false);
+    BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
     prebuiltRuntimeImageBuildStep.run(buildContext);
   }
 
@@ -85,7 +88,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
         .file("foo.war").build()
         .build();
 
-    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace, false);
+    BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
     String image = "test_war_image";
     when(jdkServerLookup.lookupServerImage(null, null)).thenReturn(image);
 
@@ -103,7 +106,9 @@ public class PrebuiltRuntimeImageBuildStepTest {
 
     RuntimeConfig runtimeConfig = new RuntimeConfig();
     runtimeConfig.setJdk("custom_jdk");
-    BuildContext buildContext = new BuildContext(runtimeConfig, workspace, false);
+    AppYaml appYaml = new AppYaml();
+    appYaml.setRuntimeConfig(runtimeConfig);
+    BuildContext buildContext = new BuildContext(appYaml, workspace, false);
 
     String image = "custom_jdk_image";
     when(jdkServerLookup.lookupJdkImage("custom_jdk")).thenReturn(image);
@@ -124,7 +129,9 @@ public class PrebuiltRuntimeImageBuildStepTest {
     RuntimeConfig runtimeConfig = new RuntimeConfig();
     runtimeConfig.setJdk("custom_jdk");
     runtimeConfig.setServer("custom_server");
-    BuildContext buildContext = new BuildContext(runtimeConfig, workspace, false);
+    AppYaml appYaml = new AppYaml();
+    appYaml.setRuntimeConfig(runtimeConfig);
+    BuildContext buildContext = new BuildContext(appYaml, workspace, false);
 
     assertEquals(workspace.resolve("foo.jar"), prebuiltRuntimeImageBuildStep.getArtifact(buildContext).getPath());
 
@@ -134,7 +141,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
   @Test(expected = ArtifactNotFoundException.class)
   public void testNoArtifacts() throws IOException, BuildStepException {
     Path workspace = new TestWorkspaceBuilder().build();
-    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace, false);
+    BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
     prebuiltRuntimeImageBuildStep.run(buildContext);
   }
 
@@ -160,7 +167,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
         .file("WEB-INF/appengine-web.xml").build()
         .file("WEB-INF/web.xml").build()
         .build();
-    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace, false);
+    BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
     prebuiltRuntimeImageBuildStep.run(buildContext);
 
     String dockerfile = buildContext.getDockerfile().toString();
@@ -169,19 +176,19 @@ public class PrebuiltRuntimeImageBuildStepTest {
   }
 
   @Test
-  public void testNonCompatExplodedWarArtifactAtRoot() throws IOException, BuildStepException {
+  public void testExplodedWarArtifactAtRoot() throws IOException, BuildStepException {
+    String serverRuntime = "server_runtime_image";
+    when(jdkServerLookup.lookupServerImage(null, null)).thenReturn(serverRuntime);
     Path workspace = new TestWorkspaceBuilder()
         .file("WEB-INF/web.xml").build()
         .build();
-    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace, false);
+    BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
 
-    String serverRuntime = "server-runtime";
-    when(jdkServerLookup.lookupServerImage(isNull(), isNull())).thenReturn(serverRuntime);
     prebuiltRuntimeImageBuildStep.run(buildContext);
 
     String dockerfile = buildContext.getDockerfile().toString();
-    assertTrue(dockerfile.startsWith("FROM " + serverRuntime + "\n"));
-    assertTrue(dockerfile.contains("COPY ./ $APP_DESTINATION"));
+    assertTrue(dockerfile.startsWith("FROM " + compatImageName + "\n"));
+    assertTrue(dockerfile.contains("COPY ./ /app/"));
   }
 
   @Test
@@ -191,11 +198,65 @@ public class PrebuiltRuntimeImageBuildStepTest {
     Path workspace = new TestWorkspaceBuilder()
         .file("foo.war/WEB-INF/web.xml").build()
         .build();
-    BuildContext buildContext = new BuildContext(new RuntimeConfig(), workspace, false);
+    BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
     prebuiltRuntimeImageBuildStep.run(buildContext);
     String dockerfile = buildContext.getDockerfile().toString();
 
-    assertTrue(dockerfile.startsWith("FROM " + serverRuntime));
-    assertTrue(dockerfile.contains("COPY " + "./foo.war $APP_DESTINATION"));
+    assertTrue(dockerfile.startsWith("FROM " + compatImageName + "\n"));
+    assertTrue(dockerfile.contains("COPY ./foo.war /app/"));
+  }
+
+  @Test(expected = BuildStepException.class)
+  public void testForceCompatRuntimeWithWar() throws BuildStepException, IOException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("foo.war").build()
+        .build();
+
+    BetaSettings betaSettings = new BetaSettings();
+    betaSettings.setEnableAppEngineApis(true);
+    AppYaml appYaml = new AppYaml();
+    appYaml.setBetaSettings(betaSettings);
+    BuildContext buildContext = new BuildContext(appYaml, workspace, false);
+
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+  }
+
+  @Test
+  public void testForceCompatRuntimeWithExplodedWar() throws BuildStepException, IOException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("WEB-INF/web.xml").build()
+        .build();
+
+    BetaSettings betaSettings = new BetaSettings();
+    betaSettings.setEnableAppEngineApis(true);
+    AppYaml appYaml = new AppYaml();
+    appYaml.setBetaSettings(betaSettings);
+    BuildContext buildContext = new BuildContext(appYaml, workspace, false);
+
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+
+    String dockerfile = buildContext.getDockerfile().toString();
+    assertTrue(dockerfile.startsWith("FROM " + compatImageName));
+    assertTrue(dockerfile.contains("COPY ./ /app/"));
+  }
+
+  @Test
+  public void testForceCompatRuntime() throws BuildStepException, IOException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("WEB-INF/web.xml").build()
+        .file("WEB-INF/appengine-web.xml").build()
+        .build();
+
+    BetaSettings betaSettings = new BetaSettings();
+    betaSettings.setEnableAppEngineApis(true);
+    AppYaml appYaml = new AppYaml();
+    appYaml.setBetaSettings(betaSettings);
+    BuildContext buildContext = new BuildContext(appYaml, workspace, false);
+
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+
+    String dockerfile = buildContext.getDockerfile().toString();
+    assertTrue(dockerfile.startsWith("FROM " + compatImageName));
+    assertTrue(dockerfile.contains("COPY ./ /app/"));
   }
 }

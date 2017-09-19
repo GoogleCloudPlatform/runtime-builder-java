@@ -17,7 +17,6 @@
 package com.google.cloud.runtimes.builder.buildsteps;
 
 import static com.google.cloud.runtimes.builder.Constants.DOCKERFILE_BUILD_STAGE;
-import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.APP_ENGINE_EXPLODED_WAR;
 import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.EXPLODED_WAR;
 import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.JAR;
 import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.WAR;
@@ -47,9 +46,10 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
   @Override
   public void run(BuildContext buildContext) throws BuildStepException {
     Artifact artifact = getArtifact(buildContext);
-    logger.debug("Found Java artifact {}", artifact);
+    logger.info("Identified Java artifact for deployment {}", artifact);
 
-    buildContext.getDockerfile().appendLine("FROM " + getBaseRuntimeImage(buildContext, artifact));
+    String baseRuntimeImage = getBaseRuntimeImage(buildContext, artifact);
+    buildContext.getDockerfile().appendLine("FROM " + baseRuntimeImage);
     String copyStep = "COPY";
     if (buildContext.isSourceBuild()) {
       copyStep += " --from=" + DOCKERFILE_BUILD_STAGE;
@@ -59,7 +59,7 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
         .relativize(artifact.getPath()).toString();
 
     // compat runtime requires a special app destination
-    String artifactDestination = artifact.getType() == APP_ENGINE_EXPLODED_WAR
+    String artifactDestination = baseRuntimeImage.equals(compatImageName)
         ? "/app/"
         : "$APP_DESTINATION";
 
@@ -71,16 +71,22 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
       throws BuildStepException {
     RuntimeConfig runtimeConfig = buildContext.getRuntimeConfig();
 
-    // runtime type is selected based on the type of artifact
+    // Check if the user has explicitly selected the compat runtime
+    if (buildContext.isCompatEnabled() && artifact.getType() != EXPLODED_WAR) {
+      throw new BuildStepException(String.format("App Engine APIs have been enabled. In order to "
+          + "use App Engine APIs, an exploded WAR artifact is required, but a %s artifact was "
+          + "found. See https://cloud.google.com/appengine/docs/flexible/java/upgrading for more "
+          + "detail.", artifact.getType()));
+    }
 
-    if (artifact.getPath().normalize().equals(buildContext.getWorkspaceDir())
-        && artifact.getType() == APP_ENGINE_EXPLODED_WAR) {
-      // If the workspace directory itself is an app engine exploded war, use the compat runtime.
-      logger.info("Using base image '{}' for App Engine exploded WAR artifact", compatImageName);
+    // Select runtime based on artifact type
+
+    if (artifact.getType() == EXPLODED_WAR) {
+      // Use the compat runtime for exploded war artifacts.
+      logger.info("Using base image '{}' for exploded WAR artifact", compatImageName);
       return compatImageName;
 
-    } else if (artifact.getType() == WAR || artifact.getType() == EXPLODED_WAR
-        || artifact.getType() == APP_ENGINE_EXPLODED_WAR) {
+    } else if (artifact.getType() == WAR) {
       String baseImage
           = jdkServerLookup.lookupServerImage(runtimeConfig.getJdk(), runtimeConfig.getServer());
       logger.info("Using base image '{}' for WAR artifact", baseImage);
@@ -90,7 +96,7 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
       // If the user expects a server to be involved, fail loudly.
       if (runtimeConfig.getServer() != null) {
         throw new BuildStepException("runtime_config.server configuration is not compatible with "
-            + ".jar artifacts. To use a web server runtime, use a .war artifact instead.");
+            + "JAR artifacts. To use a web server runtime, use a WAR artifact instead.");
       }
       String baseImage = jdkServerLookup.lookupJdkImage(runtimeConfig.getJdk());
       logger.info("Using base image '{}' for JAR artifact", baseImage);

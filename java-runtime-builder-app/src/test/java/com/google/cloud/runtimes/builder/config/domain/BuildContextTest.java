@@ -19,6 +19,7 @@ public class BuildContextTest {
 
   private Path workspace;
   private RuntimeConfig runtimeConfig;
+  private BetaSettings betaSettings;
   private boolean disableSourceBuild;
 
   private static final String DOCKER_IGNORE_PREAMBLE = "Dockerfile\n"
@@ -29,11 +30,15 @@ public class BuildContextTest {
     // initialize to empty dir
     workspace = new TestWorkspaceBuilder().build();
     runtimeConfig = new RuntimeConfig();
+    betaSettings = new BetaSettings();
     disableSourceBuild = false;
   }
 
   private BuildContext initBuildContext() {
-    return new BuildContext(runtimeConfig, workspace, disableSourceBuild);
+    AppYaml appYaml = new AppYaml();
+    appYaml.setRuntimeConfig(runtimeConfig);
+    appYaml.setBetaSettings(betaSettings);
+    return new BuildContext(appYaml, workspace, disableSourceBuild);
   }
 
   @Test
@@ -157,6 +162,18 @@ public class BuildContextTest {
 
     assertEquals(BuildTool.GRADLE,
         initBuildContext().getBuildTool().get());
+  }
+
+  @Test
+  public void testIsForceCompatRuntimeWithBetaSettingsFalse() {
+    betaSettings.setEnableAppEngineApis(false);
+    assertFalse(initBuildContext().isCompatEnabled());
+  }
+
+  @Test
+  public void testIsForceCompatRuntimeWithBetaSettingsTrue() {
+    betaSettings.setEnableAppEngineApis(true);
+    assertTrue(initBuildContext().isCompatEnabled());
   }
 
   private Path getDockerfile() {

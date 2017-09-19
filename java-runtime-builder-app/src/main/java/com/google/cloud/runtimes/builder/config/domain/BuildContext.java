@@ -53,7 +53,7 @@ public class BuildContext {
 
   private final Logger logger = LoggerFactory.getLogger(BuildContext.class);
 
-  private final RuntimeConfig runtimeConfig;
+  private final AppYaml appYaml;
   private final Path workspaceDir;
   private final StringLineAppender dockerfile;
   private final StringLineAppender dockerignore;
@@ -64,16 +64,17 @@ public class BuildContext {
   /**
    * Constructs a new {@link BuildContext}.
    *
-   * @param runtimeConfig runtime configuration object provided by the user
+   * @param appYaml configuration object provided by the user
    * @param workspaceDir the directory in which the build will take place
+   * @param disableSourceBuild whether or not source builds should be disabled
    */
   @Inject
   @VisibleForTesting
-  public BuildContext(@Assisted RuntimeConfig runtimeConfig, @Assisted Path workspaceDir,
+  public BuildContext(@Assisted AppYaml appYaml, @Assisted Path workspaceDir,
       @DisableSourceBuild boolean disableSourceBuild) {
     Preconditions.checkArgument(Files.isDirectory(workspaceDir));
 
-    this.runtimeConfig = runtimeConfig;
+    this.appYaml = appYaml;
     this.workspaceDir = workspaceDir;
     this.dockerfile = new StringLineAppender();
     // dockerignore should always include itself and the dockerfile
@@ -84,7 +85,7 @@ public class BuildContext {
   }
 
   public RuntimeConfig getRuntimeConfig() {
-    return runtimeConfig;
+    return appYaml.getRuntimeConfig();
   }
 
   public Path getWorkspaceDir() {
@@ -113,11 +114,20 @@ public class BuildContext {
    */
   public boolean isSourceBuild() {
     try {
-      return !disableSourceBuild && (!Strings.isNullOrEmpty(runtimeConfig.getBuildScript())
-          || getBuildTool().isPresent());
+      return !disableSourceBuild && (!Strings.isNullOrEmpty(
+          appYaml.getRuntimeConfig().getBuildScript()) || getBuildTool().isPresent());
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * Returns whether or not a compat runtime was requested in the user's configuration.
+   *
+   * @return true if the user has explicitly requested a compat runtime
+   */
+  public boolean isCompatEnabled() {
+    return appYaml.getBetaSettings().isEnableAppEngineApis();
   }
 
   /**

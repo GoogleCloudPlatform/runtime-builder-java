@@ -4,6 +4,7 @@ import static junit.framework.TestCase.assertEquals;
 
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import java.io.IOException;
@@ -42,7 +43,9 @@ public class JettyOptionsBuildStepTest {
   }
 
   private BuildContext initBuildContext(RuntimeConfig runtimeConfig) throws IOException {
-    return new BuildContext(runtimeConfig, new TestWorkspaceBuilder().build(), false);
+    AppYaml appYaml = new AppYaml();
+    appYaml.setRuntimeConfig(runtimeConfig);
+    return new BuildContext(appYaml, new TestWorkspaceBuilder().build(), false);
   }
 
 }

@@ -1,6 +1,5 @@
 package com.google.cloud.runtimes.builder.config.domain;
 
-import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.APP_ENGINE_EXPLODED_WAR;
 import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.EXPLODED_WAR;
 import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.JAR;
 import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.WAR;
@@ -75,7 +74,7 @@ public class ArtifactTest {
 
     Artifact result = Artifact.fromPath(path);
     assertEquals(path, result.getPath());
-    assertEquals(APP_ENGINE_EXPLODED_WAR, result.getType());
+    assertEquals(EXPLODED_WAR, result.getType());
   }
 
   @Test

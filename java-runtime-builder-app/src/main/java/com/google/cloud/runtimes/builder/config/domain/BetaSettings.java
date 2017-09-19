@@ -20,26 +20,16 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AppYaml {
+public class BetaSettings {
 
-  private RuntimeConfig runtimeConfig = new RuntimeConfig();
-  private BetaSettings betaSettings = new BetaSettings();
+  private boolean enableAppEngineApis = false;
 
-  @JsonProperty("runtime_config")
-  public RuntimeConfig getRuntimeConfig() {
-    return runtimeConfig;
+  public boolean isEnableAppEngineApis() {
+    return enableAppEngineApis;
   }
 
-  public void setRuntimeConfig(RuntimeConfig runtimeConfig) {
-    this.runtimeConfig = runtimeConfig;
-  }
-
-  @JsonProperty("beta_settings")
-  public BetaSettings getBetaSettings() {
-    return betaSettings;
-  }
-
-  public void setBetaSettings(BetaSettings betaSettings) {
-    this.betaSettings = betaSettings;
+  @JsonProperty("enable_app_engine_apis")
+  public void setEnableAppEngineApis(boolean enableAppEngineApis) {
+    this.enableAppEngineApis = enableAppEngineApis;
   }
 }

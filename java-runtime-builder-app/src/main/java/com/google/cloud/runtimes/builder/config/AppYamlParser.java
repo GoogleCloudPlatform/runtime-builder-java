@@ -17,13 +17,13 @@
 package com.google.cloud.runtimes.builder.config;
 
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
+import com.google.cloud.runtimes.builder.config.domain.BetaSettings;
+import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
-import com.google.cloud.runtimes.builder.config.domain.BetaSettings;
-import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -49,7 +49,7 @@ public class AppYamlParser implements YamlParser<AppYaml> {
       appYaml.setBetaSettings(new BetaSettings());
     }
     if (appYaml.getRuntimeConfig() == null) {
-     appYaml.setRuntimeConfig(new RuntimeConfig());
+      appYaml.setRuntimeConfig(new RuntimeConfig());
     }
     return appYaml;
   }

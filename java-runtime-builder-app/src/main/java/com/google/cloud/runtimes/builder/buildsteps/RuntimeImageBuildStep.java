@@ -62,7 +62,8 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
         .relativize(artifact.getPath()).toString();
 
     // compat runtime requires a special app destination
-    String artifactDestination = baseRuntimeImage.equals(compatImageName)
+    String artifactDestination
+        = baseRuntimeImage.equals(compatImageName) || baseRuntimeImage.equals(legacyCompatImageName)
         ? "/app/"
         : "$APP_DESTINATION";
 

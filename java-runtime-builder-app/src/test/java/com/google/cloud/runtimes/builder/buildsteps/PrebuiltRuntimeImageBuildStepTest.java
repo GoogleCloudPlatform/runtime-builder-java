@@ -2,6 +2,7 @@ package com.google.cloud.runtimes.builder.buildsteps;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -36,9 +37,9 @@ public class PrebuiltRuntimeImageBuildStepTest {
   public void before() {
     MockitoAnnotations.initMocks(this);
     compatImageName = "test-compat-image";
-    prebuiltRuntimeImageBuildStep
-        = new PrebuiltRuntimeImageBuildStep(jdkServerLookup, compatImageName,
-        legacyCompatImageName);
+    legacyCompatImageName = "legacy-compat-image";
+    prebuiltRuntimeImageBuildStep = new PrebuiltRuntimeImageBuildStep(jdkServerLookup,
+        compatImageName, legacyCompatImageName);
   }
 
   @Test
@@ -260,5 +261,64 @@ public class PrebuiltRuntimeImageBuildStepTest {
     String dockerfile = buildContext.getDockerfile().toString();
     assertTrue(dockerfile.startsWith("FROM " + compatImageName));
     assertTrue(dockerfile.contains("COPY ./ /app/"));
+  }
+
+  @Test
+  public void testForceCompatRuntimeVmTrue() throws BuildStepException, IOException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("WEB-INF/web.xml").build()
+        .file("WEB-INF/appengine-web.xml").build()
+        .build();
+
+    BetaSettings betaSettings = new BetaSettings();
+    betaSettings.setEnableAppEngineApis(true);
+    AppYaml appYaml = new AppYaml();
+    appYaml.setBetaSettings(betaSettings);
+    appYaml.setVm(true);
+    BuildContext buildContext = new BuildContext(appYaml, workspace, false);
+
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+
+    String dockerfile = buildContext.getDockerfile().toString();
+    assertTrue(dockerfile.startsWith("FROM " + legacyCompatImageName));
+    assertTrue(dockerfile.contains("COPY ./ /app/"));
+  }
+
+  @Test
+  public void testNonForceCompatRuntimeVmTrue() throws BuildStepException, IOException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("WEB-INF/appengine-web.xml").build()
+        .build();
+
+    AppYaml appYaml = new AppYaml();
+    appYaml.setVm(true);
+    BuildContext buildContext = new BuildContext(appYaml, workspace, false);
+
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+
+    String dockerfile = buildContext.getDockerfile().toString();
+    assertTrue(dockerfile.startsWith("FROM " + legacyCompatImageName));
+    assertTrue(dockerfile.contains("COPY ./ /app/"));
+  }
+
+  @Test
+  public void testVmTrueWithJar() throws IOException, BuildStepException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("app.jar").build()
+        .build();
+
+    AppYaml appYaml = new AppYaml();
+    appYaml.setVm(true);
+    BuildContext buildContext = new BuildContext(appYaml, workspace, false);
+
+    String jdkImage = "test-jdk-image";
+    when(jdkServerLookup.lookupJdkImage(any())).thenReturn(jdkImage);
+
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+
+
+    String dockerfile = buildContext.getDockerfile().toString();
+    assertTrue(dockerfile.startsWith("FROM " + jdkImage));
+    assertTrue(dockerfile.contains("COPY ./app.jar $APP_DESTINATION"));
   }
 }

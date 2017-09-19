@@ -176,7 +176,9 @@ public class PrebuiltRuntimeImageBuildStepTest {
   }
 
   @Test
-  public void testNonCompatExplodedWarArtifactAtRoot() throws IOException, BuildStepException {
+  public void testExplodedWarArtifactAtRoot() throws IOException, BuildStepException {
+    String serverRuntime = "server_runtime_image";
+    when(jdkServerLookup.lookupServerImage(null, null)).thenReturn(serverRuntime);
     Path workspace = new TestWorkspaceBuilder()
         .file("WEB-INF/web.xml").build()
         .build();
@@ -200,14 +202,14 @@ public class PrebuiltRuntimeImageBuildStepTest {
     prebuiltRuntimeImageBuildStep.run(buildContext);
     String dockerfile = buildContext.getDockerfile().toString();
 
-    assertTrue(dockerfile.startsWith("FROM " + compatImageName));
-    assertTrue(dockerfile.contains("COPY " + "./foo.war /app/"));
+    assertTrue(dockerfile.startsWith("FROM " + compatImageName + "\n"));
+    assertTrue(dockerfile.contains("COPY ./foo.war /app/"));
   }
 
   @Test(expected = BuildStepException.class)
-  public void testForceCompatRuntimeWithWrongArtifactType() throws BuildStepException, IOException {
+  public void testForceCompatRuntimeWithWar() throws BuildStepException, IOException {
     Path workspace = new TestWorkspaceBuilder()
-        .file("foo.jar").build()
+        .file("foo.war").build()
         .build();
 
     BetaSettings betaSettings = new BetaSettings();
@@ -217,6 +219,25 @@ public class PrebuiltRuntimeImageBuildStepTest {
     BuildContext buildContext = new BuildContext(appYaml, workspace, false);
 
     prebuiltRuntimeImageBuildStep.run(buildContext);
+  }
+
+  @Test
+  public void testForceCompatRuntimeWithExplodedWar() throws BuildStepException, IOException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("WEB-INF/web.xml").build()
+        .build();
+
+    BetaSettings betaSettings = new BetaSettings();
+    betaSettings.setEnableAppEngineApis(true);
+    AppYaml appYaml = new AppYaml();
+    appYaml.setBetaSettings(betaSettings);
+    BuildContext buildContext = new BuildContext(appYaml, workspace, false);
+
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+
+    String dockerfile = buildContext.getDockerfile().toString();
+    assertTrue(dockerfile.startsWith("FROM " + compatImageName));
+    assertTrue(dockerfile.contains("COPY ./ /app/"));
   }
 
   @Test

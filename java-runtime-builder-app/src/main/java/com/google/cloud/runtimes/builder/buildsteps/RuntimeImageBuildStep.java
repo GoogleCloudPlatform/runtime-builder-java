@@ -17,7 +17,6 @@
 package com.google.cloud.runtimes.builder.buildsteps;
 
 import static com.google.cloud.runtimes.builder.Constants.DOCKERFILE_BUILD_STAGE;
-import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.APP_ENGINE_EXPLODED_WAR;
 import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.EXPLODED_WAR;
 import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.JAR;
 import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.WAR;
@@ -73,21 +72,16 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
     RuntimeConfig runtimeConfig = buildContext.getRuntimeConfig();
 
     // Check if the user has explicitly selected the compat runtime
-    if (buildContext.isForceCompatRuntime()) {
-      if (artifact.getType() != APP_ENGINE_EXPLODED_WAR) {
-        throw new BuildStepException(String.format("The App Engine java-compat runtime requires an "
-            + "App Engine Exploded WAR artifact, but a %s artifact was provided (%s). In order to "
-            + "proceed, modify your application to build an App Engine exploded WAR artifact. "
-            + "See https://cloud.google.com/appengine/docs/flexible/java/upgrading for more "
-            + "detail.", artifact.getType().toString(), artifact.toString()));
-      }
-      logger.info("Using base image '{}' for App Engine exploded WAR artifact", compatImageName);
-      return compatImageName;
+    if (buildContext.isCompatEnabled() && artifact.getType() != EXPLODED_WAR) {
+      throw new BuildStepException(String.format("App Engine APIs have been enabled. In order to "
+          + "use App Engine APIs, an exploded WAR artifact is required, but a %s artifact was "
+          + "found. See https://cloud.google.com/appengine/docs/flexible/java/upgrading for more "
+          + "detail.", artifact.getType()));
     }
 
     // Select runtime based on artifact type
 
-    if (artifact.getType() == APP_ENGINE_EXPLODED_WAR || artifact.getType() == EXPLODED_WAR) {
+    if (artifact.getType() == EXPLODED_WAR) {
       // Use the compat runtime for exploded war artifacts.
       logger.info("Using base image '{}' for exploded WAR artifact", compatImageName);
       return compatImageName;

@@ -126,7 +126,7 @@ public class BuildContext {
    *
    * @return true if the user has explicitly requested a compat runtime
    */
-  public boolean isForceCompatRuntime() {
+  public boolean isCompatEnabled() {
     return appYaml.getBetaSettings().isEnableAppEngineApis();
   }
 

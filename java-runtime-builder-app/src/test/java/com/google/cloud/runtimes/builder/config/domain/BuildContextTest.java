@@ -167,13 +167,13 @@ public class BuildContextTest {
   @Test
   public void testIsForceCompatRuntimeWithBetaSettingsFalse() {
     betaSettings.setEnableAppEngineApis(false);
-    assertFalse(initBuildContext().isForceCompatRuntime());
+    assertFalse(initBuildContext().isCompatEnabled());
   }
 
   @Test
   public void testIsForceCompatRuntimeWithBetaSettingsTrue() {
     betaSettings.setEnableAppEngineApis(true);
-    assertTrue(initBuildContext().isForceCompatRuntime());
+    assertTrue(initBuildContext().isCompatEnabled());
   }
 
   private Path getDockerfile() {

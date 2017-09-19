@@ -24,7 +24,7 @@ import java.nio.file.Path;
 public class Artifact {
 
   public enum ArtifactType {
-    JAR, WAR, EXPLODED_WAR, APP_ENGINE_EXPLODED_WAR
+    JAR, WAR, EXPLODED_WAR
   }
 
   private final Path path;
@@ -66,10 +66,7 @@ public class Artifact {
   public static Artifact fromPath(Path path) {
     String extension = com.google.common.io.Files.getFileExtension(path.toString());
 
-    if (Files.exists(path.resolve("WEB-INF").resolve("appengine-web.xml"))) {
-      return new Artifact(ArtifactType.APP_ENGINE_EXPLODED_WAR, path);
-
-    } else if (Files.exists(path.resolve("WEB-INF"))) {
+    if (Files.exists(path.resolve("WEB-INF"))) {
       return new Artifact(ArtifactType.EXPLODED_WAR, path);
 
     } else if (extension.equalsIgnoreCase("war")) {

@@ -25,7 +25,6 @@ import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.BuildContextFactory;
 import com.google.cloud.runtimes.builder.config.domain.BuildTool;
-import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
@@ -63,8 +62,7 @@ public class BuildPipelineConfigurator {
   /**
    * Generates files required for a docker build into the source directory.
    */
-  public void generateDockerResources(Path workspaceDir) throws AppYamlNotFoundException,
-      BuildStepException, IOException {
+  public void generateDockerResources(Path workspaceDir) throws BuildStepException, IOException {
 
     BuildContext buildContext = configureBuildContext(workspaceDir);
 
@@ -101,8 +99,7 @@ public class BuildPipelineConfigurator {
     buildContext.writeDockerResources();
   }
 
-  private BuildContext configureBuildContext(Path workspaceDir) throws AppYamlNotFoundException,
-      IOException {
+  private BuildContext configureBuildContext(Path workspaceDir) throws IOException {
 
     // locate and deserialize configuration files
     Optional<Path> pathToAppYaml = appYamlFinder.findAppYamlFile(workspaceDir);

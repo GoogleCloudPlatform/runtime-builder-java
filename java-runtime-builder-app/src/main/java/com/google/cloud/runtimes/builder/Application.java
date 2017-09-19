@@ -17,7 +17,6 @@
 package com.google.cloud.runtimes.builder;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
-import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.cloud.runtimes.builder.injection.RootModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -88,8 +87,7 @@ public class Application {
   /**
    * Main method for invocation from the command line. Handles parsing of command line options.
    */
-  public static void main(String[] args)
-      throws BuildStepException, IOException, AppYamlNotFoundException {
+  public static void main(String[] args) throws BuildStepException, IOException {
     CommandLine cmd = parse(args);
     String[] jdkMappings = cmd.getOptionValues("j");
     String[] serverMappings = cmd.getOptionValues("s");

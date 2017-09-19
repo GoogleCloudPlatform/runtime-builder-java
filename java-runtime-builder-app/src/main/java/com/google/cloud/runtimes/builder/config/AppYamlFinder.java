@@ -16,12 +16,14 @@
 
 package com.google.cloud.runtimes.builder.config;
 
-import com.google.cloud.runtimes.builder.exception.AppYamlNotFoundException;
 import com.google.cloud.runtimes.builder.injection.ConfigYamlPath;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,6 +31,8 @@ import java.util.List;
 import java.util.Optional;
 
 public class AppYamlFinder {
+
+  private final Logger logger = LoggerFactory.getLogger(AppYamlFinder.class);
 
   private static final List<String> DEFAULT_APP_YAML_LOCATIONS
       = ImmutableList.of("app.yaml", "src/main/appengine/app.yaml");
@@ -50,9 +54,8 @@ public class AppYamlFinder {
    *
    * @param searchDir a directory to search in
    * @return the path to the config file
-   * @throws AppYamlNotFoundException if no valid config file is found
    */
-  public Optional<Path> findAppYamlFile(Path searchDir) throws AppYamlNotFoundException {
+  public Optional<Path> findAppYamlFile(Path searchDir) {
     Preconditions.checkArgument(Files.isDirectory(searchDir));
 
     if (providedConfigPath.isPresent()) {
@@ -63,10 +66,11 @@ public class AppYamlFinder {
           .filter(this::isValidFilePath);
 
       if (!providedAppYaml.isPresent()) {
-        throw new AppYamlNotFoundException("A yaml configuration file was expected, but none was"
-            + " found at the provided path : " + providedConfigPath.get());
+        logger.warn("A yaml configuration file was expected, but none was found at the provided "
+            + "path: {}. Proceeding with default configuration values.", providedConfigPath.get());
       }
       return providedAppYaml;
+
     } else {
       // Search in the default locations for the config file. It's ok if we don't find anything.
       return DEFAULT_APP_YAML_LOCATIONS.stream()

@@ -18,14 +18,15 @@ public class RootModuleTest {
   private static final String MVN_IMAGE = "mvn";
   private static final String GRADLE_IMAGE = "gradle";
   private static final String COMPAT_IMAGE = "compat";
+  private static final String LEGACY_COMPAT_IMAGE = "old-compat";
   private static final boolean DISABLE_BUILD = false;
 
   @Test(expected = IllegalArgumentException.class)
   public void testProvideJdkServerLookupMissingJdkDefault() throws IOException {
     String[] jdkMappings = {"foo=gcr.io/foo"};
     String[] serverMappings = {"*|*=gcr.io/foo"};
-    new RootModule(jdkMappings, serverMappings, COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
-        DISABLE_BUILD)
+    new RootModule(jdkMappings, serverMappings, COMPAT_IMAGE, LEGACY_COMPAT_IMAGE, MVN_IMAGE,
+        GRADLE_IMAGE, DISABLE_BUILD)
         .provideJdkServerLookup();
   }
 
@@ -33,8 +34,8 @@ public class RootModuleTest {
   public void testProvideJdkServerLookupMissingServerDefault() throws IOException {
     String[] jdkMappings = {"*=gcr.io/foo"};
     String[] serverMappings = {"foo=gcr.io/foo"};
-    new RootModule(jdkMappings, serverMappings, COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
-        DISABLE_BUILD)
+    new RootModule(jdkMappings, serverMappings, COMPAT_IMAGE, LEGACY_COMPAT_IMAGE, MVN_IMAGE,
+        GRADLE_IMAGE, DISABLE_BUILD)
         .provideJdkServerLookup();
   }
 
@@ -42,8 +43,8 @@ public class RootModuleTest {
   public void testProvideJdkServerLookupBadArgFormat() throws IOException {
     String[] jdkMappings = {"*=gcr.io/foo"};
     String[] serverMappings = {"foo=gcr.io/foo=bar"};
-    new RootModule(jdkMappings, serverMappings, COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
-        DISABLE_BUILD)
+    new RootModule(jdkMappings, serverMappings, COMPAT_IMAGE, LEGACY_COMPAT_IMAGE, MVN_IMAGE,
+        GRADLE_IMAGE, DISABLE_BUILD)
         .provideJdkServerLookup();
   }
 
@@ -59,8 +60,8 @@ public class RootModuleTest {
     };
 
     JdkServerLookup jdkServerLookup
-        = new RootModule(jdkMappings, serverMappings, COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
-        DISABLE_BUILD)
+        = new RootModule(jdkMappings, serverMappings, COMPAT_IMAGE, LEGACY_COMPAT_IMAGE, MVN_IMAGE,
+        GRADLE_IMAGE, DISABLE_BUILD)
         .provideJdkServerLookup();
 
     assertEquals("gcr.io/jdk:latest", jdkServerLookup.lookupJdkImage(null));
@@ -75,8 +76,8 @@ public class RootModuleTest {
     String[] serverMappings = {"*|*=gcr.io/server:latest"};
     // test that the bindings can be created without errors
     Guice.createInjector(
-        new RootModule(jdkMappings, serverMappings, COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
-            DISABLE_BUILD))
+        new RootModule(jdkMappings, serverMappings, COMPAT_IMAGE, LEGACY_COMPAT_IMAGE, MVN_IMAGE,
+        GRADLE_IMAGE, DISABLE_BUILD))
         .getInstance(BuildPipelineConfigurator.class);
   }
 

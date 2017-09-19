@@ -63,6 +63,13 @@ public class Application {
         .desc("Base runtime image to use for the flex-compat environment")
         .build());
 
+    CLI_OPTIONS.addOption(Option.builder("l")
+        .required()
+        .hasArgs()
+        .longOpt("legacy-compat-runtime-image")
+        .desc("Base runtime image to use for the mvm-compat environment")
+        .build());
+
     CLI_OPTIONS.addOption(Option.builder("m")
         .required()
         .hasArg()
@@ -92,13 +99,14 @@ public class Application {
     String[] jdkMappings = cmd.getOptionValues("j");
     String[] serverMappings = cmd.getOptionValues("s");
     String compatImage = cmd.getOptionValue("c");
+    String legacyCompatImage = cmd.getOptionValue("l");
     String mavenImage = cmd.getOptionValue("m");
     String gradleImage = cmd.getOptionValue("g");
     boolean disableSourceBuild = cmd.hasOption("n");
 
     Injector injector = Guice.createInjector(
-        new RootModule(jdkMappings, serverMappings, compatImage, mavenImage, gradleImage,
-            disableSourceBuild));
+        new RootModule(jdkMappings, serverMappings, compatImage, legacyCompatImage, mavenImage,
+            gradleImage, disableSourceBuild));
 
     // Perform dependency injection and run the application
     Path workspaceDir  = Paths.get(System.getProperty("user.dir"));

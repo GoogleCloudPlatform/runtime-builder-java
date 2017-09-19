@@ -130,6 +130,14 @@ public class BuildContext {
     return appYaml.getBetaSettings().isEnableAppEngineApis();
   }
 
+
+  /**
+   * Returns whether or not the user has selected to run in the deprecated "managed VM" environment.
+   */
+  public boolean isManagedVmEnv() {
+    return appYaml.isVm();
+  }
+
   /**
    * Writes the contents of Dockerfile and .dockerignore buffers to files. If a .dockerignore file
    * already exists, the .dockerignore buffer will be appended to it.

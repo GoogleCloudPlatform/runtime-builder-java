@@ -71,15 +71,21 @@ public class PrebuiltRuntimeImageBuildStepTest {
     prebuiltRuntimeImageBuildStep.run(buildContext);
   }
 
-  @Test(expected = TooManyArtifactsException.class)
+  @Test
   public void testMultipleArtifactsWithCompat() throws IOException, BuildStepException {
     Path workspace = new TestWorkspaceBuilder()
-        .file("foo.jar").build()
-        .file("foo.war/WEB-INF/web.xml").build()
+        .file("my-deployment.war").build()
+        .file("my-deployment/WEB-INF/web.xml").build()
         .build();
 
     BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
+    String image = "test_war_image";
+    when(jdkServerLookup.lookupServerImage(null, null)).thenReturn(image);
     prebuiltRuntimeImageBuildStep.run(buildContext);
+
+    String expected = "FROM test_war_image\n"
+        + "COPY ./my-deployment.war $APP_DESTINATION\n";
+    assertEquals(expected, buildContext.getDockerfile().toString());
   }
 
   @Test
@@ -191,7 +197,7 @@ public class PrebuiltRuntimeImageBuildStepTest {
     assertTrue(dockerfile.contains("COPY ./ /app/"));
   }
 
-  @Test
+  @Test(expected = ArtifactNotFoundException.class)
   public void testCompatArtifactNotAtRoot() throws IOException, BuildStepException {
     String serverRuntime = "server_runtime_image";
     when(jdkServerLookup.lookupServerImage(null, null)).thenReturn(serverRuntime);
@@ -200,10 +206,6 @@ public class PrebuiltRuntimeImageBuildStepTest {
         .build();
     BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
     prebuiltRuntimeImageBuildStep.run(buildContext);
-    String dockerfile = buildContext.getDockerfile().toString();
-
-    assertTrue(dockerfile.startsWith("FROM " + compatImageName + "\n"));
-    assertTrue(dockerfile.contains("COPY ./foo.war /app/"));
   }
 
   @Test(expected = BuildStepException.class)

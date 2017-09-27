@@ -16,6 +16,8 @@
 
 package com.google.cloud.runtimes.builder.buildsteps;
 
+import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.EXPLODED_WAR;
+
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.Artifact;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
@@ -30,7 +32,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
 
@@ -50,15 +51,19 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
 
     List<Path> artifacts;
     try {
-      artifacts =
-          // potential artifacts include all files at the root of the workspace,
-          // and the workspace itself
-          Stream.concat(
-              Stream.of(buildContext.getWorkspaceDir()),
-              Files.list(buildContext.getWorkspaceDir())
-          )
+      // Check if the workspace itself is an exploded war artifact
+      if (Artifact.isAnArtifact(buildContext.getWorkspaceDir())) {
+        Artifact rootArtifact = Artifact.fromPath(buildContext.getWorkspaceDir());
+        if (rootArtifact.getType() == EXPLODED_WAR) {
+          return rootArtifact;
+        }
+      }
 
-          // filter out non-valid artifacts
+      // Potential artifacts include all files (not including directories) at the workspace root.
+      artifacts = Files.list(buildContext.getWorkspaceDir())
+          // filter out directories
+          .filter((path) -> !Files.isDirectory(path))
+          // filter out non-artifacts
           .filter(Artifact::isAnArtifact)
           .collect(Collectors.toList());
     } catch (IOException e) {

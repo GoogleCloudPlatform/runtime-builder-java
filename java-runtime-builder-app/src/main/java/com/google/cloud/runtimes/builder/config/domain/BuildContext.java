@@ -145,7 +145,8 @@ public class BuildContext {
     Path dockerFilePath = workspaceDir.resolve(DOCKERFILE_NAME);
 
     // fail loudly if a Dockerfile already exists
-    if (Files.exists(dockerFilePath)) {
+    if (Files.exists(dockerFilePath)
+        || Files.exists(workspaceDir.resolve("src/main/docker/" + DOCKERFILE_NAME))) {
       throw new IllegalStateException("Custom Dockerfiles are not supported. If you wish to use a "
           + "custom Dockerfile, consider using runtime: custom. Otherwise, remove the Dockerfile "
           + "from the root of your sources to continue.");

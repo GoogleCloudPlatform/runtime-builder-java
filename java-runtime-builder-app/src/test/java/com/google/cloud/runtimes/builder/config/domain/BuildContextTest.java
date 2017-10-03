@@ -97,6 +97,16 @@ public class BuildContextTest {
     context.writeDockerResources();
   }
 
+  @Test(expected = IllegalStateException.class)
+  public void testWriteDockerFilesWithExistingDockerfileAlternateLocation() throws IOException {
+    workspace = new TestWorkspaceBuilder()
+        .file("src/main/docker/Dockerfile").withContents("FROM foo\n").build()
+        .build();
+
+    BuildContext context = initBuildContext();
+    context.writeDockerResources();
+  }
+
   @Test
   public void testIsSourceBuildWithBuildScript() {
     runtimeConfig.setBuildScript("build script");

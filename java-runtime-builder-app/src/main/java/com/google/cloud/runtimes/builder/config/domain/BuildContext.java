@@ -25,6 +25,7 @@ import com.google.cloud.runtimes.builder.util.StringLineAppender;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
@@ -38,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -49,7 +51,8 @@ import java.util.stream.Collectors;
 public class BuildContext {
 
   private static final String DOCKERFILE_NAME = "Dockerfile";
-  private static final String EXISITING_DOCKER_DIR = "src/main/docker/";
+  private static final List<String> EXISITING_DOCKER_DIRS =
+      ImmutableList.of("src/main/docker/");
   private static final String DOCKERIGNORE_NAME = ".dockerignore";
 
   private final Logger logger = LoggerFactory.getLogger(BuildContext.class);
@@ -152,9 +155,11 @@ public class BuildContext {
           + "from the root of your sources to continue.");
     }
 
-    if (Files.exists(workspaceDir.resolve(EXISITING_DOCKER_DIR + DOCKERFILE_NAME))) {
-      throw new IllegalStateException("There is an unexpected Dockerfile in " + EXISITING_DOCKER_DIR
-      + ". Please remove it to continue.");
+    for (String dir : EXISITING_DOCKER_DIRS) {
+      if (Files.exists(workspaceDir.resolve(dir + DOCKERFILE_NAME))) {
+        throw new IllegalStateException("There is an unexpected Dockerfile in " + dir
+            + ". Please remove it to continue.");
+      }
     }
 
     // write Dockerfile

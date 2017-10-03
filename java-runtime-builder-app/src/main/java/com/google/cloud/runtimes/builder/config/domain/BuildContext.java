@@ -49,6 +49,7 @@ import java.util.stream.Collectors;
 public class BuildContext {
 
   private static final String DOCKERFILE_NAME = "Dockerfile";
+  private static final String EXISITING_DOCKER_DIR = "src/main/docker/";
   private static final String DOCKERIGNORE_NAME = ".dockerignore";
 
   private final Logger logger = LoggerFactory.getLogger(BuildContext.class);
@@ -145,11 +146,15 @@ public class BuildContext {
     Path dockerFilePath = workspaceDir.resolve(DOCKERFILE_NAME);
 
     // fail loudly if a Dockerfile already exists
-    if (Files.exists(dockerFilePath)
-        || Files.exists(workspaceDir.resolve("src/main/docker/" + DOCKERFILE_NAME))) {
+    if (Files.exists(dockerFilePath)) {
       throw new IllegalStateException("Custom Dockerfiles are not supported. If you wish to use a "
           + "custom Dockerfile, consider using runtime: custom. Otherwise, remove the Dockerfile "
           + "from the root of your sources to continue.");
+    }
+
+    if (Files.exists(workspaceDir.resolve(EXISITING_DOCKER_DIR + DOCKERFILE_NAME))) {
+      throw new IllegalStateException("There is an unexpected Dockerfile in " + EXISITING_DOCKER_DIR
+      + ". Please remove it to continue.");
     }
 
     // write Dockerfile

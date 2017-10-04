@@ -52,7 +52,7 @@ public class BuildContext {
 
   private static final String DOCKERFILE_NAME = "Dockerfile";
   private static final List<String> EXISITING_DOCKER_DIRS =
-      ImmutableList.of("", "src/main/docker/");
+      ImmutableList.of(DOCKERFILE_NAME, "src/main/docker/" + DOCKERFILE_NAME);
   private static final String DOCKERIGNORE_NAME = ".dockerignore";
 
   private final Logger logger = LoggerFactory.getLogger(BuildContext.class);
@@ -148,10 +148,10 @@ public class BuildContext {
   private void writeDockerFile() throws IOException {
     // fail loudly if a Dockerfile already exists
     for (String dir : EXISITING_DOCKER_DIRS) {
-      if (Files.exists(workspaceDir.resolve(dir + DOCKERFILE_NAME))) {
+      if (Files.exists(workspaceDir.resolve(dir))) {
         throw new IllegalStateException("Custom Dockerfiles aren't supported. If you wish to use a "
             + "custom Dockerfile, consider using runtime: custom. Otherwise, remove the Dockerfile "
-            + "from " + (dir == "" ? "the root" : dir) + " to continue.");
+            + (dir == DOCKERFILE_NAME ? "from the root" : "at " + dir) + " to continue.");
       }
     }
 

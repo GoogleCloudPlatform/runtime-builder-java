@@ -99,8 +99,8 @@ public class BuildContextTest {
                 + "to continue."},
         new String[]{"src/main/docker/Dockerfile",
             "Custom Dockerfiles aren't supported. If you wish to use a custom Dockerfile, consider "
-                + "using runtime: custom. Otherwise, remove the Dockerfile from src/main/docker/ "
-                + "to continue."});
+                + "using runtime: custom. Otherwise, remove the Dockerfile at "
+                + "src/main/docker/Dockerfile to continue."});
 
     int errorMessagesMatched = 0;
     for (String[] p : dockerPathsMessages) {

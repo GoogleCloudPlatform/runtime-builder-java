@@ -3,6 +3,7 @@ package com.google.cloud.runtimes.builder.config.domain;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
 import com.google.common.collect.ImmutableList;
@@ -90,35 +91,41 @@ public class BuildContextTest {
   }
 
   @Test
-  public void testWriteDockerFilesWithExistingDockerfile() throws IOException {
+  public void testWriteDockerFilesWithExistingDockerfileAtRoot() throws IOException {
+    workspace = new TestWorkspaceBuilder()
+        .file("Dockerfile").withContents("FROM foo\n").build()
+        .build();
 
-    List<String[]> dockerPathsMessages = ImmutableList.of(
-        new String[]{"Dockerfile",
-            "Custom Dockerfiles aren't supported. If you wish to use a custom Dockerfile, consider "
-                + "using runtime: custom. Otherwise, remove the Dockerfile from the root "
-                + "to continue."},
-        new String[]{"src/main/docker/Dockerfile",
-            "Custom Dockerfiles aren't supported. If you wish to use a custom Dockerfile, consider "
-                + "using runtime: custom. Otherwise, remove the Dockerfile at "
-                + "src/main/docker/Dockerfile to continue."});
-
-    int errorMessagesMatched = 0;
-    for (String[] p : dockerPathsMessages) {
-      workspace = new TestWorkspaceBuilder()
-          .file(p[0]).withContents("FROM foo\n").build()
-          .build();
-
-      try {
-        BuildContext context = initBuildContext();
-        context.writeDockerResources();
-      } catch (IllegalStateException e) {
-        if (e.getMessage().equals(p[1])) {
-          errorMessagesMatched++;
-        }
-      }
-
+    try {
+      BuildContext context = initBuildContext();
+      context.writeDockerResources();
+      fail("An exception should have been thrown.");
+    } catch (IllegalStateException e) {
+      assertEquals(
+          "Custom Dockerfiles aren't supported. If you wish to use a custom Dockerfile, consider "
+              + "using runtime: custom. Otherwise, remove the Dockerfile from the root "
+              + "to continue.",
+          e.getMessage());
     }
-    assertEquals(dockerPathsMessages.size(), errorMessagesMatched);
+  }
+
+  @Test
+  public void testWriteDockerFilesWithExistingDockerfileInSrc() throws IOException {
+    workspace = new TestWorkspaceBuilder()
+        .file("src/main/docker/Dockerfile").withContents("FROM foo\n").build()
+        .build();
+
+    try {
+      BuildContext context = initBuildContext();
+      context.writeDockerResources();
+      fail("An exception should have been thrown.");
+    } catch (IllegalStateException e) {
+      assertEquals(
+          "Custom Dockerfiles aren't supported. If you wish to use a custom Dockerfile, consider "
+              + "using runtime: custom. Otherwise, remove the Dockerfile at "
+              + "src/main/docker/Dockerfile to continue.",
+          e.getMessage());
+    }
   }
 
   @Test

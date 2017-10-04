@@ -25,6 +25,7 @@ import com.google.cloud.runtimes.builder.util.StringLineAppender;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 
@@ -38,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -49,6 +51,8 @@ import java.util.stream.Collectors;
 public class BuildContext {
 
   private static final String DOCKERFILE_NAME = "Dockerfile";
+  private static final List<String> EXISITING_DOCKER_PATHS =
+      ImmutableList.of(DOCKERFILE_NAME, "src/main/docker/" + DOCKERFILE_NAME);
   private static final String DOCKERIGNORE_NAME = ".dockerignore";
 
   private final Logger logger = LoggerFactory.getLogger(BuildContext.class);
@@ -142,14 +146,16 @@ public class BuildContext {
   }
 
   private void writeDockerFile() throws IOException {
-    Path dockerFilePath = workspaceDir.resolve(DOCKERFILE_NAME);
-
     // fail loudly if a Dockerfile already exists
-    if (Files.exists(dockerFilePath)) {
-      throw new IllegalStateException("Custom Dockerfiles are not supported. If you wish to use a "
-          + "custom Dockerfile, consider using runtime: custom. Otherwise, remove the Dockerfile "
-          + "from the root of your sources to continue.");
+    for (String dir : EXISITING_DOCKER_PATHS) {
+      if (Files.exists(workspaceDir.resolve(dir))) {
+        throw new IllegalStateException("Custom Dockerfiles aren't supported. If you wish to use a "
+            + "custom Dockerfile, consider using runtime: custom. Otherwise, remove the Dockerfile "
+            + (dir.equals(DOCKERFILE_NAME) ? "from the root" : "at " + dir) + " to continue.");
+      }
     }
+
+    Path dockerFilePath = workspaceDir.resolve(DOCKERFILE_NAME);
 
     // write Dockerfile
     logger.info("Generating Dockerfile at {}", dockerFilePath);

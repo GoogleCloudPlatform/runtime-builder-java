@@ -87,14 +87,40 @@ public class BuildContextTest {
     assertEquals(expectedDockerIgnore, readFile(getDockerIgnore()));
   }
 
-  @Test(expected = IllegalStateException.class)
-  public void testWriteDockerFilesWithExistingDockerfile() throws IOException {
+  private boolean testWriteDockerFilesWithExistingDockerfileGivesCorrectException(String dockerPath,
+      String exceptionMessage)
+      throws IOException {
     workspace = new TestWorkspaceBuilder()
-        .file("Dockerfile").withContents("FROM foo\n").build()
+        .file(dockerPath).withContents("FROM foo\n").build()
         .build();
 
-    BuildContext context = initBuildContext();
-    context.writeDockerResources();
+    try {
+      BuildContext context = initBuildContext();
+      context.writeDockerResources();
+      return false;
+    } catch (IllegalStateException e) {
+      return exceptionMessage.equals(e.getMessage());
+    }
+  }
+
+  @Test
+  public void testWriteDockerFilesWithExistingDockerfileAtRoot() throws IOException {
+    assertTrue(
+        testWriteDockerFilesWithExistingDockerfileGivesCorrectException(
+            "Dockerfile",
+            "Custom Dockerfiles aren't supported. If you wish to use a custom Dockerfile, consider "
+            + "using runtime: custom. Otherwise, remove the Dockerfile from the root "
+                + "to continue."));
+  }
+
+  @Test
+  public void testWriteDockerFilesWithExistingDockerfileInSrc() throws IOException {
+    assertTrue(
+        testWriteDockerFilesWithExistingDockerfileGivesCorrectException(
+            "src/main/docker/Dockerfile",
+            "Custom Dockerfiles aren't supported. If you wish to use a custom Dockerfile, consider "
+                + "using runtime: custom. Otherwise, remove the Dockerfile at "
+                + "src/main/docker/Dockerfile to continue."));
   }
 
   @Test

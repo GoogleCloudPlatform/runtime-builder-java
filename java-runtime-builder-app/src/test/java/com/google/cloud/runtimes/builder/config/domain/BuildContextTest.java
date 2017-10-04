@@ -88,7 +88,8 @@ public class BuildContextTest {
     assertEquals(expectedDockerIgnore, readFile(getDockerIgnore()));
   }
 
-  public void testWriteDockerFilesWithExistingDockerfile(String dockerPath, String exceptionMessage)
+  private boolean testWriteDockerFilesWithExistingDockerfileGivesCorrectException(String dockerPath,
+      String exceptionMessage)
       throws IOException {
     workspace = new TestWorkspaceBuilder()
         .file(dockerPath).withContents("FROM foo\n").build()
@@ -97,26 +98,30 @@ public class BuildContextTest {
     try {
       BuildContext context = initBuildContext();
       context.writeDockerResources();
-      fail("An exception should have been thrown.");
+      return false;
     } catch (IllegalStateException e) {
-      assertEquals(exceptionMessage, e.getMessage());
+      return exceptionMessage.equals(e.getMessage());
     }
   }
 
   @Test
   public void testWriteDockerFilesWithExistingDockerfileAtRoot() throws IOException {
-    testWriteDockerFilesWithExistingDockerfile("Dockerfile",
-        "Custom Dockerfiles aren't supported. If you wish to use a custom Dockerfile, consider "
+    assertTrue(
+        testWriteDockerFilesWithExistingDockerfileGivesCorrectException(
+            "Dockerfile",
+            "Custom Dockerfiles aren't supported. If you wish to use a custom Dockerfile, consider "
             + "using runtime: custom. Otherwise, remove the Dockerfile from the root "
-            + "to continue.");
+                + "to continue."));
   }
 
   @Test
   public void testWriteDockerFilesWithExistingDockerfileInSrc() throws IOException {
-    testWriteDockerFilesWithExistingDockerfile("src/main/docker/Dockerfile",
-        "Custom Dockerfiles aren't supported. If you wish to use a custom Dockerfile, consider "
-            + "using runtime: custom. Otherwise, remove the Dockerfile at "
-            + "src/main/docker/Dockerfile to continue.");
+    assertTrue(
+        testWriteDockerFilesWithExistingDockerfileGivesCorrectException(
+            "src/main/docker/Dockerfile",
+            "Custom Dockerfiles aren't supported. If you wish to use a custom Dockerfile, consider "
+                + "using runtime: custom. Otherwise, remove the Dockerfile at "
+                + "src/main/docker/Dockerfile to continue."));
   }
 
   @Test

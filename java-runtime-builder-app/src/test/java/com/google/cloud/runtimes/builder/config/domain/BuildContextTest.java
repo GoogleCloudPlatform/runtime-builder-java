@@ -88,10 +88,10 @@ public class BuildContextTest {
     assertEquals(expectedDockerIgnore, readFile(getDockerIgnore()));
   }
 
-  @Test
-  public void testWriteDockerFilesWithExistingDockerfileAtRoot() throws IOException {
+  public void testWriteDockerFilesWithExistingDockerfile(String dockerPath, String exceptionMessage)
+      throws IOException {
     workspace = new TestWorkspaceBuilder()
-        .file("Dockerfile").withContents("FROM foo\n").build()
+        .file(dockerPath).withContents("FROM foo\n").build()
         .build();
 
     try {
@@ -99,31 +99,24 @@ public class BuildContextTest {
       context.writeDockerResources();
       fail("An exception should have been thrown.");
     } catch (IllegalStateException e) {
-      assertEquals(
-          "Custom Dockerfiles aren't supported. If you wish to use a custom Dockerfile, consider "
-              + "using runtime: custom. Otherwise, remove the Dockerfile from the root "
-              + "to continue.",
-          e.getMessage());
+      assertEquals(exceptionMessage, e.getMessage());
     }
   }
 
   @Test
-  public void testWriteDockerFilesWithExistingDockerfileInSrc() throws IOException {
-    workspace = new TestWorkspaceBuilder()
-        .file("src/main/docker/Dockerfile").withContents("FROM foo\n").build()
-        .build();
+  public void testWriteDockerFilesWithExistingDockerfileAtRoot() throws IOException {
+    testWriteDockerFilesWithExistingDockerfile("Dockerfile",
+        "Custom Dockerfiles aren't supported. If you wish to use a custom Dockerfile, consider "
+            + "using runtime: custom. Otherwise, remove the Dockerfile from the root "
+            + "to continue.");
+  }
 
-    try {
-      BuildContext context = initBuildContext();
-      context.writeDockerResources();
-      fail("An exception should have been thrown.");
-    } catch (IllegalStateException e) {
-      assertEquals(
-          "Custom Dockerfiles aren't supported. If you wish to use a custom Dockerfile, consider "
-              + "using runtime: custom. Otherwise, remove the Dockerfile at "
-              + "src/main/docker/Dockerfile to continue.",
-          e.getMessage());
-    }
+  @Test
+  public void testWriteDockerFilesWithExistingDockerfileInSrc() throws IOException {
+    testWriteDockerFilesWithExistingDockerfile("src/main/docker/Dockerfile",
+        "Custom Dockerfiles aren't supported. If you wish to use a custom Dockerfile, consider "
+            + "using runtime: custom. Otherwise, remove the Dockerfile at "
+            + "src/main/docker/Dockerfile to continue.");
   }
 
   @Test

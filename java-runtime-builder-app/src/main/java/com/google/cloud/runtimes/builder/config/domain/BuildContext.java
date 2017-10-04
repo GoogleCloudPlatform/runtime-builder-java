@@ -151,7 +151,7 @@ public class BuildContext {
       if (Files.exists(workspaceDir.resolve(dir + DOCKERFILE_NAME))) {
         throw new IllegalStateException("Custom Dockerfiles aren't supported. If you wish to use a "
             + "custom Dockerfile, consider using runtime: custom. Otherwise, remove the Dockerfile "
-            + "from " + dir + " to continue.");
+            + "from " + (dir == "" ? "the root" : dir) + " to continue.");
       }
     }
 

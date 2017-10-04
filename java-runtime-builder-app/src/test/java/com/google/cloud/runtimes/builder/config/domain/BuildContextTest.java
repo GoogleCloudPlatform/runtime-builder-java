@@ -5,10 +5,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
+import com.google.common.collect.ImmutableList;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -87,24 +89,36 @@ public class BuildContextTest {
     assertEquals(expectedDockerIgnore, readFile(getDockerIgnore()));
   }
 
-  @Test(expected = IllegalStateException.class)
+  @Test
   public void testWriteDockerFilesWithExistingDockerfile() throws IOException {
-    workspace = new TestWorkspaceBuilder()
-        .file("Dockerfile").withContents("FROM foo\n").build()
-        .build();
 
-    BuildContext context = initBuildContext();
-    context.writeDockerResources();
-  }
+    List<String[]> dockerPathsMessages = ImmutableList.of(
+        new String[]{"Dockerfile",
+            "Custom Dockerfiles aren't supported. If you wish to use a custom Dockerfile, consider "
+                + "using runtime: custom. Otherwise, remove the Dockerfile from the root "
+                + "to continue."},
+        new String[]{"src/main/docker/Dockerfile",
+            "Custom Dockerfiles aren't supported. If you wish to use a custom Dockerfile, consider "
+                + "using runtime: custom. Otherwise, remove the Dockerfile from src/main/docker/ "
+                + "to continue."});
 
-  @Test(expected = IllegalStateException.class)
-  public void testWriteDockerFilesWithExistingDockerfileAlternateLocation() throws IOException {
-    workspace = new TestWorkspaceBuilder()
-        .file("src/main/docker/Dockerfile").withContents("FROM foo\n").build()
-        .build();
+    int errorMessagesMatched = 0;
+    for (String[] p : dockerPathsMessages) {
+      workspace = new TestWorkspaceBuilder()
+          .file(p[0]).withContents("FROM foo\n").build()
+          .build();
 
-    BuildContext context = initBuildContext();
-    context.writeDockerResources();
+      try {
+        BuildContext context = initBuildContext();
+        context.writeDockerResources();
+      } catch (IllegalStateException e) {
+        if (e.getMessage().equals(p[1])) {
+          errorMessagesMatched++;
+        }
+      }
+
+    }
+    assertEquals(dockerPathsMessages.size(), errorMessagesMatched);
   }
 
   @Test

@@ -3,7 +3,6 @@ package com.google.cloud.runtimes.builder.config.domain;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import com.google.cloud.runtimes.builder.TestUtils.TestWorkspaceBuilder;
 import java.io.FileNotFoundException;

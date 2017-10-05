@@ -25,6 +25,14 @@ public class AppYaml {
   private RuntimeConfig runtimeConfig = new RuntimeConfig();
   private BetaSettings betaSettings = new BetaSettings();
 
+  /**
+   * Checks environment variables and overwrites any existing settings in this object.
+   */
+  public void getSettingsFromEnvironment() {
+    runtimeConfig.getEnvironmentVariableSettings();
+    betaSettings.getEnvironmentVariableSettings();
+  }
+
   @JsonProperty("runtime_config")
   public RuntimeConfig getRuntimeConfig() {
     return runtimeConfig;

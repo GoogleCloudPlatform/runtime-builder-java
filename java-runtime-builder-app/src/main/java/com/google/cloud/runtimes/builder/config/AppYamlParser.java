@@ -51,6 +51,7 @@ public class AppYamlParser implements YamlParser<AppYaml> {
     if (appYaml.getRuntimeConfig() == null) {
       appYaml.setRuntimeConfig(new RuntimeConfig());
     }
+    appYaml.getSettingsFromEnvironment();
     return appYaml;
   }
 }

@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 
+import com.google.cloud.runtimes.builder.config.domain.EnvironmentVariablePrioritySetting;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,10 +32,16 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 /**
  * Tests for {@link AppYamlParser}
  */
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(EnvironmentVariablePrioritySetting.class)
 public class AppYamlParserTest {
 
   private AppYamlParser appYamlParser;
@@ -76,11 +83,22 @@ public class AppYamlParserTest {
   }
 
   @Test
-  public void testParseEnableAppEngineApisFalse() throws IOException {
+  public void testParseEnableAppEngineApisFalseWithoutEnvVar() throws IOException {
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "beta_settings:\n"
         + "  enable_app_engine_apis: false");
     assertFalse(result.getBetaSettings().isEnableAppEngineApis());
+  }
+
+  @Test
+  public void testParseEnableAppEngineApisTrueWithEnvVar() throws IOException {
+    PowerMockito.mockStatic(EnvironmentVariablePrioritySetting.class);
+    PowerMockito.when(EnvironmentVariablePrioritySetting.getEnv("enable_app_engine_apis"))
+        .thenReturn("true");
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
+        + "beta_settings:\n"
+        + "  enable_app_engine_apis: false");
+    assertTrue(result.getBetaSettings().isEnableAppEngineApis());
   }
 
   @Test
@@ -96,6 +114,15 @@ public class AppYamlParserTest {
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "beta_settings:\n"
         + "  enable_app_engine_apis: true");
+    assertTrue(result.getBetaSettings().isEnableAppEngineApis());
+  }
+
+  @Test
+  public void testParseEnableAppEngineApisTrueWithoutYaml() throws Exception {
+    PowerMockito.mockStatic(EnvironmentVariablePrioritySetting.class);
+    PowerMockito.when(EnvironmentVariablePrioritySetting.getEnv("enable_app_engine_apis"))
+        .thenReturn("true");
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE);
     assertTrue(result.getBetaSettings().isEnableAppEngineApis());
   }
 
@@ -128,6 +155,29 @@ public class AppYamlParserTest {
         + "runtime_config:\n"
         + "  artifact: " + artifact);
     assertEquals(artifact, result.getRuntimeConfig().getArtifact());
+  }
+
+  @Test
+  public void testParse_artifactWithEnvVar() throws IOException {
+    String artifact = "my/path/to/artifact";
+    String otherArtifact = "my/path/to/other_artifact";
+    PowerMockito.mockStatic(EnvironmentVariablePrioritySetting.class);
+    PowerMockito.when(EnvironmentVariablePrioritySetting.getEnv("artifact"))
+        .thenReturn(otherArtifact);
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
+        + "runtime_config:\n"
+        + "  artifact: " + artifact);
+    assertEquals(otherArtifact, result.getRuntimeConfig().getArtifact());
+  }
+
+  @Test
+  public void testParse_artifactWithoutYaml() throws IOException {
+    String otherArtifact = "my/path/to/other_artifact";
+    PowerMockito.mockStatic(EnvironmentVariablePrioritySetting.class);
+    PowerMockito.when(EnvironmentVariablePrioritySetting.getEnv("artifact"))
+        .thenReturn(otherArtifact);
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE);
+    assertEquals(otherArtifact, result.getRuntimeConfig().getArtifact());
   }
 
   @Test

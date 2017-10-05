@@ -158,7 +158,7 @@ public class AppYamlParserTest {
   }
 
   @Test
-  public void testParse_artifactWithEnvVar() throws IOException {
+  public void testParseArtifactWithEnvVar() throws IOException {
     String artifact = "my/path/to/artifact";
     String otherArtifact = "my/path/to/other_artifact";
     PowerMockito.mockStatic(EnvironmentVariablePrioritySetting.class);
@@ -171,7 +171,7 @@ public class AppYamlParserTest {
   }
 
   @Test
-  public void testParse_artifactWithoutYaml() throws IOException {
+  public void testParseArtifactWithoutYaml() throws IOException {
     String otherArtifact = "my/path/to/other_artifact";
     PowerMockito.mockStatic(EnvironmentVariablePrioritySetting.class);
     PowerMockito.when(EnvironmentVariablePrioritySetting.getEnv("artifact"))

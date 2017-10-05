@@ -34,7 +34,6 @@ public class EnvironmentVariablePrioritySetting {
    * an environment variable for each.
    */
   public void getEnvironmentVariableSettings() {
-
     for (Field field : this.getClass().getDeclaredFields()) {
       if (field.isAnnotationPresent(SettingFromEnvironmentVariable.class)) {
         String fieldName = field.getName();

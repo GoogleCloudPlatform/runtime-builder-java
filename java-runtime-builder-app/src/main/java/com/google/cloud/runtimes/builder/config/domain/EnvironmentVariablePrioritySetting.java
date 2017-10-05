@@ -51,14 +51,6 @@ public class EnvironmentVariablePrioritySetting {
       field.setAccessible(true);
       if (field.getType().equals(boolean.class)) {
         field.set(this, Boolean.valueOf(envValue));
-      } else if (field.getType().equals(int.class)) {
-        field.set(this, Integer.valueOf(envValue));
-      } else if (field.getType().equals(long.class)) {
-        field.set(this, Long.valueOf(envValue));
-      } else if (field.getType().equals(float.class)) {
-        field.set(this, Float.valueOf(envValue));
-      } else if (field.getType().equals(double.class)) {
-        field.set(this, Double.valueOf(envValue));
       } else if (field.getType().equals(String.class)) {
         field.set(this, envValue);
       } else {

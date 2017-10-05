@@ -27,6 +27,7 @@ import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.BetaSettings;
 import com.google.cloud.runtimes.builder.config.domain.EnvironmentVariablePrioritySetting;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
+import com.google.cloud.runtimes.builder.config.domain.SystemEnvironmentVariableSource;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -34,16 +35,10 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 /**
  * Tests for {@link AppYamlParser}
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(EnvironmentVariablePrioritySetting.class)
 public class AppYamlParserTest {
 
   private AppYamlParser appYamlParser;
@@ -94,13 +89,14 @@ public class AppYamlParserTest {
 
   @Test
   public void testParseEnableAppEngineApisTrueWithEnvVar() throws IOException {
-    PowerMockito.mockStatic(EnvironmentVariablePrioritySetting.class);
-    PowerMockito.when(EnvironmentVariablePrioritySetting.getEnv("enable_app_engine_apis"))
-        .thenReturn("true");
+    EnvironmentVariablePrioritySetting.setEnvVariableSource(
+        (String name) -> "enable_app_engine_apis".equals(name) ? "true" : "false");
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "beta_settings:\n"
         + "  enable_app_engine_apis: false");
     assertTrue(result.getBetaSettings().isEnableAppEngineApis());
+    EnvironmentVariablePrioritySetting
+        .setEnvVariableSource(SystemEnvironmentVariableSource.getInstance());
   }
 
   @Test
@@ -121,11 +117,12 @@ public class AppYamlParserTest {
 
   @Test
   public void testParseEnableAppEngineApisTrueWithoutYaml() throws Exception {
-    PowerMockito.mockStatic(EnvironmentVariablePrioritySetting.class);
-    PowerMockito.when(EnvironmentVariablePrioritySetting.getEnv("enable_app_engine_apis"))
-        .thenReturn("true");
+    EnvironmentVariablePrioritySetting.setEnvVariableSource(
+        (String name) -> "enable_app_engine_apis".equals(name) ? "true" : "false");
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE);
     assertTrue(result.getBetaSettings().isEnableAppEngineApis());
+    EnvironmentVariablePrioritySetting
+        .setEnvVariableSource(SystemEnvironmentVariableSource.getInstance());
   }
 
   @Test
@@ -163,49 +160,53 @@ public class AppYamlParserTest {
   public void testParseArtifactWithEnvVar() throws IOException {
     String artifact = "my/path/to/artifact";
     String otherArtifact = "my/path/to/other_artifact";
-    PowerMockito.mockStatic(EnvironmentVariablePrioritySetting.class);
-    PowerMockito.when(EnvironmentVariablePrioritySetting.getEnv("artifact"))
-        .thenReturn(otherArtifact);
+    EnvironmentVariablePrioritySetting.setEnvVariableSource(
+        (String name) -> "artifact".equals(name) ? otherArtifact : null);
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "runtime_config:\n"
         + "  artifact: " + artifact);
     assertEquals(otherArtifact, result.getRuntimeConfig().getArtifact());
+    EnvironmentVariablePrioritySetting
+        .setEnvVariableSource(SystemEnvironmentVariableSource.getInstance());
   }
 
   @Test
   public void testParseJdkWithEnvVar() throws IOException {
     String jdk = "jdk";
     String otherJdk = "other_jdk";
-    PowerMockito.mockStatic(EnvironmentVariablePrioritySetting.class);
-    PowerMockito.when(EnvironmentVariablePrioritySetting.getEnv("jdk"))
-        .thenReturn(otherJdk);
+    EnvironmentVariablePrioritySetting.setEnvVariableSource(
+        (String name) -> "jdk".equals(name) ? otherJdk : null);
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "runtime_config:\n"
         + "  jdk: " + jdk);
     assertEquals(otherJdk, result.getRuntimeConfig().getJdk());
+    EnvironmentVariablePrioritySetting
+        .setEnvVariableSource(SystemEnvironmentVariableSource.getInstance());
   }
 
   @Test
   public void testParseBuildScriptWithEnvVar() throws IOException {
     String buildScript = "build_script";
     String otherBuildScript = "other_build_script";
-    PowerMockito.mockStatic(EnvironmentVariablePrioritySetting.class);
-    PowerMockito.when(EnvironmentVariablePrioritySetting.getEnv("build_script"))
-        .thenReturn(otherBuildScript);
+    EnvironmentVariablePrioritySetting.setEnvVariableSource(
+        (String name) -> "build_script".equals(name) ? otherBuildScript : null);
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "runtime_config:\n"
         + "  build_script: " + buildScript);
     assertEquals(otherBuildScript, result.getRuntimeConfig().getBuildScript());
+    EnvironmentVariablePrioritySetting
+        .setEnvVariableSource(SystemEnvironmentVariableSource.getInstance());
   }
 
   @Test
   public void testParseArtifactWithoutYaml() throws IOException {
     String otherArtifact = "my/path/to/other_artifact";
-    PowerMockito.mockStatic(EnvironmentVariablePrioritySetting.class);
-    PowerMockito.when(EnvironmentVariablePrioritySetting.getEnv("artifact"))
-        .thenReturn(otherArtifact);
+    EnvironmentVariablePrioritySetting.setEnvVariableSource(
+        (String name) -> "artifact".equals(name) ? otherArtifact : null);
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE);
     assertEquals(otherArtifact, result.getRuntimeConfig().getArtifact());
+    EnvironmentVariablePrioritySetting
+        .setEnvVariableSource(SystemEnvironmentVariableSource.getInstance());
   }
 
   @Test

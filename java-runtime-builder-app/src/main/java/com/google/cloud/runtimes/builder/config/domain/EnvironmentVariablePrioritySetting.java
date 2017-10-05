@@ -21,8 +21,17 @@ import java.lang.reflect.Field;
 
 public class EnvironmentVariablePrioritySetting {
 
-  public static String getEnv(String name) {
-    return System.getenv(name);
+  // The default source is just the one that uses System.getenv().
+  private static EnvironmentVariableSource envVariableSource =
+      SystemEnvironmentVariableSource.getInstance();
+
+  /**
+   * Sets the source for getting environment variables.
+   *
+   * @param source the source for getting environment variables.
+   */
+  public static void setEnvVariableSource(EnvironmentVariableSource source) {
+    envVariableSource = source;
   }
 
   /**
@@ -34,7 +43,8 @@ public class EnvironmentVariablePrioritySetting {
       if (field.isAnnotationPresent(SettingFromEnvironmentVariable.class)) {
         String fieldName = field.getName();
         String annotatedName = field.getAnnotation(SettingFromEnvironmentVariable.class).value();
-        String envSetting = getEnv(annotatedName.isEmpty() ? fieldName : annotatedName);
+        String envSetting = envVariableSource
+            .getEnv(annotatedName.isEmpty() ? fieldName : annotatedName);
         if (envSetting != null && !envSetting.isEmpty()) {
           setField(field, envSetting);
         }

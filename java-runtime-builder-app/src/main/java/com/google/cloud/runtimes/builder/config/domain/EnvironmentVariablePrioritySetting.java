@@ -16,14 +16,10 @@
 
 package com.google.cloud.runtimes.builder.config.domain;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import java.io.IOException;
 import java.lang.reflect.Field;
 
 public class EnvironmentVariablePrioritySetting {
-
-  private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
   public static String getEnv(String name) {
     return System.getenv(name);
@@ -33,7 +29,7 @@ public class EnvironmentVariablePrioritySetting {
    * Checks for fields annotated with {@link SettingFromEnvironmentVariable} and checks if there is
    * an environment variable for each.
    */
-  public void getEnvironmentVariableSettings() {
+  public void getEnvironmentVariableSettings() throws IOException {
     for (Field field : this.getClass().getDeclaredFields()) {
       if (field.isAnnotationPresent(SettingFromEnvironmentVariable.class)) {
         String fieldName = field.getName();
@@ -46,7 +42,7 @@ public class EnvironmentVariablePrioritySetting {
     }
   }
 
-  private void setField(Field field, String envValue) {
+  private void setField(Field field, String envValue) throws IOException {
     try {
       field.setAccessible(true);
       if (field.getType().equals(boolean.class)) {
@@ -54,11 +50,11 @@ public class EnvironmentVariablePrioritySetting {
       } else if (field.getType().equals(String.class)) {
         field.set(this, envValue);
       } else {
-        logger.warn("The environment variable could not be set as the requested type {}",
-            field.getType().toString());
+        throw new IOException("The environment variable could not be set as the requested typ: "
+            + field.getType().toString());
       }
     } catch (IllegalAccessException e) {
-      logger.warn("Unable to set field from environment variable.", e);
+      throw new IOException("Unable to set field from environment variable.", e);
     } finally {
       field.setAccessible(false);
     }

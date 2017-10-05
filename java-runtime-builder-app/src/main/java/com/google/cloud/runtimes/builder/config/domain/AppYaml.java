@@ -19,6 +19,8 @@ package com.google.cloud.runtimes.builder.config.domain;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.IOException;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AppYaml {
 
@@ -28,7 +30,7 @@ public class AppYaml {
   /**
    * Checks environment variables and overwrites any existing settings in this object.
    */
-  public void getSettingsFromEnvironment() {
+  public void getSettingsFromEnvironment() throws IOException {
     runtimeConfig.getEnvironmentVariableSettings();
     betaSettings.getEnvironmentVariableSettings();
   }

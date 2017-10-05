@@ -24,7 +24,9 @@ import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 
+import com.google.cloud.runtimes.builder.config.domain.BetaSettings;
 import com.google.cloud.runtimes.builder.config.domain.EnvironmentVariablePrioritySetting;
+import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -171,6 +173,32 @@ public class AppYamlParserTest {
   }
 
   @Test
+  public void testParseJdkWithEnvVar() throws IOException {
+    String jdk = "jdk";
+    String otherJdk = "other_jdk";
+    PowerMockito.mockStatic(EnvironmentVariablePrioritySetting.class);
+    PowerMockito.when(EnvironmentVariablePrioritySetting.getEnv("jdk"))
+        .thenReturn(otherJdk);
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
+        + "runtime_config:\n"
+        + "  jdk: " + jdk);
+    assertEquals(otherJdk, result.getRuntimeConfig().getJdk());
+  }
+
+  @Test
+  public void testParseBuildScriptWithEnvVar() throws IOException {
+    String buildScript = "build_script";
+    String otherBuildScript = "other_build_script";
+    PowerMockito.mockStatic(EnvironmentVariablePrioritySetting.class);
+    PowerMockito.when(EnvironmentVariablePrioritySetting.getEnv("build_script"))
+        .thenReturn(otherBuildScript);
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
+        + "runtime_config:\n"
+        + "  build_script: " + buildScript);
+    assertEquals(otherBuildScript, result.getRuntimeConfig().getBuildScript());
+  }
+
+  @Test
   public void testParseArtifactWithoutYaml() throws IOException {
     String otherArtifact = "my/path/to/other_artifact";
     PowerMockito.mockStatic(EnvironmentVariablePrioritySetting.class);
@@ -203,4 +231,19 @@ public class AppYamlParserTest {
     assertTrue(result.getRuntimeConfig().getServer().equals("tomcat"));
   }
 
+  @Test
+  public void testSetRuntimeConfig() {
+    AppYaml result = new AppYaml();
+    RuntimeConfig config = new RuntimeConfig();
+    result.setRuntimeConfig(config);
+    assertTrue(result.getRuntimeConfig() == config);
+  }
+
+  @Test
+  public void testSetBetaSettings() {
+    AppYaml result = new AppYaml();
+    BetaSettings config = new BetaSettings();
+    result.setBetaSettings(config);
+    assertTrue(result.getBetaSettings() == config);
+  }
 }

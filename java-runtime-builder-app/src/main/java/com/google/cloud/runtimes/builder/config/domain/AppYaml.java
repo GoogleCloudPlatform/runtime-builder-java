@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.IOException;
+import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AppYaml {
@@ -29,10 +30,11 @@ public class AppYaml {
 
   /**
    * Checks environment variables and overwrites any existing settings in this object.
+   * @param overrideSettings A map of the settings.
    */
-  public void getSettingsFromEnvironment() throws IOException {
-    runtimeConfig.getEnvironmentVariableSettings();
-    betaSettings.getEnvironmentVariableSettings();
+  public void applyOverrideSettings(Map<String, Object> overrideSettings) throws IOException {
+    runtimeConfig.applyOverrideSettings(overrideSettings);
+    betaSettings.applyOverrideSettings(overrideSettings);
   }
 
   @JsonProperty("runtime_config")

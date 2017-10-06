@@ -21,13 +21,17 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import com.google.cloud.runtimes.builder.Application;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 
 import com.google.cloud.runtimes.builder.config.domain.BetaSettings;
-import com.google.cloud.runtimes.builder.config.domain.EnvironmentVariablePrioritySetting;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
-import com.google.cloud.runtimes.builder.config.domain.SystemEnvironmentVariableSource;
+import java.util.HashMap;
+import java.util.Map;
+import org.apache.commons.cli.CommandLine;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -80,7 +84,7 @@ public class AppYamlParserTest {
   }
 
   @Test
-  public void testParseEnableAppEngineApisFalseWithoutEnvVar() throws IOException {
+  public void testParseEnableAppEngineApisFalseWithoutCmdSetting() throws IOException {
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "beta_settings:\n"
         + "  enable_app_engine_apis: false");
@@ -88,15 +92,14 @@ public class AppYamlParserTest {
   }
 
   @Test
-  public void testParseEnableAppEngineApisTrueWithEnvVar() throws IOException {
-    EnvironmentVariablePrioritySetting.setEnvVariableSource(
-        (String name) -> "enable_app_engine_apis".equals(name) ? "true" : "false");
+  public void testParseEnableAppEngineApisTrueWithCmdSetting() throws IOException {
+    Map<String, Object> overrideSettings = new HashMap<>();
+    overrideSettings.put("enable_app_engine_apis", true);
+    appYamlParser = new AppYamlParser(overrideSettings);
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "beta_settings:\n"
         + "  enable_app_engine_apis: false");
     assertTrue(result.getBetaSettings().isEnableAppEngineApis());
-    EnvironmentVariablePrioritySetting
-        .setEnvVariableSource(SystemEnvironmentVariableSource.getInstance());
   }
 
   @Test
@@ -117,12 +120,11 @@ public class AppYamlParserTest {
 
   @Test
   public void testParseEnableAppEngineApisTrueWithoutYaml() throws Exception {
-    EnvironmentVariablePrioritySetting.setEnvVariableSource(
-        (String name) -> "enable_app_engine_apis".equals(name) ? "true" : "false");
+    Map<String, Object> overrideSettings = new HashMap<>();
+    overrideSettings.put("enable_app_engine_apis", true);
+    appYamlParser = new AppYamlParser(overrideSettings);
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE);
     assertTrue(result.getBetaSettings().isEnableAppEngineApis());
-    EnvironmentVariablePrioritySetting
-        .setEnvVariableSource(SystemEnvironmentVariableSource.getInstance());
   }
 
   @Test
@@ -157,56 +159,60 @@ public class AppYamlParserTest {
   }
 
   @Test
-  public void testParseArtifactWithEnvVar() throws IOException {
+  public void testParseArtifactWithCmdSetting() throws IOException {
     String artifact = "my/path/to/artifact";
     String otherArtifact = "my/path/to/other_artifact";
-    EnvironmentVariablePrioritySetting.setEnvVariableSource(
-        (String name) -> "artifact".equals(name) ? otherArtifact : null);
+
+    Map<String, Object> overrideSettings = new HashMap<>();
+    overrideSettings.put("artifact", otherArtifact);
+    appYamlParser = new AppYamlParser(overrideSettings);
+
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "runtime_config:\n"
         + "  artifact: " + artifact);
     assertEquals(otherArtifact, result.getRuntimeConfig().getArtifact());
-    EnvironmentVariablePrioritySetting
-        .setEnvVariableSource(SystemEnvironmentVariableSource.getInstance());
   }
 
   @Test
-  public void testParseJdkWithEnvVar() throws IOException {
+  public void testParseJdkWithCmdSetting() throws IOException {
     String jdk = "jdk";
     String otherJdk = "other_jdk";
-    EnvironmentVariablePrioritySetting.setEnvVariableSource(
-        (String name) -> "jdk".equals(name) ? otherJdk : null);
+
+    Map<String, Object> overrideSettings = new HashMap<>();
+    overrideSettings.put("jdk", otherJdk);
+    appYamlParser = new AppYamlParser(overrideSettings);
+
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "runtime_config:\n"
         + "  jdk: " + jdk);
     assertEquals(otherJdk, result.getRuntimeConfig().getJdk());
-    EnvironmentVariablePrioritySetting
-        .setEnvVariableSource(SystemEnvironmentVariableSource.getInstance());
   }
 
   @Test
-  public void testParseBuildScriptWithEnvVar() throws IOException {
+  public void testParseBuildScriptWithCmdSetting() throws IOException {
     String buildScript = "build_script";
     String otherBuildScript = "other_build_script";
-    EnvironmentVariablePrioritySetting.setEnvVariableSource(
-        (String name) -> "build_script".equals(name) ? otherBuildScript : null);
+
+    Map<String, Object> overrideSettings = new HashMap<>();
+    overrideSettings.put("build_script", otherBuildScript);
+    appYamlParser = new AppYamlParser(overrideSettings);
+
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "runtime_config:\n"
         + "  build_script: " + buildScript);
     assertEquals(otherBuildScript, result.getRuntimeConfig().getBuildScript());
-    EnvironmentVariablePrioritySetting
-        .setEnvVariableSource(SystemEnvironmentVariableSource.getInstance());
   }
 
   @Test
   public void testParseArtifactWithoutYaml() throws IOException {
     String otherArtifact = "my/path/to/other_artifact";
-    EnvironmentVariablePrioritySetting.setEnvVariableSource(
-        (String name) -> "artifact".equals(name) ? otherArtifact : null);
+
+    Map<String, Object> overrideSettings = new HashMap<>();
+    overrideSettings.put("artifact", otherArtifact);
+    appYamlParser = new AppYamlParser(overrideSettings);
+
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE);
     assertEquals(otherArtifact, result.getRuntimeConfig().getArtifact());
-    EnvironmentVariablePrioritySetting
-        .setEnvVariableSource(SystemEnvironmentVariableSource.getInstance());
   }
 
   @Test
@@ -246,5 +252,20 @@ public class AppYamlParserTest {
     BetaSettings config = new BetaSettings();
     result.setBetaSettings(config);
     assertTrue(result.getBetaSettings() == config);
+  }
+
+  @Test
+  public void testGetAppYamlOverrideSettings() {
+    CommandLine cmd = mock(CommandLine.class);
+    String jdkKey = "jdk";
+    String jdkValue = "jdkSetting";
+    String jettyQuickstartKey = "jetty_quickstart";
+    when(cmd.getOptionValue(jdkKey)).thenReturn(jdkValue);
+    when(cmd.hasOption(jettyQuickstartKey)).thenReturn(true);
+
+    Map<String, Object> result = Application.getAppYamlOverrideSettings(cmd);
+    assertEquals(2, result.size());
+    assertEquals(jdkValue, result.get(jdkKey));
+    assertEquals(true, result.get(jettyQuickstartKey));
   }
 }

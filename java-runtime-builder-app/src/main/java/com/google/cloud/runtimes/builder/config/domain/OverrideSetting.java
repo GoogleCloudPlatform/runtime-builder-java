@@ -23,7 +23,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface SettingFromEnvironmentVariable {
+public @interface OverrideSetting {
 
   /**
    * Optional name of the environment variable to check for the value. If this is not given then the

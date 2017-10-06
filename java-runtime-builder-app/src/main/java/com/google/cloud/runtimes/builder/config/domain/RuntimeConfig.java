@@ -20,24 +20,24 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public final class RuntimeConfig extends EnvironmentVariablePrioritySetting {
+public final class RuntimeConfig extends OverrideableSetting {
 
   private static final String BUILD_SCRIPT_SETTING_NAME = "build_script";
   private static final String JETTY_QUICKSTART_SETTING_NAME = "jetty_quickstart";
 
-  @SettingFromEnvironmentVariable
+  @OverrideSetting
   private String jdk;
 
-  @SettingFromEnvironmentVariable
+  @OverrideSetting
   private String server;
 
-  @SettingFromEnvironmentVariable(BUILD_SCRIPT_SETTING_NAME)
+  @OverrideSetting(BUILD_SCRIPT_SETTING_NAME)
   private String buildScript;
 
-  @SettingFromEnvironmentVariable
+  @OverrideSetting
   private String artifact;
 
-  @SettingFromEnvironmentVariable(JETTY_QUICKSTART_SETTING_NAME)
+  @OverrideSetting(JETTY_QUICKSTART_SETTING_NAME)
   private boolean jettyQuickstart;
 
   public String getJdk() {

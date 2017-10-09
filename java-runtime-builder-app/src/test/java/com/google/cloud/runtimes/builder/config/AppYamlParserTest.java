@@ -276,11 +276,11 @@ public class AppYamlParserTest {
     Options options = new Options();
     Application.addOverrideSettingsToOptions(options);
 
-    assertTrue(!options.getOption("enable_app_engine_apis").hasArg());
+    assertFalse(options.getOption("enable_app_engine_apis").hasArg());
     assertEquals("Replaces the setting from app.yaml under beta_settings : enable_app_engine_apis",
         options.getOption("enable_app_engine_apis").getDescription());
 
-    assertTrue(!options.getOption("jetty_quickstart").hasArg());
+    assertFalse(options.getOption("jetty_quickstart").hasArg());
     assertEquals("Replaces the setting from app.yaml under runtime_config : jetty_quickstart",
         options.getOption("jetty_quickstart").getDescription());
 

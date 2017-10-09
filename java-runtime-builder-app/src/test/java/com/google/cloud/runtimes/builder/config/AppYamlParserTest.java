@@ -29,9 +29,9 @@ import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 
 import com.google.cloud.runtimes.builder.config.domain.BetaSettings;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
-import java.util.HashMap;
-import java.util.Map;
+
 import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -39,6 +39,8 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Tests for {@link AppYamlParser}
@@ -267,5 +269,35 @@ public class AppYamlParserTest {
     assertEquals(2, result.size());
     assertEquals(jdkValue, result.get(jdkKey));
     assertEquals(true, result.get(jettyQuickstartKey));
+  }
+
+  @Test
+  public void testAddOverrideSettingsToOptions() {
+    Options options = new Options();
+    Application.addOverrideSettingsToOptions(options);
+
+    assertTrue(!options.getOption("enable_app_engine_apis").hasArg());
+    assertEquals("Replaces the setting from app.yaml under beta_settings : enable_app_engine_apis",
+        options.getOption("enable_app_engine_apis").getDescription());
+
+    assertTrue(!options.getOption("jetty_quickstart").hasArg());
+    assertEquals("Replaces the setting from app.yaml under runtime_config : jetty_quickstart",
+        options.getOption("jetty_quickstart").getDescription());
+
+    assertTrue(options.hasOption("build_script"));
+    assertEquals("Replaces the setting from app.yaml under runtime_config : build_script",
+        options.getOption("build_script").getDescription());
+
+    assertTrue(options.hasOption("jdk"));
+    assertEquals("Replaces the setting from app.yaml under runtime_config : jdk",
+        options.getOption("jdk").getDescription());
+
+    assertTrue(options.hasOption("server"));
+    assertEquals("Replaces the setting from app.yaml under runtime_config : server",
+        options.getOption("server").getDescription());
+
+    assertTrue(options.hasOption("artifact"));
+    assertEquals("Replaces the setting from app.yaml under runtime_config : artifact",
+        options.getOption("artifact").getDescription());
   }
 }

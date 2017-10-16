@@ -76,6 +76,30 @@ runtime_config:
   build_script: "mvn clean install -Pcloud-build-profile"
   jetty_quickstart: true
 ```
+### JDK and Server Map
+
+The `--jdk-runtimes-map` and `--server-runtimes-map` settings are optional in both
+[java.yaml](java.yaml) when using the Cloud Container Builder as well as when building locally.
+These are the default mappings and will be available unless individually overridden:
+
+| JDK Runtime Mapping | Default |
+|-----------------|-------------|
+|`*`| `gcr.io/google-appengine/openjdk:8`|
+|`openjdk8`|`gcr.io/google-appengine/openjdk:8`|
+|`openjdk9`|`gcr.io/google-appengine/openjdk:9`|
+
+| Server Runtime Mapping | Default |
+|-----------------|-------------|
+|`*`&#124;`*`|`gcr.io/google-appengine/jetty:9`|
+|`openjdk8`&#124;`*`|`gcr.io/google-appengine/jetty:9`|
+|`openjdk8`&#124;`jetty9`|`gcr.io/google-appengine/jetty:9`|
+|`openjdk8`&#124;`jetty`|`gcr.io/google-appengine/jetty:9`|
+|`openjdk8`&#124;`tomcat8`|`gcr.io/google-appengine/tomcat:8`|
+|`openjdk8`&#124;`tomcat`|`gcr.io/google-appengine/tomcat:8`|
+|`*`&#124;`jetty9`|`gcr.io/google-appengine/jetty:9`|
+|`*`&#124;`jetty`|`gcr.io/google-appengine/jetty:latest`|
+|`*`&#124;`tomcat8`|`gcr.io/google-appengine/tomcat:8`|
+|`*`&#124;`tomcat`|`gcr.io/google-appengine/tomcat:latest`|
 
 ## Development guide
 * See [DEVELOPING.md](DEVELOPING.md) for instructions on how to build and test this pipeline.

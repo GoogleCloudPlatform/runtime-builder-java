@@ -22,6 +22,7 @@ import com.google.cloud.runtimes.builder.config.domain.OverrideableSetting;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.injection.RootModule;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -50,16 +51,37 @@ public class Application {
   private static final Options CLI_OPTIONS = new Options();
   private static final String EXECUTABLE_NAME = "<BUILDER>";
 
+  private static final ImmutableMap<String, String> defaultJdkMappings = ImmutableMap.of(
+      "*", "gcr.io/google-appengine/openjdk:8",
+      "openjdk8", "gcr.io/google-appengine/openjdk:8",
+      "openjdk9", "gcr.io/google-appengine/openjdk:9"
+
+  );
+  private static final ImmutableMap<String, String> defaultServerMappings;
+
   static {
+
+    Map<String, String> serverSettings = new HashMap<>();
+    serverSettings.put("*|*", "gcr.io/google-appengine/jetty:9");
+    serverSettings.put("openjdk8|*", "gcr.io/google-appengine/jetty:9");
+    serverSettings.put("openjdk8|jetty9", "gcr.io/google-appengine/jetty:9");
+    serverSettings.put("openjdk8|jetty", "gcr.io/google-appengine/jetty:9");
+    serverSettings.put("openjdk8|tomcat8", "gcr.io/google-appengine/tomcat:8");
+    serverSettings.put("openjdk8|tomcat", "gcr.io/google-appengine/tomcat:8");
+    serverSettings.put("*|jetty9", "gcr.io/google-appengine/jetty:9");
+    serverSettings.put("*|jetty", "gcr.io/google-appengine/jetty:latest");
+    serverSettings.put("*|tomcat8", "gcr.io/google-appengine/tomcat:8");
+    serverSettings.put("*|tomcat", "gcr.io/google-appengine/tomcat:latest");
+
+    defaultServerMappings = ImmutableMap.copyOf(serverSettings);
+
     CLI_OPTIONS.addOption(Option.builder("j")
-        .required()
         .hasArgs()
         .longOpt("jdk-runtimes-map")
         .desc("Mappings between supported jdk versions and docker images")
         .build());
 
     CLI_OPTIONS.addOption(Option.builder("s")
-        .required()
         .hasArgs()
         .longOpt("server-runtimes-map")
         .desc("Mappings between supported jdk versions, server types, and docker images")
@@ -95,6 +117,14 @@ public class Application {
     addOverrideSettingsToOptions(CLI_OPTIONS);
   }
 
+  public static ImmutableMap<String, String> getDefaultJdkMappings() {
+    return defaultJdkMappings;
+  }
+
+  public static ImmutableMap<String, String> getDefaultServerMappings() {
+    return defaultServerMappings;
+  }
+
   /**
    * Main method for invocation from the command line. Handles parsing of command line options.
    */
@@ -108,7 +138,8 @@ public class Application {
     boolean disableSourceBuild = cmd.hasOption("n");
 
     Injector injector = Guice.createInjector(
-        new RootModule(jdkMappings, serverMappings, compatImage, mavenImage, gradleImage,
+        new RootModule(jdkMappings, defaultJdkMappings, serverMappings, defaultServerMappings,
+            compatImage, mavenImage, gradleImage,
             disableSourceBuild, getAppYamlOverrideSettings(cmd)));
 
     // Perform dependency injection and run the application

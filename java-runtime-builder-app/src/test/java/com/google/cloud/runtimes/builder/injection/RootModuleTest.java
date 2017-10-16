@@ -2,10 +2,12 @@ package com.google.cloud.runtimes.builder.injection;
 
 import static org.junit.Assert.assertEquals;
 
+import com.google.cloud.runtimes.builder.Application;
 import com.google.cloud.runtimes.builder.BuildPipelineConfigurator;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.inject.Guice;
 
+import java.util.Collections;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -80,4 +82,45 @@ public class RootModuleTest {
         .getInstance(BuildPipelineConfigurator.class);
   }
 
+  @Test
+  public void testDefaultSettingsNoCommandLineGiven() throws IOException {
+    JdkServerLookup jdkServerLookup
+        = new RootModule(null, Application.getDefaultJdkMappings(), null,
+        Application.getDefaultServerMappings(), COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
+        DISABLE_BUILD, Collections.emptyMap())
+        .provideJdkServerLookup();
+
+    // spot-checking some of the default settings
+    assertEquals("gcr.io/google-appengine/jetty:9", jdkServerLookup.lookupServerImage("*", "*"));
+    assertEquals("gcr.io/google-appengine/tomcat:8",
+        jdkServerLookup.lookupServerImage("openjdk8", "tomcat"));
+    assertEquals("gcr.io/google-appengine/tomcat:latest",
+        jdkServerLookup.lookupServerImage("*", "tomcat"));
+
+    assertEquals("gcr.io/google-appengine/openjdk:8", jdkServerLookup.lookupJdkImage("*"));
+    assertEquals("gcr.io/google-appengine/openjdk:8", jdkServerLookup.lookupJdkImage("openjdk8"));
+    assertEquals("gcr.io/google-appengine/openjdk:9", jdkServerLookup.lookupJdkImage("openjdk9"));
+  }
+
+  @Test
+  public void testDefaultSettingsPartialCommandLineGiven() throws IOException {
+    String[] jdkMappings = {"*=gcr.io/jdk:latest"};
+    String[] serverMappings = {"*|*=gcr.io/server:latest"};
+    JdkServerLookup jdkServerLookup
+        = new RootModule(jdkMappings, Application.getDefaultJdkMappings(), serverMappings,
+        Application.getDefaultServerMappings(), COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
+        DISABLE_BUILD, Collections.emptyMap())
+        .provideJdkServerLookup();
+
+    // spot-checking some of the default settings
+    assertEquals("gcr.io/server:latest", jdkServerLookup.lookupServerImage("*", "*"));
+    assertEquals("gcr.io/google-appengine/tomcat:8",
+        jdkServerLookup.lookupServerImage("openjdk8", "tomcat"));
+    assertEquals("gcr.io/google-appengine/tomcat:latest",
+        jdkServerLookup.lookupServerImage("*", "tomcat"));
+
+    assertEquals("gcr.io/jdk:latest", jdkServerLookup.lookupJdkImage("*"));
+    assertEquals("gcr.io/google-appengine/openjdk:8", jdkServerLookup.lookupJdkImage("openjdk8"));
+    assertEquals("gcr.io/google-appengine/openjdk:9", jdkServerLookup.lookupJdkImage("openjdk9"));
+  }
 }

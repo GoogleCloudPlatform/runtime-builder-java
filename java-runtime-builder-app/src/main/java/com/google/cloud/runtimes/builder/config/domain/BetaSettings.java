@@ -20,15 +20,18 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class BetaSettings {
+public final class BetaSettings extends OverrideableSetting {
 
+  private static final String ENABLE_APP_ENGINE_APIS_SETTING_NAME = "enable_app_engine_apis";
+
+  @OverrideSetting(ENABLE_APP_ENGINE_APIS_SETTING_NAME)
   private boolean enableAppEngineApis = false;
 
   public boolean isEnableAppEngineApis() {
     return enableAppEngineApis;
   }
 
-  @JsonProperty("enable_app_engine_apis")
+  @JsonProperty(ENABLE_APP_ENGINE_APIS_SETTING_NAME)
   public void setEnableAppEngineApis(boolean enableAppEngineApis) {
     this.enableAppEngineApis = enableAppEngineApis;
   }

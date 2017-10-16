@@ -17,7 +17,11 @@
 package com.google.cloud.runtimes.builder;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
+import com.google.cloud.runtimes.builder.config.domain.BetaSettings;
+import com.google.cloud.runtimes.builder.config.domain.OverrideableSetting;
+import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.injection.RootModule;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -30,8 +34,13 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * Top-level class for executing from the command line.
@@ -82,6 +91,8 @@ public class Application {
         .longOpt("no-source-build")
         .desc("Disable building from source")
         .build());
+
+    addOverrideSettingsToOptions(CLI_OPTIONS);
   }
 
   /**
@@ -98,7 +109,7 @@ public class Application {
 
     Injector injector = Guice.createInjector(
         new RootModule(jdkMappings, serverMappings, compatImage, mavenImage, gradleImage,
-            disableSourceBuild));
+            disableSourceBuild, getAppYamlOverrideSettings(cmd)));
 
     // Perform dependency injection and run the application
     Path workspaceDir  = Paths.get(System.getProperty("user.dir"));
@@ -116,5 +127,82 @@ public class Application {
       System.exit(1);
     }
     return null;
+  }
+
+  /**
+   * Gets the override settings from the command line.
+   *
+   * @param cmd the command line in which to check for the settings.
+   * @return a map of the settings.
+   */
+  @VisibleForTesting
+  public static Map<String, Object> getAppYamlOverrideSettings(CommandLine cmd) {
+    List<Field> configFields = OverrideableSetting.getOverridableFields(RuntimeConfig.class);
+    configFields.addAll(OverrideableSetting.getOverridableFields(BetaSettings.class));
+    Map<String, Object> configMap = new HashMap<>();
+    doForEachOverrideSetting(configFields,
+        name -> {
+          if (cmd.hasOption(name)) {
+            configMap.put(name, true);
+          }
+        },
+        name -> {
+          String value = cmd.getOptionValue(name);
+          if (value != null) {
+            configMap.put(name, cmd.getOptionValue(name));
+          }
+        }
+    );
+    return configMap;
+  }
+
+  /**
+   * Adds options for override settings to app.yaml to command line options.
+   *
+   * @param options the command line options to which to add these settings.
+   */
+  @VisibleForTesting
+  public static void addOverrideSettingsToOptions(Options options) {
+    String overrideSettingDescPrefix = "Replaces the setting from app.yaml under";
+
+    doForEachOverrideSetting(OverrideableSetting.getOverridableFields(RuntimeConfig.class),
+        booleanSettingName -> {
+          options.addOption(Option.builder().longOpt(booleanSettingName)
+              .desc(overrideSettingDescPrefix + " runtime_config : " + booleanSettingName)
+              .hasArg(false)
+              .build());
+        },
+        nonBooleanSettingName -> {
+          options.addOption(Option.builder().longOpt(nonBooleanSettingName)
+              .desc(overrideSettingDescPrefix + " runtime_config : " + nonBooleanSettingName)
+              .build());
+        }
+    );
+
+    doForEachOverrideSetting(OverrideableSetting.getOverridableFields(BetaSettings.class),
+        booleanSettingName -> {
+          options.addOption(Option.builder().longOpt(booleanSettingName)
+              .desc(overrideSettingDescPrefix + " beta_settings : " + booleanSettingName)
+              .hasArg(false)
+              .build());
+        },
+        nonBooleanSettingName -> {
+          options.addOption(Option.builder().longOpt(nonBooleanSettingName)
+              .desc(overrideSettingDescPrefix + " beta_settings : " + nonBooleanSettingName)
+              .build());
+        }
+    );
+  }
+
+  private static void doForEachOverrideSetting(List<Field> configFields,
+      Consumer<String> actionBooleanSetting, Consumer<String> actionStringSetting) {
+    for (Field field : configFields) {
+      String name = OverrideableSetting.getSettingName(field);
+      if ((field.getType().equals(boolean.class) || field.getType().equals(Boolean.class))) {
+        actionBooleanSetting.accept(name);
+      } else {
+        actionStringSetting.accept(name);
+      }
+    }
   }
 }

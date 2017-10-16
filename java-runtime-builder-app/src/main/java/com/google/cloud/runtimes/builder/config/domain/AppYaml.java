@@ -19,11 +19,23 @@ package com.google.cloud.runtimes.builder.config.domain;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.IOException;
+import java.util.Map;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AppYaml {
 
   private RuntimeConfig runtimeConfig = new RuntimeConfig();
   private BetaSettings betaSettings = new BetaSettings();
+
+  /**
+   * Checks environment variables and overwrites any existing settings in this object.
+   * @param overrideSettings A map of the settings.
+   */
+  public void applyOverrideSettings(Map<String, Object> overrideSettings) throws IOException {
+    runtimeConfig.applyOverrideSettings(overrideSettings);
+    betaSettings.applyOverrideSettings(overrideSettings);
+  }
 
   @JsonProperty("runtime_config")
   public RuntimeConfig getRuntimeConfig() {

@@ -31,6 +31,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -47,7 +48,40 @@ public class RootModule extends AbstractModule {
   private final String gradleDockerImage;
   private final boolean disableSourceBuild;
 
+  private final Map<String, Object> commandLineOverrideSettings;
+
   private static final String CONFIG_YAML_ENV_VAR = "GAE_APPLICATION_YAML_PATH";
+
+  /**
+   * Constructs a new {@link RootModule} for Guice.
+   *
+   * @param jdkMappings mappings between supported jdk versions and docker images
+   * @param serverMappings mappings between supported jdk versions, server types, and docker images
+   * @param compatImage compat runtime docker image
+   * @param mavenDockerImage maven builder docker image
+   * @param gradleDockerImage gradle builder docker image
+   * @param disableSourceBuild disables the building of images from source
+   * @param commandLineOverrideSettings a map of settings from commandline to override
+   */
+  public RootModule(String[] jdkMappings, String[] serverMappings, String compatImage,
+      String mavenDockerImage, String gradleDockerImage, boolean disableSourceBuild,
+      Map<String, Object> commandLineOverrideSettings) {
+    Preconditions.checkNotNull(jdkMappings);
+    Preconditions.checkNotNull(serverMappings);
+    Preconditions.checkNotNull(compatImage);
+    Preconditions.checkNotNull(mavenDockerImage);
+    Preconditions.checkNotNull(gradleDockerImage);
+    Preconditions.checkNotNull(commandLineOverrideSettings);
+
+    this.jdkMappings = jdkMappings;
+    this.serverMappings = serverMappings;
+    this.compatImage = compatImage;
+    this.mavenDockerImage = mavenDockerImage;
+    this.gradleDockerImage = gradleDockerImage;
+    this.disableSourceBuild = disableSourceBuild;
+
+    this.commandLineOverrideSettings = commandLineOverrideSettings;
+  }
 
   /**
    * Constructs a new {@link RootModule} for Guice.
@@ -61,18 +95,9 @@ public class RootModule extends AbstractModule {
    */
   public RootModule(String[] jdkMappings, String[] serverMappings, String compatImage,
       String mavenDockerImage, String gradleDockerImage, boolean disableSourceBuild) {
-    Preconditions.checkNotNull(jdkMappings);
-    Preconditions.checkNotNull(serverMappings);
-    Preconditions.checkNotNull(compatImage);
-    Preconditions.checkNotNull(mavenDockerImage);
-    Preconditions.checkNotNull(gradleDockerImage);
-
-    this.jdkMappings = jdkMappings;
-    this.serverMappings = serverMappings;
-    this.compatImage = compatImage;
-    this.mavenDockerImage = mavenDockerImage;
-    this.gradleDockerImage = gradleDockerImage;
-    this.disableSourceBuild = disableSourceBuild;
+    this(jdkMappings, serverMappings, compatImage, mavenDockerImage, gradleDockerImage,
+        disableSourceBuild,
+        Collections.emptyMap());
   }
 
   @Override
@@ -80,6 +105,12 @@ public class RootModule extends AbstractModule {
     bind(new TypeLiteral<Optional<String>>(){})
         .annotatedWith(ConfigYamlPath.class)
         .toInstance(Optional.ofNullable(System.getenv(CONFIG_YAML_ENV_VAR)));
+
+    bind(new TypeLiteral<Map<String, Object>>() {
+    })
+        .annotatedWith(CommandLineOverrideSettings.class)
+        .toInstance(commandLineOverrideSettings);
+
     bind(String.class)
         .annotatedWith(CompatDockerImage.class)
         .toInstance(compatImage);

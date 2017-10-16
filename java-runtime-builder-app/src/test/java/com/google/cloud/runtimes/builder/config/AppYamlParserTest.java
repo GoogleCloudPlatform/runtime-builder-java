@@ -21,9 +21,17 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import com.google.cloud.runtimes.builder.Application;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 
+import com.google.cloud.runtimes.builder.config.domain.BetaSettings;
+import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -31,6 +39,8 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Tests for {@link AppYamlParser}
@@ -76,11 +86,22 @@ public class AppYamlParserTest {
   }
 
   @Test
-  public void testParseEnableAppEngineApisFalse() throws IOException {
+  public void testParseEnableAppEngineApisFalseWithoutCmdSetting() throws IOException {
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "beta_settings:\n"
         + "  enable_app_engine_apis: false");
     assertFalse(result.getBetaSettings().isEnableAppEngineApis());
+  }
+
+  @Test
+  public void testParseEnableAppEngineApisTrueWithCmdSetting() throws IOException {
+    Map<String, Object> overrideSettings = new HashMap<>();
+    overrideSettings.put("enable_app_engine_apis", true);
+    appYamlParser = new AppYamlParser(overrideSettings);
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
+        + "beta_settings:\n"
+        + "  enable_app_engine_apis: false");
+    assertTrue(result.getBetaSettings().isEnableAppEngineApis());
   }
 
   @Test
@@ -96,6 +117,15 @@ public class AppYamlParserTest {
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "beta_settings:\n"
         + "  enable_app_engine_apis: true");
+    assertTrue(result.getBetaSettings().isEnableAppEngineApis());
+  }
+
+  @Test
+  public void testParseEnableAppEngineApisTrueWithoutYaml() throws Exception {
+    Map<String, Object> overrideSettings = new HashMap<>();
+    overrideSettings.put("enable_app_engine_apis", true);
+    appYamlParser = new AppYamlParser(overrideSettings);
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE);
     assertTrue(result.getBetaSettings().isEnableAppEngineApis());
   }
 
@@ -131,6 +161,63 @@ public class AppYamlParserTest {
   }
 
   @Test
+  public void testParseArtifactWithCmdSetting() throws IOException {
+    String artifact = "my/path/to/artifact";
+    String otherArtifact = "my/path/to/other_artifact";
+
+    Map<String, Object> overrideSettings = new HashMap<>();
+    overrideSettings.put("artifact", otherArtifact);
+    appYamlParser = new AppYamlParser(overrideSettings);
+
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
+        + "runtime_config:\n"
+        + "  artifact: " + artifact);
+    assertEquals(otherArtifact, result.getRuntimeConfig().getArtifact());
+  }
+
+  @Test
+  public void testParseJdkWithCmdSetting() throws IOException {
+    String jdk = "jdk";
+    String otherJdk = "other_jdk";
+
+    Map<String, Object> overrideSettings = new HashMap<>();
+    overrideSettings.put("jdk", otherJdk);
+    appYamlParser = new AppYamlParser(overrideSettings);
+
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
+        + "runtime_config:\n"
+        + "  jdk: " + jdk);
+    assertEquals(otherJdk, result.getRuntimeConfig().getJdk());
+  }
+
+  @Test
+  public void testParseBuildScriptWithCmdSetting() throws IOException {
+    String buildScript = "build_script";
+    String otherBuildScript = "other_build_script";
+
+    Map<String, Object> overrideSettings = new HashMap<>();
+    overrideSettings.put("build_script", otherBuildScript);
+    appYamlParser = new AppYamlParser(overrideSettings);
+
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
+        + "runtime_config:\n"
+        + "  build_script: " + buildScript);
+    assertEquals(otherBuildScript, result.getRuntimeConfig().getBuildScript());
+  }
+
+  @Test
+  public void testParseArtifactWithoutYaml() throws IOException {
+    String otherArtifact = "my/path/to/other_artifact";
+
+    Map<String, Object> overrideSettings = new HashMap<>();
+    overrideSettings.put("artifact", otherArtifact);
+    appYamlParser = new AppYamlParser(overrideSettings);
+
+    AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE);
+    assertEquals(otherArtifact, result.getRuntimeConfig().getArtifact());
+  }
+
+  @Test
   public void testParseJettyQuickstart() throws IOException {
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "runtime_config:\n"
@@ -153,4 +240,64 @@ public class AppYamlParserTest {
     assertTrue(result.getRuntimeConfig().getServer().equals("tomcat"));
   }
 
+  @Test
+  public void testSetRuntimeConfig() {
+    AppYaml result = new AppYaml();
+    RuntimeConfig config = new RuntimeConfig();
+    result.setRuntimeConfig(config);
+    assertTrue(result.getRuntimeConfig() == config);
+  }
+
+  @Test
+  public void testSetBetaSettings() {
+    AppYaml result = new AppYaml();
+    BetaSettings config = new BetaSettings();
+    result.setBetaSettings(config);
+    assertTrue(result.getBetaSettings() == config);
+  }
+
+  @Test
+  public void testGetAppYamlOverrideSettings() {
+    CommandLine cmd = mock(CommandLine.class);
+    String jdkKey = "jdk";
+    String jdkValue = "jdkSetting";
+    String jettyQuickstartKey = "jetty_quickstart";
+    when(cmd.getOptionValue(jdkKey)).thenReturn(jdkValue);
+    when(cmd.hasOption(jettyQuickstartKey)).thenReturn(true);
+
+    Map<String, Object> result = Application.getAppYamlOverrideSettings(cmd);
+    assertEquals(2, result.size());
+    assertEquals(jdkValue, result.get(jdkKey));
+    assertEquals(true, result.get(jettyQuickstartKey));
+  }
+
+  @Test
+  public void testAddOverrideSettingsToOptions() {
+    Options options = new Options();
+    Application.addOverrideSettingsToOptions(options);
+
+    assertFalse(options.getOption("enable_app_engine_apis").hasArg());
+    assertEquals("Replaces the setting from app.yaml under beta_settings : enable_app_engine_apis",
+        options.getOption("enable_app_engine_apis").getDescription());
+
+    assertFalse(options.getOption("jetty_quickstart").hasArg());
+    assertEquals("Replaces the setting from app.yaml under runtime_config : jetty_quickstart",
+        options.getOption("jetty_quickstart").getDescription());
+
+    assertTrue(options.hasOption("build_script"));
+    assertEquals("Replaces the setting from app.yaml under runtime_config : build_script",
+        options.getOption("build_script").getDescription());
+
+    assertTrue(options.hasOption("jdk"));
+    assertEquals("Replaces the setting from app.yaml under runtime_config : jdk",
+        options.getOption("jdk").getDescription());
+
+    assertTrue(options.hasOption("server"));
+    assertEquals("Replaces the setting from app.yaml under runtime_config : server",
+        options.getOption("server").getDescription());
+
+    assertTrue(options.hasOption("artifact"));
+    assertEquals("Replaces the setting from app.yaml under runtime_config : artifact",
+        options.getOption("artifact").getDescription());
+  }
 }

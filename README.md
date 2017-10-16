@@ -34,7 +34,7 @@ image is available locally.) Note that these commands effectively mirror the ste
 LOCAL_APPLICATION_DIR=/path/to/my/app
 
 # Generate docker resources
-# See java.yaml for the fullly specified jdk-runtimes-map server-runtimes-map args
+# See java.yaml for the fully specified jdk-runtimes-map server-runtimes-map args
 docker run -v $LOCAL_APPLICATION_DIR:/workspace -w /workspace runtime-builder \
     --jdk-runtimes-map='*=gcr.io/google-appengine/openjdk:8' \
     --server-runtimes-map='*|*=gcr.io/google-appengine/jetty:9' \
@@ -48,9 +48,11 @@ docker build -t my-app-container $LOCAL_APPLICATION_DIR
 
 ## Configuration
 An [app.yaml](https://cloud.google.com/appengine/docs/flexible/java/configuring-your-app-with-app-yaml) 
-file must be included in the sources passed to the Java Runtime Builder. The `runtime_config`
-section of this file tells the builder how to build and package your source. In most cases, 
-`runtime_config` can be omitted.
+file can be included in the sources passed to the Java Runtime Builder, but is not required. The 
+`runtime_config` section of this file tells the builder how to build and package your source. 
+In most cases, `runtime_config` can be omitted.
+
+Alternatively, these settings can be provided as command line arguments to the Java Runtime Builder.  
 
 | Option Name | Type | Default | Description |
 |----------|------|---------|-------------|
@@ -59,6 +61,10 @@ section of this file tells the builder how to build and package your source. In 
 | artifact | string |  Discovered based on the content of your build output | The path where the builder should expect to find the artifact to package in the resulting docker container. This setting will be required if your build produces more than one artifact. 
 | build_script | string | `mvn -B -DskipTests clean package` if a maven project is detected, or `gradle build` if a gradle project is detected | The build command that is executed to build your source |
 | jetty_quickstart | boolean | false | Enable the [Jetty quickstart module](http://www.eclipse.org/jetty/documentation/9.4.x/quickstart-webapp.html) to speed up the start time of the application (Only available if the jetty runtime is selected).
+
+The settings in app.yaml and the command line share the same names. For example, `--jdk=openjdk8`
+can be included in the `args:` section of [java.yaml](java.yaml). If a setting is provided in both
+app.yaml and the command line, the setting from the command line will be used.
 ### Sample app.yaml
 ```yaml
 runtime: java

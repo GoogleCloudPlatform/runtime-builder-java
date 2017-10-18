@@ -57,23 +57,20 @@ public class Application {
       "openjdk9", "gcr.io/google-appengine/openjdk:9"
 
   );
-  public static final ImmutableMap<String, String> DEFAULT_SERVER_MAPPINGS;
+  public static final ImmutableMap<String, String> DEFAULT_SERVER_MAPPINGS =
+      new ImmutableMap.Builder<String, String>()
+          .put("*|*", "gcr.io/google-appengine/jetty:9")
+          .put("openjdk8|*", "gcr.io/google-appengine/jetty:9")
+          .put("openjdk8|jetty9", "gcr.io/google-appengine/jetty:9")
+          .put("openjdk8|jetty", "gcr.io/google-appengine/jetty:9")
+          .put("openjdk8|tomcat8", "gcr.io/google-appengine/tomcat:8")
+          .put("openjdk8|tomcat", "gcr.io/google-appengine/tomcat:8")
+          .put("*|jetty9", "gcr.io/google-appengine/jetty:9")
+          .put("*|jetty", "gcr.io/google-appengine/jetty:latest")
+          .put("*|tomcat8", "gcr.io/google-appengine/tomcat:8")
+          .put("*|tomcat", "gcr.io/google-appengine/tomcat:latest").build();
 
   static {
-
-    Map<String, String> serverSettings = new HashMap<>();
-    serverSettings.put("*|*", "gcr.io/google-appengine/jetty:9");
-    serverSettings.put("openjdk8|*", "gcr.io/google-appengine/jetty:9");
-    serverSettings.put("openjdk8|jetty9", "gcr.io/google-appengine/jetty:9");
-    serverSettings.put("openjdk8|jetty", "gcr.io/google-appengine/jetty:9");
-    serverSettings.put("openjdk8|tomcat8", "gcr.io/google-appengine/tomcat:8");
-    serverSettings.put("openjdk8|tomcat", "gcr.io/google-appengine/tomcat:8");
-    serverSettings.put("*|jetty9", "gcr.io/google-appengine/jetty:9");
-    serverSettings.put("*|jetty", "gcr.io/google-appengine/jetty:latest");
-    serverSettings.put("*|tomcat8", "gcr.io/google-appengine/tomcat:8");
-    serverSettings.put("*|tomcat", "gcr.io/google-appengine/tomcat:latest");
-
-    DEFAULT_SERVER_MAPPINGS = ImmutableMap.copyOf(serverSettings);
 
     CLI_OPTIONS.addOption(Option.builder("j")
         .hasArgs()

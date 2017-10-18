@@ -50,7 +50,6 @@ public class Application {
 
   private static final Options CLI_OPTIONS = new Options();
   private static final String EXECUTABLE_NAME = "<BUILDER>";
-
   public static final ImmutableMap<String, String> DEFAULT_JDK_MAPPINGS = ImmutableMap.of(
       "*", "gcr.io/google-appengine/openjdk:8",
       "openjdk8", "gcr.io/google-appengine/openjdk:8",
@@ -69,6 +68,12 @@ public class Application {
           .put("*|jetty", "gcr.io/google-appengine/jetty:latest")
           .put("*|tomcat8", "gcr.io/google-appengine/tomcat:8")
           .put("*|tomcat", "gcr.io/google-appengine/tomcat:latest").build();
+  public static final String DEFAULT_COMPAT_RUNTIME_IMAGE =
+      "gcr.io/google-appengine/jetty9-compat:latest";
+  public static final String DEFAULT_MAVEN_DOCKER_IMAGE =
+      "gcr.io/cloud-builders/java/mvn:3.5.0-jdk-8";
+  public static final String DEFAULT_GRADLE_DOCKER_IMAGE =
+      "gcr.io/cloud-builders/java/gradle:4.0-jdk-8";
 
   static {
 
@@ -85,21 +90,18 @@ public class Application {
         .build());
 
     CLI_OPTIONS.addOption(Option.builder("c")
-        .required()
         .hasArgs()
         .longOpt("compat-runtime-image")
         .desc("Base runtime image to use for the flex-compat environment")
         .build());
 
     CLI_OPTIONS.addOption(Option.builder("m")
-        .required()
         .hasArg()
         .longOpt("maven-docker-image")
         .desc("Docker image to use for maven builds")
         .build());
 
     CLI_OPTIONS.addOption(Option.builder("g")
-        .required()
         .hasArg()
         .longOpt("gradle-docker-image")
         .desc("Docker image to use for gradle builds")
@@ -128,7 +130,9 @@ public class Application {
 
     Injector injector = Guice.createInjector(
         new RootModule(jdkMappings, DEFAULT_JDK_MAPPINGS, serverMappings, DEFAULT_SERVER_MAPPINGS,
-            compatImage, mavenImage, gradleImage,
+            compatImage == null ? DEFAULT_COMPAT_RUNTIME_IMAGE : compatImage,
+            mavenImage == null ? DEFAULT_MAVEN_DOCKER_IMAGE : mavenImage,
+            gradleImage == null ? DEFAULT_GRADLE_DOCKER_IMAGE : gradleImage,
             disableSourceBuild, getAppYamlOverrideSettings(cmd)));
 
     // Perform dependency injection and run the application

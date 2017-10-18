@@ -35,10 +35,7 @@ LOCAL_APPLICATION_DIR=/path/to/my/app
 
 # Generate docker resources
 # See java.yaml for the fully specified jdk-runtimes-map server-runtimes-map args
-docker run -v $LOCAL_APPLICATION_DIR:/workspace -w /workspace runtime-builder \
-    --compat-docker-image='gcr.io/google-appengine/jetty9-compat' \
-    --maven-docker-image='gcr.io/cloud-builders/java/mvn:3.5.0-jdk-8' \
-    --gradle-docker-image='gcr.io/cloud-builders/java/gradle:4.0-jdk-8'
+docker run -v $LOCAL_APPLICATION_DIR:/workspace -w /workspace runtime-builder 
 
 # package my application into a docker container
 docker build -t my-app-container $LOCAL_APPLICATION_DIR
@@ -74,7 +71,7 @@ runtime_config:
   build_script: "mvn clean install -Pcloud-build-profile"
   jetty_quickstart: true
 ```
-### JDK and Server Map
+### Images
 
 The `--jdk-runtimes-map` and `--server-runtimes-map` settings are optional in both
 [java.yaml](java.yaml) when using the Cloud Container Builder as well as when building locally.
@@ -98,6 +95,14 @@ These are the default mappings and will be available unless individually overrid
 |`*`&#124;`jetty`|`gcr.io/google-appengine/jetty:latest`|
 |`*`&#124;`tomcat8`|`gcr.io/google-appengine/tomcat:8`|
 |`*`&#124;`tomcat`|`gcr.io/google-appengine/tomcat:latest`|
+
+These settings are also optional:
+
+| Command Line Settings | Default |
+|-----|-----|
+|`--compat-runtime-image`|`gcr.io/google-appengine/jetty9-compat:latest`|
+|`--maven-docker-image`|`gcr.io/cloud-builders/java/mvn:3.5.0-jdk-8`|
+|`--gradle-docker-image`|`gcr.io/cloud-builders/java/gradle:4.0-jdk-8`|
 
 ## Development guide
 * See [DEVELOPING.md](DEVELOPING.md) for instructions on how to build and test this pipeline.

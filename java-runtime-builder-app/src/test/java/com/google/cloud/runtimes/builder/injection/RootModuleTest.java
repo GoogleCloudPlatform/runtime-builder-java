@@ -149,5 +149,8 @@ public class RootModuleTest {
     for (String key : defaultServer.keySet()) {
       assertTrue(javaYaml.contains(key + "=" + defaultServer.get(key)));
     }
+    assertTrue(javaYaml.contains(Application.DEFAULT_COMPAT_RUNTIME_IMAGE));
+    assertTrue(javaYaml.contains(Application.DEFAULT_MAVEN_DOCKER_IMAGE));
+    assertTrue(javaYaml.contains(Application.DEFAULT_GRADLE_DOCKER_IMAGE));
   }
 }

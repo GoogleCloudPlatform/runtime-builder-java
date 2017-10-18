@@ -51,13 +51,13 @@ public class Application {
   private static final Options CLI_OPTIONS = new Options();
   private static final String EXECUTABLE_NAME = "<BUILDER>";
 
-  private static final ImmutableMap<String, String> defaultJdkMappings = ImmutableMap.of(
+  public static final ImmutableMap<String, String> DEFAULT_JDK_MAPPINGS = ImmutableMap.of(
       "*", "gcr.io/google-appengine/openjdk:8",
       "openjdk8", "gcr.io/google-appengine/openjdk:8",
       "openjdk9", "gcr.io/google-appengine/openjdk:9"
 
   );
-  private static final ImmutableMap<String, String> defaultServerMappings;
+  public static final ImmutableMap<String, String> DEFAULT_SERVER_MAPPINGS;
 
   static {
 
@@ -73,7 +73,7 @@ public class Application {
     serverSettings.put("*|tomcat8", "gcr.io/google-appengine/tomcat:8");
     serverSettings.put("*|tomcat", "gcr.io/google-appengine/tomcat:latest");
 
-    defaultServerMappings = ImmutableMap.copyOf(serverSettings);
+    DEFAULT_SERVER_MAPPINGS = ImmutableMap.copyOf(serverSettings);
 
     CLI_OPTIONS.addOption(Option.builder("j")
         .hasArgs()
@@ -117,14 +117,6 @@ public class Application {
     addOverrideSettingsToOptions(CLI_OPTIONS);
   }
 
-  public static ImmutableMap<String, String> getDefaultJdkMappings() {
-    return defaultJdkMappings;
-  }
-
-  public static ImmutableMap<String, String> getDefaultServerMappings() {
-    return defaultServerMappings;
-  }
-
   /**
    * Main method for invocation from the command line. Handles parsing of command line options.
    */
@@ -138,7 +130,7 @@ public class Application {
     boolean disableSourceBuild = cmd.hasOption("n");
 
     Injector injector = Guice.createInjector(
-        new RootModule(jdkMappings, defaultJdkMappings, serverMappings, defaultServerMappings,
+        new RootModule(jdkMappings, DEFAULT_JDK_MAPPINGS, serverMappings, DEFAULT_SERVER_MAPPINGS,
             compatImage, mavenImage, gradleImage,
             disableSourceBuild, getAppYamlOverrideSettings(cmd)));
 

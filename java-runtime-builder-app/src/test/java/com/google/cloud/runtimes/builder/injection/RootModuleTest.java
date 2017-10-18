@@ -91,8 +91,8 @@ public class RootModuleTest {
   @Test
   public void testDefaultSettingsNoCommandLineGiven() throws IOException {
     JdkServerLookup jdkServerLookup
-        = new RootModule(null, Application.getDefaultJdkMappings(), null,
-        Application.getDefaultServerMappings(), COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
+        = new RootModule(null, Application.DEFAULT_JDK_MAPPINGS, null,
+        Application.DEFAULT_SERVER_MAPPINGS, COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
         DISABLE_BUILD, Collections.emptyMap())
         .provideJdkServerLookup();
 
@@ -113,8 +113,8 @@ public class RootModuleTest {
     String[] jdkMappings = {"*=gcr.io/jdk:latest"};
     String[] serverMappings = {"*|*=gcr.io/server:latest"};
     JdkServerLookup jdkServerLookup
-        = new RootModule(jdkMappings, Application.getDefaultJdkMappings(), serverMappings,
-        Application.getDefaultServerMappings(), COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
+        = new RootModule(jdkMappings, Application.DEFAULT_JDK_MAPPINGS, serverMappings,
+        Application.DEFAULT_SERVER_MAPPINGS, COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
         DISABLE_BUILD, Collections.emptyMap())
         .provideJdkServerLookup();
 
@@ -141,11 +141,11 @@ public class RootModuleTest {
     // A simple check to see that all of the default settings appear in java.yaml and are therefore
     // not outdated. There might still be settings in java.yaml that aren't in the default settings.
     // Intentionally not parsing java.yaml to not depend on its structure.
-    Map<String, String> defaultJdk = Application.getDefaultJdkMappings();
+    Map<String, String> defaultJdk = Application.DEFAULT_JDK_MAPPINGS;
     for (String key : defaultJdk.keySet()) {
       assertTrue(javaYaml.contains(key + "=" + defaultJdk.get(key)));
     }
-    Map<String, String> defaultServer = Application.getDefaultServerMappings();
+    Map<String, String> defaultServer = Application.DEFAULT_SERVER_MAPPINGS;
     for (String key : defaultServer.keySet()) {
       assertTrue(javaYaml.contains(key + "=" + defaultServer.get(key)));
     }

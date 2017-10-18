@@ -1,13 +1,19 @@
 package com.google.cloud.runtimes.builder.injection;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.google.cloud.runtimes.builder.Application;
 import com.google.cloud.runtimes.builder.BuildPipelineConfigurator;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.inject.Guice;
 
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.Map;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -122,5 +128,26 @@ public class RootModuleTest {
     assertEquals("gcr.io/jdk:latest", jdkServerLookup.lookupJdkImage("*"));
     assertEquals("gcr.io/google-appengine/openjdk:8", jdkServerLookup.lookupJdkImage("openjdk8"));
     assertEquals("gcr.io/google-appengine/openjdk:9", jdkServerLookup.lookupJdkImage("openjdk9"));
+  }
+
+  /**
+   * A check that the default settings are not outdated compared to what is in java.yaml.
+   */
+  @Test
+  public void testDefaultSettingsMatchJavaYaml() throws URISyntaxException, IOException {
+    Path path = Paths.get("../java.yaml");
+    String javaYaml = new String(Files.readAllBytes(path));
+
+    // A simple check to see that all of the default settings appear in java.yaml and are therefore
+    // not outdated. There might still be settings in java.yaml that aren't in the default settings.
+    // Intentionally not parsing java.yaml to not depend on its structure.
+    Map<String, String> defaultJdk = Application.getDefaultJdkMappings();
+    for (String key : defaultJdk.keySet()) {
+      assertTrue(javaYaml.contains(key + "=" + defaultJdk.get(key)));
+    }
+    Map<String, String> defaultServer = Application.getDefaultServerMappings();
+    for (String key : defaultServer.keySet()) {
+      assertTrue(javaYaml.contains(key + "=" + defaultServer.get(key)));
+    }
   }
 }

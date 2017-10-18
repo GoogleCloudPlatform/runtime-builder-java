@@ -284,19 +284,19 @@ public class AppYamlParserTest {
     assertEquals("Replaces the setting from app.yaml under runtime_config : jetty_quickstart",
         options.getOption("jetty_quickstart").getDescription());
 
-    assertTrue(options.hasOption("build_script"));
+    assertTrue(options.getOption("build_script").hasArg());
     assertEquals("Replaces the setting from app.yaml under runtime_config : build_script",
         options.getOption("build_script").getDescription());
 
-    assertTrue(options.hasOption("jdk"));
+    assertTrue(options.getOption("jdk").hasArg());
     assertEquals("Replaces the setting from app.yaml under runtime_config : jdk",
         options.getOption("jdk").getDescription());
 
-    assertTrue(options.hasOption("server"));
+    assertTrue(options.getOption("server").hasArg());
     assertEquals("Replaces the setting from app.yaml under runtime_config : server",
         options.getOption("server").getDescription());
 
-    assertTrue(options.hasOption("artifact"));
+    assertTrue(options.getOption("artifact").hasArg());
     assertEquals("Replaces the setting from app.yaml under runtime_config : artifact",
         options.getOption("artifact").getDescription());
   }

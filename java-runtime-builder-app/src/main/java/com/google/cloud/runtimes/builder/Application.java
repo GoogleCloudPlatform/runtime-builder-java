@@ -199,6 +199,7 @@ public class Application {
         nonBooleanSettingName -> {
           options.addOption(Option.builder().longOpt(nonBooleanSettingName)
               .desc(overrideSettingDescPrefix + " runtime_config : " + nonBooleanSettingName)
+              .hasArg()
               .build());
         }
     );
@@ -213,6 +214,7 @@ public class Application {
         nonBooleanSettingName -> {
           options.addOption(Option.builder().longOpt(nonBooleanSettingName)
               .desc(overrideSettingDescPrefix + " beta_settings : " + nonBooleanSettingName)
+              .hasArg()
               .build());
         }
     );

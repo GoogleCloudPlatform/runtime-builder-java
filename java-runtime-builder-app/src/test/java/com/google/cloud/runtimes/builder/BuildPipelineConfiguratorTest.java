@@ -47,6 +47,7 @@ import com.google.common.io.Files;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.junit.Before;
@@ -104,7 +105,7 @@ public class BuildPipelineConfiguratorTest {
 
   private BuildPipelineConfigurator initConfigurator() {
     return new BuildPipelineConfigurator(appYamlYamlParser, appYamlFinder, buildStepFactory,
-        buildContextFactory);
+        buildContextFactory, Collections.emptyMap());
   }
 
   private void assertBuildStepsCalledWithRuntimeConfig(RuntimeConfig expected,

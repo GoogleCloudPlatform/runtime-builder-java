@@ -25,10 +25,13 @@ import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.BuildContextFactory;
 import com.google.cloud.runtimes.builder.config.domain.BuildTool;
+import com.google.cloud.runtimes.builder.injection.CommandLineOverrideSettings;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,6 +39,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -50,13 +54,18 @@ public class BuildPipelineConfigurator {
   private final BuildStepFactory buildStepFactory;
   private final BuildContextFactory buildContextFactory;
 
+  private final Map<String, Object> overrideSettings;
+
   @Inject
   BuildPipelineConfigurator(YamlParser<AppYaml> appYamlParser, AppYamlFinder appYamlFinder,
-      BuildStepFactory buildStepFactory, BuildContextFactory buildContextFactory) {
+      BuildStepFactory buildStepFactory, BuildContextFactory buildContextFactory,
+      @CommandLineOverrideSettings Map<String, Object> overrideSettings) {
+    Preconditions.checkNotNull(overrideSettings);
     this.appYamlParser = appYamlParser;
     this.appYamlFinder = appYamlFinder;
     this.buildStepFactory = buildStepFactory;
     this.buildContextFactory = buildContextFactory;
+    this.overrideSettings = overrideSettings;
   }
 
   /**
@@ -107,6 +116,8 @@ public class BuildPipelineConfigurator {
     AppYaml appYaml = pathToAppYaml.isPresent()
         ? parseAppYaml(pathToAppYaml.get())
         : new AppYaml();
+
+    appYaml.applyOverrideSettings(this.overrideSettings);
 
     BuildContext buildContext = buildContextFactory.createBuildContext(appYaml, workspaceDir);
 

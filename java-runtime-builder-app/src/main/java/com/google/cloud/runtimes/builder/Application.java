@@ -146,6 +146,7 @@ public class Application {
       return parser.parse(CLI_OPTIONS, args);
     } catch (ParseException e) {
       // print instructions and exit
+      System.out.println(e.getMessage());
       HelpFormatter formatter = new HelpFormatter();
       formatter.printHelp(EXECUTABLE_NAME, CLI_OPTIONS, true);
       System.exit(1);

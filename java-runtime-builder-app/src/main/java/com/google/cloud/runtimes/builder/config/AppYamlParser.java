@@ -55,4 +55,9 @@ public class AppYamlParser implements YamlParser<AppYaml> {
     }
     return appYaml;
   }
+
+  @Override
+  public AppYaml getEmpty() {
+    return new AppYaml();
+  }
 }

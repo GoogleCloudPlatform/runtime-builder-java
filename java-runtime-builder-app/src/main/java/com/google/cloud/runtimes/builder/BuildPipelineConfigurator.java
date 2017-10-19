@@ -31,7 +31,6 @@ import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
 import com.fasterxml.jackson.databind.JsonMappingException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,9 +114,9 @@ public class BuildPipelineConfigurator {
 
     AppYaml appYaml = pathToAppYaml.isPresent()
         ? parseAppYaml(pathToAppYaml.get())
-        : new AppYaml();
+        : appYamlParser.getEmpty();
 
-    appYaml.applyOverrideSettings(this.overrideSettings);
+    appYaml.applyOverrideSettings(overrideSettings);
 
     BuildContext buildContext = buildContextFactory.createBuildContext(appYaml, workspaceDir);
 

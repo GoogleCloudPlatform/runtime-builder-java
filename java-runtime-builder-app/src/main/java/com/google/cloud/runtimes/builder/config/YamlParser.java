@@ -23,4 +23,5 @@ public interface YamlParser<T> {
 
   T parse(Path yamlFilePath) throws IOException;
 
+  T getEmpty();
 }

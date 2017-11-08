@@ -3,6 +3,10 @@ package com.google.cloud.runtimes.builder.injection;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.cloud.runtimes.builder.Application;
 import com.google.cloud.runtimes.builder.BuildPipelineConfigurator;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
@@ -12,8 +16,17 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -134,23 +147,66 @@ public class RootModuleTest {
    * A check that the default settings are not outdated compared to what is in java.yaml.
    */
   @Test
-  public void testDefaultSettingsMatchJavaYaml() throws URISyntaxException, IOException {
+  public void testDefaultSettingsMatchJavaYaml()
+      throws URISyntaxException, IOException, ParseException {
     Path path = Paths.get("../java.yaml");
-    String javaYaml = new String(Files.readAllBytes(path));
 
-    // A simple check to see that all of the default settings appear in java.yaml and are therefore
-    // not outdated. There might still be settings in java.yaml that aren't in the default settings.
-    // Intentionally not parsing java.yaml to not depend on its structure.
-    Map<String, String> defaultJdk = Application.DEFAULT_JDK_MAPPINGS;
-    for (String key : defaultJdk.keySet()) {
-      assertTrue(javaYaml.contains(key + "=" + defaultJdk.get(key)));
+    ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+
+    JavaYaml javaYaml = mapper.readValue(path.toFile(), JavaYaml.class);
+
+    String[] args = ((ArrayList<String>) javaYaml.getSteps()[0].get("args")).toArray(new String[0]);
+
+    Options options = new Options();
+
+    Application.addCliOptions(options);
+
+    CommandLine cmd = new DefaultParser().parse(options, args);
+
+    String[] jdkMappings = cmd.getOptionValues("j");
+    String[] serverMappings = cmd.getOptionValues("s");
+
+    Map<String, String> defaultJdk = new HashMap<String, String>();
+    defaultJdk.putAll(Application.DEFAULT_JDK_MAPPINGS);
+
+    for (String jdk : jdkMappings) {
+      String[] parts = jdk.split("=");
+      assertEquals(parts[1], defaultJdk.get(parts[0]));
+      defaultJdk.remove(parts[0]);
     }
-    Map<String, String> defaultServer = Application.DEFAULT_SERVER_MAPPINGS;
-    for (String key : defaultServer.keySet()) {
-      assertTrue(javaYaml.contains(key + "=" + defaultServer.get(key)));
+    assertEquals(0, defaultJdk.size());
+
+    Map<String, String> defaultServer = new HashMap<String, String>();
+    defaultServer.putAll(Application.DEFAULT_SERVER_MAPPINGS);
+
+    for (String server : serverMappings) {
+      String[] parts = server.split("=");
+      assertEquals(parts[1], defaultServer.get(parts[0]));
+      defaultServer.remove(parts[0]);
     }
-    assertTrue(javaYaml.contains(Application.DEFAULT_COMPAT_RUNTIME_IMAGE));
-    assertTrue(javaYaml.contains(Application.DEFAULT_MAVEN_DOCKER_IMAGE));
-    assertTrue(javaYaml.contains(Application.DEFAULT_GRADLE_DOCKER_IMAGE));
+    assertEquals(0, defaultServer.size());
+
+    String compatImage = cmd.getOptionValue("c");
+    String mavenImage = cmd.getOptionValue("m");
+    String gradleImage = cmd.getOptionValue("g");
+
+    assertEquals(compatImage, Application.DEFAULT_COMPAT_RUNTIME_IMAGE);
+    assertEquals(mavenImage, Application.DEFAULT_MAVEN_DOCKER_IMAGE);
+    assertEquals(gradleImage, Application.DEFAULT_GRADLE_DOCKER_IMAGE);
+  }
+
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  private static class JavaYaml {
+
+    private Map<String, Object>[] steps;
+
+    public Map<String, Object>[] getSteps() {
+      return steps;
+    }
+
+    public void setSteps(
+        Map<String, Object>[] steps) {
+      this.steps = steps;
+    }
   }
 }

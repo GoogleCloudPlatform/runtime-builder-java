@@ -54,7 +54,6 @@ public class Application {
       "*", "gcr.io/google-appengine/openjdk:8",
       "openjdk8", "gcr.io/google-appengine/openjdk:8",
       "openjdk9", "gcr.io/google-appengine/openjdk:9"
-
   );
   public static final ImmutableMap<String, String> DEFAULT_SERVER_MAPPINGS =
       new ImmutableMap.Builder<String, String>()
@@ -75,51 +74,58 @@ public class Application {
   public static final String DEFAULT_GRADLE_DOCKER_IMAGE =
       "gcr.io/cloud-builders/java/gradle:4.0-jdk-8";
 
-  static {
+  /**
+   * Adds the settings needed for the builder to an Options.
+   *
+   * @param options The options to which to add the required args.
+   */
+  @VisibleForTesting
+  public static void addCliOptions(Options options) {
 
-    CLI_OPTIONS.addOption(Option.builder("j")
+    options.addOption(Option.builder("j")
         .hasArgs()
         .longOpt("jdk-runtimes-map")
         .desc("Mappings between supported jdk versions and docker images")
         .build());
 
-    CLI_OPTIONS.addOption(Option.builder("s")
+    options.addOption(Option.builder("s")
         .hasArgs()
         .longOpt("server-runtimes-map")
         .desc("Mappings between supported jdk versions, server types, and docker images")
         .build());
 
-    CLI_OPTIONS.addOption(Option.builder("c")
+    options.addOption(Option.builder("c")
         .hasArgs()
         .longOpt("compat-runtime-image")
         .desc("Base runtime image to use for the flex-compat environment")
         .build());
 
-    CLI_OPTIONS.addOption(Option.builder("m")
+    options.addOption(Option.builder("m")
         .hasArg()
         .longOpt("maven-docker-image")
         .desc("Docker image to use for maven builds")
         .build());
 
-    CLI_OPTIONS.addOption(Option.builder("g")
+    options.addOption(Option.builder("g")
         .hasArg()
         .longOpt("gradle-docker-image")
         .desc("Docker image to use for gradle builds")
         .build());
 
-    CLI_OPTIONS.addOption(Option.builder("n")
+    options.addOption(Option.builder("n")
         .hasArg(false)
         .longOpt("no-source-build")
         .desc("Disable building from source")
         .build());
 
-    addOverrideSettingsToOptions(CLI_OPTIONS);
+    addOverrideSettingsToOptions(options);
   }
 
   /**
    * Main method for invocation from the command line. Handles parsing of command line options.
    */
   public static void main(String[] args) throws BuildStepException, IOException {
+    addCliOptions(CLI_OPTIONS);
     CommandLine cmd = parse(args);
     String[] jdkMappings = cmd.getOptionValues("j");
     String[] serverMappings = cmd.getOptionValues("s");

@@ -22,6 +22,7 @@ import com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,11 +30,12 @@ import java.util.stream.Collectors;
 public class JdkServerLookup {
 
   private static final String KEY_DELIMITER = "|";
+  private static final String KEY_DELIMITER_REGEX = "\\|";
   private static final String KEY_WILDCARD = "*";
   private static final Logger log = LoggerFactory.getLogger(JdkServerLookup.class);
 
-  private final Map<String, String> serverRuntimeMap;
-  private final Map<String, String> jdkRuntimeMap;
+  private final Map<String, String> serverRuntimeMap = new HashMap<>();
+  private final Map<String, String> jdkRuntimeMap = new HashMap<>();
 
   /**
    * Constructs a new {@link JdkServerLookup}.
@@ -45,24 +47,32 @@ public class JdkServerLookup {
     Preconditions.checkNotNull(jdkRuntimeMap);
     Preconditions.checkNotNull(serverRuntimeMap);
 
-    this.jdkRuntimeMap = jdkRuntimeMap;
-    this.serverRuntimeMap = serverRuntimeMap;
+    for (String key : jdkRuntimeMap.keySet()) {
+      this.jdkRuntimeMap.put(key.trim(), jdkRuntimeMap.get(key).trim());
+    }
 
-    validate();
-  }
+    for (String key : serverRuntimeMap.keySet()) {
+      String[] keyParts = key.split(KEY_DELIMITER_REGEX);
+      if (keyParts.length != 2) {
+        throw new IllegalArgumentException("Invalid server map key: '" + key + "'. "
+            + "All server mapping keys must be formatted as: jdk" + KEY_DELIMITER + "serverType");
+      }
+      this.serverRuntimeMap
+          .put(buildServerMapKey(keyParts[0].trim(), keyParts[1].trim()),
+              serverRuntimeMap.get(key).trim());
+    }
 
-  private void validate() {
-    // make sure each map contains default keys
-    if (!jdkRuntimeMap.containsKey(KEY_WILDCARD)) {
+    if (!this.jdkRuntimeMap.containsKey(KEY_WILDCARD)) {
       throw new IllegalArgumentException("Expected to find default (" + KEY_WILDCARD + ") key in "
           + "JDK runtime map.");
     }
     String serverMapKey = buildServerMapKey(null, null);
-    if (!serverRuntimeMap.containsKey(serverMapKey)) {
+    if (!this.serverRuntimeMap.containsKey(serverMapKey)) {
       throw new IllegalArgumentException("Expected to find default (" + serverMapKey + ") key in "
           + "server runtime map.");
     }
   }
+
 
   /**
    * Lookup a JDK image for the given JDK name.

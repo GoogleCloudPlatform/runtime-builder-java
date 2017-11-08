@@ -18,17 +18,17 @@ public class JdkServerLookupTest {
   @Before
   public void before() {
     Map<String, String> jdkMap = ImmutableMap.of(
-        "oldjdk", "jdk:old",
+        "oldjdk ", "  jdk:old  ",
         "currentjdk", "jdk:current",
-        "*", "defaultjdk"
+        "* ", "defaultjdk "
     );
 
     Map<String, String> serverMap = ImmutableMap.of(
-       "newjdk|server1", "server1:new",
-       "newjdk|*", "newjdk:defaultserver",
-       "oldjdk|server1", "server1:old",
-       "*|server1", "defaultjdk:server1",
-       "*|*", "bothdefaults"
+        "   newjdk| server1", " server1:new",
+        "newjdk |*", " newjdk:defaultserver ",
+        " oldjdk | server1 ", "server1:old",
+        "*| server1", "defaultjdk:server1",
+        " * | * ", "bothdefaults"
     );
 
     jdkServerLookup = new JdkServerLookup(jdkMap, serverMap);

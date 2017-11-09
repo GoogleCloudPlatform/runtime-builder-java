@@ -83,7 +83,7 @@ public class BuildPipelineConfiguratorTest {
   private boolean disableSourceBuild;
 
   @Before
-  public void setup() throws BuildStepException, IOException {
+  public void setUp() throws BuildStepException, IOException {
     MockitoAnnotations.initMocks(this);
 
     when(buildStepFactory.createMavenBuildStep()).thenReturn(mavenBuildStep);

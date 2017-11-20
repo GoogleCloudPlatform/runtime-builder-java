@@ -24,6 +24,7 @@ import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactT
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStep;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.Artifact;
+import com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
@@ -61,7 +62,8 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
     // compat runtime requires a special app destination
     String artifactDestination = baseRuntimeImage.equals(compatImageName)
         ? "/app/"
-        : "$APP_DESTINATION";
+        : (artifact.getType() == EXPLODED_WAR ? "$APP_DESTINATION_EXPLODED_WAR"
+            : "$APP_DESTINATION");
 
     buildContext.getDockerfile().appendLine(copyStep + " " + relativeArtifactPath + " "
         + artifactDestination);
@@ -72,27 +74,27 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
     RuntimeConfig runtimeConfig = buildContext.getRuntimeConfig();
 
     // Check if the user has explicitly selected the compat runtime
-    if (buildContext.isCompatEnabled() && artifact.getType() != EXPLODED_WAR) {
-      throw new BuildStepException(String.format("App Engine APIs have been enabled. In order to "
-          + "use App Engine APIs, an exploded WAR artifact is required, but a %s artifact was "
-          + "found. See https://cloud.google.com/appengine/docs/flexible/java/upgrading for more "
-          + "detail.", artifact.getType()));
+    if (buildContext.isCompatEnabled()) {
+      if (artifact.getType() != EXPLODED_WAR) {
+        throw new BuildStepException(String.format("App Engine APIs have been enabled. In order to "
+            + "use App Engine APIs, an exploded WAR artifact is required, but a %s artifact was "
+            + "found. See https://cloud.google.com/appengine/docs/flexible/java/upgrading for more "
+            + "detail.", artifact.getType()));
+      }
+      return compatImageName;
     }
 
     // Select runtime based on artifact type
 
-    if (artifact.getType() == EXPLODED_WAR) {
-      // Use the compat runtime for exploded war artifacts.
-      logger.info("Using base image '{}' for exploded WAR artifact", compatImageName);
-      return compatImageName;
+    ArtifactType artifactType = artifact.getType();
 
-    } else if (artifact.getType() == WAR) {
+    if (artifactType == EXPLODED_WAR || artifactType == WAR) {
+      // Use the compat runtime for exploded war artifacts.
       String baseImage
           = jdkServerLookup.lookupServerImage(runtimeConfig.getJdk(), runtimeConfig.getServer());
-      logger.info("Using base image '{}' for WAR artifact", baseImage);
+      logger.info("Using base image '{}' for {} artifact", baseImage, artifactType);
       return baseImage;
-
-    } else if (artifact.getType() == JAR) {
+    } else if (artifactType == JAR) {
       // If the user expects a server to be involved, fail loudly.
       if (runtimeConfig.getServer() != null) {
         throw new BuildStepException("runtime_config.server configuration is not compatible with "
@@ -101,10 +103,9 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
       String baseImage = jdkServerLookup.lookupJdkImage(runtimeConfig.getJdk());
       logger.info("Using base image '{}' for JAR artifact", baseImage);
       return baseImage;
-
     } else {
       throw new BuildStepException("Unable to select a base image for the artifact of type "
-          + artifact.getType() + " at path " + artifact.getPath());
+          + artifactType + " at path " + artifact.getPath());
     }
   }
 

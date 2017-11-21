@@ -168,20 +168,6 @@ public class PrebuiltRuntimeImageBuildStepTest {
   }
 
   @Test
-  public void testCompatArtifact() throws IOException, BuildStepException {
-    Path workspace = new TestWorkspaceBuilder()
-        .file("WEB-INF/appengine-web.xml").build()
-        .file("WEB-INF/web.xml").build()
-        .build();
-    BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
-    prebuiltRuntimeImageBuildStep.run(buildContext);
-
-    String dockerfile = buildContext.getDockerfile().toString();
-    assertTrue(dockerfile.startsWith("FROM " + compatImageName + "\n"));
-    assertTrue(dockerfile.contains("COPY ./ /app/"));
-  }
-
-  @Test
   public void testExplodedWarArtifactAtRoot() throws IOException, BuildStepException {
     String serverRuntime = "server_runtime_image";
     when(jdkServerLookup.lookupServerImage(null, null)).thenReturn(serverRuntime);
@@ -193,8 +179,8 @@ public class PrebuiltRuntimeImageBuildStepTest {
     prebuiltRuntimeImageBuildStep.run(buildContext);
 
     String dockerfile = buildContext.getDockerfile().toString();
-    assertTrue(dockerfile.startsWith("FROM " + compatImageName + "\n"));
-    assertTrue(dockerfile.contains("COPY ./ /app/"));
+    assertTrue(dockerfile.startsWith("FROM " + serverRuntime + "\n"));
+    assertTrue(dockerfile.contains("COPY ./ $APP_DESTINATION_EXPLODED_WAR"));
   }
 
   @Test(expected = ArtifactNotFoundException.class)
@@ -254,6 +240,23 @@ public class PrebuiltRuntimeImageBuildStepTest {
     AppYaml appYaml = new AppYaml();
     appYaml.setBetaSettings(betaSettings);
     BuildContext buildContext = new BuildContext(appYaml, workspace, false);
+
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+
+    String dockerfile = buildContext.getDockerfile().toString();
+    assertTrue(dockerfile.startsWith("FROM " + compatImageName));
+    assertTrue(dockerfile.contains("COPY ./ /app/"));
+  }
+
+  @Test
+  public void testCompatRuntime() throws BuildStepException, IOException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("WEB-INF/web.xml").build()
+        .file("WEB-INF/appengine-web.xml").build()
+        .build();
+
+    // Compat image should be used despite not setting EnableAppEngineApis because appengine-web.xml
+    BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
 
     prebuiltRuntimeImageBuildStep.run(buildContext);
 

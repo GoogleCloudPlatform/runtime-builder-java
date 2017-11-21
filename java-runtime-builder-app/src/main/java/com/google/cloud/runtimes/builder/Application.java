@@ -18,6 +18,8 @@ package com.google.cloud.runtimes.builder;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.BetaSettings;
+import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
+import com.google.cloud.runtimes.builder.config.domain.JdkServerLookupImpl;
 import com.google.cloud.runtimes.builder.config.domain.OverrideableSetting;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.injection.RootModule;
@@ -38,10 +40,13 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Top-level class for executing from the command line.
@@ -135,7 +140,7 @@ public class Application {
     boolean disableSourceBuild = cmd.hasOption("n");
 
     Injector injector = Guice.createInjector(
-        new RootModule(jdkMappings, DEFAULT_JDK_MAPPINGS, serverMappings, DEFAULT_SERVER_MAPPINGS,
+        new RootModule(mergeSettingsWithDefaults(serverMappings, jdkMappings),
             compatImage == null ? DEFAULT_COMPAT_RUNTIME_IMAGE : compatImage,
             mavenImage == null ? DEFAULT_MAVEN_DOCKER_IMAGE : mavenImage,
             gradleImage == null ? DEFAULT_GRADLE_DOCKER_IMAGE : gradleImage,
@@ -237,5 +242,59 @@ public class Application {
         actionStringSetting.accept(name);
       }
     }
+  }
+
+  /**
+   * Merges the given raw commandline settings with default settings for server and jdk images.
+   * @param rawServerSettings the raw commandline server mapping settings.
+   * @param rawJdkSettings the raw commandling jdk mapping settings.
+   * @return the merged settings.
+   */
+  @VisibleForTesting
+  public static JdkServerLookup mergeSettingsWithDefaults(String[] rawServerSettings,
+      String[] rawJdkSettings) {
+
+    JdkServerLookup settings = new JdkServerLookupImpl(getSettingsMap(rawJdkSettings),
+        getSettingsMap(rawServerSettings));
+
+    JdkServerLookup defaultSettings = new JdkServerLookupImpl(DEFAULT_JDK_MAPPINGS,
+        DEFAULT_SERVER_MAPPINGS);
+
+    return new JdkServerLookup(true) {
+
+      @Override
+      public Map<String, String> getJdkRuntimeMap() {
+        return mergeMaps(settings.getJdkRuntimeMap(), defaultSettings.getJdkRuntimeMap());
+      }
+
+      @Override
+      public Map<String, String> getServerRuntimeMap() {
+        return mergeMaps(settings.getServerRuntimeMap(), defaultSettings.getServerRuntimeMap());
+      }
+    };
+  }
+
+  private static Map<String, String> mergeMaps(Map<String, String> firstPriority,
+      Map<String, String> secondPriority) {
+    Map<String, String> merged = new HashMap<>(secondPriority);
+    merged.putAll(firstPriority);
+    return merged;
+  }
+
+  private static Map<String, String> getSettingsMap(String[] rawSettings) {
+    if (rawSettings == null) {
+      return Collections.emptyMap();
+    }
+    return Arrays.stream(rawSettings)
+        .map(s -> {
+          String[] split = s.split("=");
+          // make sure mappings are formatted correctly
+          if (split.length != 2) {
+            throw new IllegalArgumentException("Invalid mapping: '" + s + "'. "
+                + "All jdk/server mappings must be formatted as: KEY=VAL");
+          }
+          return split;
+        })
+        .collect(Collectors.toMap(a -> a[0], a -> a[1]));
   }
 }

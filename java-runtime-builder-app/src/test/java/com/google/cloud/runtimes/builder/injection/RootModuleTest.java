@@ -36,19 +36,11 @@ public class RootModuleTest {
   private static final boolean DISABLE_BUILD = false;
 
   @Test(expected = IllegalArgumentException.class)
-  public void testProvideJdkServerLookupMissingJdkDefault() throws IOException {
-    String[] jdkMappings = {"foo=gcr.io/foo"};
-    String[] serverMappings = {"*|*=gcr.io/foo"};
-    new RootModule(jdkMappings, serverMappings, COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
-        DISABLE_BUILD)
-        .provideJdkServerLookup();
-  }
-
-  @Test(expected = IllegalArgumentException.class)
   public void testProvideJdkServerLookupMissingServerDefault() throws IOException {
     String[] jdkMappings = {"*=gcr.io/foo"};
     String[] serverMappings = {"foo=gcr.io/foo"};
-    new RootModule(jdkMappings, serverMappings, COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
+    new RootModule(Application.mergeSettingsWithDefaults(serverMappings, jdkMappings), COMPAT_IMAGE,
+        MVN_IMAGE, GRADLE_IMAGE,
         DISABLE_BUILD)
         .provideJdkServerLookup();
   }
@@ -57,7 +49,8 @@ public class RootModuleTest {
   public void testProvideJdkServerLookupBadArgFormat() throws IOException {
     String[] jdkMappings = {"*=gcr.io/foo"};
     String[] serverMappings = {"foo=gcr.io/foo=bar"};
-    new RootModule(jdkMappings, serverMappings, COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
+    new RootModule(Application.mergeSettingsWithDefaults(serverMappings, jdkMappings), COMPAT_IMAGE,
+        MVN_IMAGE, GRADLE_IMAGE,
         DISABLE_BUILD)
         .provideJdkServerLookup();
   }
@@ -74,7 +67,8 @@ public class RootModuleTest {
     };
 
     JdkServerLookup jdkServerLookup
-        = new RootModule(jdkMappings, serverMappings, COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
+        = new RootModule(Application.mergeSettingsWithDefaults(serverMappings, jdkMappings),
+        COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
         DISABLE_BUILD)
         .provideJdkServerLookup();
 
@@ -90,7 +84,8 @@ public class RootModuleTest {
     String[] serverMappings = {"*|*=gcr.io/server:latest"};
     // test that the bindings can be created without errors
     Guice.createInjector(
-        new RootModule(jdkMappings, serverMappings, COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
+        new RootModule(Application.mergeSettingsWithDefaults(serverMappings, jdkMappings),
+            COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
             DISABLE_BUILD))
         .getInstance(BuildPipelineConfigurator.class);
   }
@@ -98,8 +93,8 @@ public class RootModuleTest {
   @Test
   public void testDefaultSettingsNoCommandLineGiven() throws IOException {
     JdkServerLookup jdkServerLookup
-        = new RootModule(null, Application.DEFAULT_JDK_MAPPINGS, null,
-        Application.DEFAULT_SERVER_MAPPINGS, COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
+        = new RootModule(Application.mergeSettingsWithDefaults(null, null), COMPAT_IMAGE, MVN_IMAGE,
+        GRADLE_IMAGE,
         DISABLE_BUILD, Collections.emptyMap())
         .provideJdkServerLookup();
 
@@ -120,8 +115,8 @@ public class RootModuleTest {
     String[] jdkMappings = {"*=gcr.io/jdk:latest"};
     String[] serverMappings = {"*|*=gcr.io/server:latest"};
     JdkServerLookup jdkServerLookup
-        = new RootModule(jdkMappings, Application.DEFAULT_JDK_MAPPINGS, serverMappings,
-        Application.DEFAULT_SERVER_MAPPINGS, COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
+        = new RootModule(Application.mergeSettingsWithDefaults(serverMappings, jdkMappings),
+        COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
         DISABLE_BUILD, Collections.emptyMap())
         .provideJdkServerLookup();
 

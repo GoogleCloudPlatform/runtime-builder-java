@@ -9,7 +9,7 @@ import java.util.Map;
 import static org.junit.Assert.*;
 
 /**
- * Unit tests for {@link JdkServerLookup}
+ * Unit tests for {@link JdkServerLookupImpl}
  */
 public class JdkServerLookupTest {
 
@@ -31,7 +31,7 @@ public class JdkServerLookupTest {
         " * | * ", "bothdefaults"
     );
 
-    jdkServerLookup = new JdkServerLookup(jdkMap, serverMap);
+    jdkServerLookup = new JdkServerLookupImpl(jdkMap, serverMap);
   }
 
   @Test
@@ -89,7 +89,7 @@ public class JdkServerLookupTest {
         "jdk#server", "value",
         "_#_", "value"
     );
-    new JdkServerLookup(jdkMap, serverMap);
+    new JdkServerLookupImpl(jdkMap, serverMap);
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -101,6 +101,6 @@ public class JdkServerLookupTest {
     Map<String, String> serverMap = ImmutableMap.of(
         "jdk#server", "value"
     );
-    new JdkServerLookup(jdkMap, serverMap);
+    new JdkServerLookupImpl(jdkMap, serverMap);
   }
 }

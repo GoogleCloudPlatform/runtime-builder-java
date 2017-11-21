@@ -16,10 +16,12 @@
 
 package com.google.cloud.runtimes.builder.buildsteps;
 
+import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.COMPAT_EXPLODED_WAR;
 import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.EXPLODED_WAR;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.Artifact;
+import com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType;
 import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.exception.ArtifactNotFoundException;
@@ -54,7 +56,8 @@ public class PrebuiltRuntimeImageBuildStep extends RuntimeImageBuildStep {
       // Check if the workspace itself is an exploded war artifact
       if (Artifact.isAnArtifact(buildContext.getWorkspaceDir())) {
         Artifact rootArtifact = Artifact.fromPath(buildContext.getWorkspaceDir());
-        if (rootArtifact.getType() == EXPLODED_WAR) {
+        ArtifactType artifactType = rootArtifact.getType();
+        if (artifactType == EXPLODED_WAR || artifactType == COMPAT_EXPLODED_WAR) {
           return rootArtifact;
         }
       }

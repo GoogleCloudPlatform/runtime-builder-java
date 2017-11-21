@@ -23,8 +23,30 @@ import java.nio.file.Path;
 
 public class Artifact {
 
-  public enum ArtifactType {
-    JAR, WAR, EXPLODED_WAR
+  /**
+   * Returns an {@link Artifact} of the appropriate type for the given path. If the artifact cannot
+   * be identified, a {@code IllegalArgumentException} is thrown. The path need not point to an
+   * existing file.
+   */
+  public static Artifact fromPath(Path path) {
+    String extension = com.google.common.io.Files.getFileExtension(path.toString());
+
+    if (Files.exists(path.resolve("WEB-INF"))) {
+      if (Files.exists(path.resolve("WEB-INF/appengine-web.xml"))) {
+        return new Artifact(ArtifactType.COMPAT_EXPLODED_WAR, path);
+      }
+      return new Artifact(ArtifactType.EXPLODED_WAR, path);
+
+    } else if (extension.equalsIgnoreCase("war")) {
+      return new Artifact(ArtifactType.WAR, path);
+
+    } else if (extension.equalsIgnoreCase("jar")) {
+      return new Artifact(ArtifactType.JAR, path);
+
+    } else {
+      throw new IllegalArgumentException("The file at path " + path + " is not a valid Java "
+          + "artifact. Expected a JAR, WAR, or exploded WAR artifact");
+    }
   }
 
   private final Path path;
@@ -58,27 +80,8 @@ public class Artifact {
     }
   }
 
-  /**
-   * Returns an {@link Artifact} of the appropriate type for the given path. If the artifact cannot
-   * be identified, a {@code IllegalArgumentException} is thrown. The path need not point to an
-   * existing file.
-   */
-  public static Artifact fromPath(Path path) {
-    String extension = com.google.common.io.Files.getFileExtension(path.toString());
-
-    if (Files.exists(path.resolve("WEB-INF"))) {
-      return new Artifact(ArtifactType.EXPLODED_WAR, path);
-
-    } else if (extension.equalsIgnoreCase("war")) {
-      return new Artifact(ArtifactType.WAR, path);
-
-    } else if (extension.equalsIgnoreCase("jar")) {
-      return new Artifact(ArtifactType.JAR, path);
-
-    } else {
-      throw new IllegalArgumentException("The file at path " + path + " is not a valid Java "
-          + "artifact. Expected a JAR, WAR, or exploded WAR artifact");
-    }
+  public enum ArtifactType {
+    JAR, WAR, EXPLODED_WAR, COMPAT_EXPLODED_WAR
   }
 
   @Override

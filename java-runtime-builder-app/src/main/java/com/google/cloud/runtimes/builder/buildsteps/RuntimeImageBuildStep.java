@@ -74,26 +74,19 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
       throws BuildStepException {
     RuntimeConfig runtimeConfig = buildContext.getRuntimeConfig();
     ArtifactType artifactType = artifact.getType();
+    String baseImage;
 
     if (artifactType == COMPAT_EXPLODED_WAR) {
-      return compatImageName;
-    }
-
-    // Check if the user has explicitly selected the compat runtime
-    if (buildContext.isCompatEnabled()) {
+      baseImage = compatImageName;
+    } else if (buildContext.isCompatEnabled()) {
       if (artifactType != EXPLODED_WAR) {
         throw new BuildStepException(String.format("App Engine APIs have been enabled. In order to "
             + "use App Engine APIs, an exploded WAR artifact is required, but a %s artifact was "
             + "found. See https://cloud.google.com/appengine/docs/flexible/java/upgrading for more "
             + "detail.", artifact.getType()));
       }
-      return compatImageName;
-    }
-
-    // Select runtime based on artifact type
-    String baseImage;
-
-    if (artifactType == EXPLODED_WAR || artifactType == WAR) {
+      baseImage = compatImageName;
+    } else if (artifactType == EXPLODED_WAR || artifactType == WAR) {
       baseImage = jdkServerLookup
           .lookupServerImage(runtimeConfig.getJdk(), runtimeConfig.getServer());
     } else if (artifactType == JAR) {

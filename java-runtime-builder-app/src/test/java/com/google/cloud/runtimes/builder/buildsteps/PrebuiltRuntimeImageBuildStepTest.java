@@ -247,4 +247,21 @@ public class PrebuiltRuntimeImageBuildStepTest {
     assertTrue(dockerfile.startsWith("FROM " + compatImageName));
     assertTrue(dockerfile.contains("COPY ./ /app/"));
   }
+
+  @Test
+  public void testCompatRuntime() throws BuildStepException, IOException {
+    Path workspace = new TestWorkspaceBuilder()
+        .file("WEB-INF/web.xml").build()
+        .file("WEB-INF/appengine-web.xml").build()
+        .build();
+
+    // Compat image should be used despite not setting EnableAppEngineApis because appengine-web.xml
+    BuildContext buildContext = new BuildContext(new AppYaml(), workspace, false);
+
+    prebuiltRuntimeImageBuildStep.run(buildContext);
+
+    String dockerfile = buildContext.getDockerfile().toString();
+    assertTrue(dockerfile.startsWith("FROM " + compatImageName));
+    assertTrue(dockerfile.contains("COPY ./ /app/"));
+  }
 }

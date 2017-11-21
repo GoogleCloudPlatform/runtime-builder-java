@@ -17,6 +17,7 @@
 package com.google.cloud.runtimes.builder.buildsteps;
 
 import static com.google.cloud.runtimes.builder.Constants.DOCKERFILE_BUILD_STAGE;
+import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.COMPAT_EXPLODED_WAR;
 import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.EXPLODED_WAR;
 import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.JAR;
 import static com.google.cloud.runtimes.builder.config.domain.Artifact.ArtifactType.WAR;
@@ -72,41 +73,35 @@ public abstract class RuntimeImageBuildStep implements BuildStep {
   private String getBaseRuntimeImage(BuildContext buildContext, Artifact artifact)
       throws BuildStepException {
     RuntimeConfig runtimeConfig = buildContext.getRuntimeConfig();
+    ArtifactType artifactType = artifact.getType();
+    String baseImage;
 
-    // Check if the user has explicitly selected the compat runtime
-    if (buildContext.isCompatEnabled()) {
-      if (artifact.getType() != EXPLODED_WAR) {
+    if (artifactType == COMPAT_EXPLODED_WAR) {
+      baseImage = compatImageName;
+    } else if (buildContext.isCompatEnabled()) {
+      if (artifactType != EXPLODED_WAR) {
         throw new BuildStepException(String.format("App Engine APIs have been enabled. In order to "
             + "use App Engine APIs, an exploded WAR artifact is required, but a %s artifact was "
             + "found. See https://cloud.google.com/appengine/docs/flexible/java/upgrading for more "
             + "detail.", artifact.getType()));
       }
-      return compatImageName;
-    }
-
-    // Select runtime based on artifact type
-
-    ArtifactType artifactType = artifact.getType();
-
-    if (artifactType == EXPLODED_WAR || artifactType == WAR) {
-      // Use the compat runtime for exploded war artifacts.
-      String baseImage
-          = jdkServerLookup.lookupServerImage(runtimeConfig.getJdk(), runtimeConfig.getServer());
-      logger.info("Using base image '{}' for {} artifact", baseImage, artifactType);
-      return baseImage;
+      baseImage = compatImageName;
+    } else if (artifactType == EXPLODED_WAR || artifactType == WAR) {
+      baseImage = jdkServerLookup
+          .lookupServerImage(runtimeConfig.getJdk(), runtimeConfig.getServer());
     } else if (artifactType == JAR) {
       // If the user expects a server to be involved, fail loudly.
       if (runtimeConfig.getServer() != null) {
         throw new BuildStepException("runtime_config.server configuration is not compatible with "
             + "JAR artifacts. To use a web server runtime, use a WAR artifact instead.");
       }
-      String baseImage = jdkServerLookup.lookupJdkImage(runtimeConfig.getJdk());
-      logger.info("Using base image '{}' for JAR artifact", baseImage);
-      return baseImage;
+      baseImage = jdkServerLookup.lookupJdkImage(runtimeConfig.getJdk());
     } else {
       throw new BuildStepException("Unable to select a base image for the artifact of type "
           + artifactType + " at path " + artifact.getPath());
     }
+    logger.info("Using base image '{}' for {} artifact", baseImage, artifactType);
+    return baseImage;
   }
 
   /**

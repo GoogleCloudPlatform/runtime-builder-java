@@ -259,14 +259,25 @@ public class Application {
 
     return new JdkServerLookup(true) {
 
+      private Map<String, String> jdkMap;
+      private Map<String, String> serverMap;
+
       @Override
       public Map<String, String> getJdkRuntimeMap() {
-        return mergeMaps(settings.getJdkRuntimeMap(), defaultSettings.getJdkRuntimeMap());
+        if (this.jdkMap == null) {
+          this.jdkMap = mergeMaps(settings.getJdkRuntimeMap(),
+              defaultSettings.getJdkRuntimeMap());
+        }
+        return this.jdkMap;
       }
 
       @Override
       public Map<String, String> getServerRuntimeMap() {
-        return mergeMaps(settings.getServerRuntimeMap(), defaultSettings.getServerRuntimeMap());
+        if (this.serverMap == null) {
+          this.serverMap = mergeMaps(settings.getServerRuntimeMap(),
+              defaultSettings.getServerRuntimeMap());
+        }
+        return this.serverMap;
       }
     };
   }

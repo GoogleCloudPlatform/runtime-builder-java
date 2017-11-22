@@ -18,8 +18,11 @@ package com.google.cloud.runtimes.builder.config.domain;
 
 import com.google.common.base.Preconditions;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class JdkServerLookupImpl extends JdkServerLookup {
 
@@ -53,6 +56,33 @@ public class JdkServerLookupImpl extends JdkServerLookup {
           .put(buildServerMapKey(keyParts[0].trim(), keyParts[1].trim()),
               serverRuntimeMap.get(key).trim());
     }
+  }
+
+  /**
+   * Constructs a new {@link JdkServerLookup}.
+   *
+   * @param jdkRuntimeMap maps jdk config names to runtime images
+   * @param serverRuntimeMap maps server and jdk config names to runtime images
+   */
+  public JdkServerLookupImpl(String[] jdkRuntimeMap, String[] serverRuntimeMap) {
+    this(getSettingsMap(jdkRuntimeMap), getSettingsMap(serverRuntimeMap));
+  }
+
+  private static Map<String, String> getSettingsMap(String[] rawSettings) {
+    if (rawSettings == null) {
+      return Collections.emptyMap();
+    }
+    return Arrays.stream(rawSettings)
+        .map(s -> {
+          String[] split = s.split("=");
+          // make sure mappings are formatted correctly
+          if (split.length != 2) {
+            throw new IllegalArgumentException("Invalid mapping: '" + s + "'. "
+                + "All jdk/server mappings must be formatted as: KEY=VAL");
+          }
+          return split;
+        })
+        .collect(Collectors.toMap(a -> a[0], a -> a[1]));
   }
 
   @Override

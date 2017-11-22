@@ -40,21 +40,16 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * Top-level class for executing from the command line.
  */
 public class Application {
 
-  private static final Options CLI_OPTIONS = new Options();
-  private static final String EXECUTABLE_NAME = "<BUILDER>";
   public static final ImmutableMap<String, String> DEFAULT_JDK_MAPPINGS = ImmutableMap.of(
       "*", "gcr.io/google-appengine/openjdk:8",
       "openjdk8", "gcr.io/google-appengine/openjdk:8",
@@ -78,6 +73,8 @@ public class Application {
       "gcr.io/cloud-builders/java/mvn:3.5.0-jdk-8";
   public static final String DEFAULT_GRADLE_DOCKER_IMAGE =
       "gcr.io/cloud-builders/java/gradle:4.0-jdk-8";
+  private static final Options CLI_OPTIONS = new Options();
+  private static final String EXECUTABLE_NAME = "<BUILDER>";
 
   /**
    * Adds the settings needed for the builder to an Options.
@@ -147,7 +144,7 @@ public class Application {
             disableSourceBuild, getAppYamlOverrideSettings(cmd)));
 
     // Perform dependency injection and run the application
-    Path workspaceDir  = Paths.get(System.getProperty("user.dir"));
+    Path workspaceDir = Paths.get(System.getProperty("user.dir"));
     injector.getInstance(BuildPipelineConfigurator.class).generateDockerResources(workspaceDir);
   }
 
@@ -246,6 +243,7 @@ public class Application {
 
   /**
    * Merges the given raw commandline settings with default settings for server and jdk images.
+   *
    * @param rawServerSettings the raw commandline server mapping settings.
    * @param rawJdkSettings the raw commandling jdk mapping settings.
    * @return the merged settings.
@@ -254,8 +252,7 @@ public class Application {
   public static JdkServerLookup mergeSettingsWithDefaults(String[] rawServerSettings,
       String[] rawJdkSettings) {
 
-    JdkServerLookup settings = new JdkServerLookupImpl(getSettingsMap(rawJdkSettings),
-        getSettingsMap(rawServerSettings));
+    JdkServerLookup settings = new JdkServerLookupImpl(rawJdkSettings, rawServerSettings);
 
     JdkServerLookup defaultSettings = new JdkServerLookupImpl(DEFAULT_JDK_MAPPINGS,
         DEFAULT_SERVER_MAPPINGS);
@@ -279,22 +276,5 @@ public class Application {
     Map<String, String> merged = new HashMap<>(secondPriority);
     merged.putAll(firstPriority);
     return merged;
-  }
-
-  private static Map<String, String> getSettingsMap(String[] rawSettings) {
-    if (rawSettings == null) {
-      return Collections.emptyMap();
-    }
-    return Arrays.stream(rawSettings)
-        .map(s -> {
-          String[] split = s.split("=");
-          // make sure mappings are formatted correctly
-          if (split.length != 2) {
-            throw new IllegalArgumentException("Invalid mapping: '" + s + "'. "
-                + "All jdk/server mappings must be formatted as: KEY=VAL");
-          }
-          return split;
-        })
-        .collect(Collectors.toMap(a -> a[0], a -> a[1]));
   }
 }

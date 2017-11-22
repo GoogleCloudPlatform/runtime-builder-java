@@ -113,7 +113,8 @@ public class RootModuleTest {
   @Test
   public void testDefaultSettingsPartialCommandLineGiven() throws IOException {
     String[] jdkMappings = {"*=gcr.io/jdk:latest"};
-    String[] serverMappings = {"*|*=gcr.io/server:latest"};
+    String[] serverMappings = {"*|*=gcr.io/server:latest",
+        "  openjdk8   | tomcat  = gcr.io/google-appengine/tomcat:8-many-spaces"};
     JdkServerLookup jdkServerLookup
         = new RootModule(Application.mergeSettingsWithDefaults(serverMappings, jdkMappings),
         COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
@@ -122,7 +123,7 @@ public class RootModuleTest {
 
     // spot-checking some of the default settings
     assertEquals("gcr.io/server:latest", jdkServerLookup.lookupServerImage("*", "*"));
-    assertEquals("gcr.io/google-appengine/tomcat:8",
+    assertEquals("gcr.io/google-appengine/tomcat:8-many-spaces",
         jdkServerLookup.lookupServerImage("openjdk8", "tomcat"));
     assertEquals("gcr.io/google-appengine/tomcat:latest",
         jdkServerLookup.lookupServerImage("*", "tomcat"));

@@ -13,7 +13,7 @@ import static org.junit.Assert.*;
  */
 public class JdkServerLookupTest {
 
-  private JdkServerLookup jdkServerLookup;
+  private JdkServerLookup jdkServerLookup, jdkServerLookupFromStrings, jdkServerLookupStringsMissingDefaultJdk, jdkServerLookupStringsMissingDefaultServer;
 
   @Before
   public void before() {
@@ -22,6 +22,11 @@ public class JdkServerLookupTest {
         "currentjdk", "jdk:current",
         "* ", "defaultjdk "
     );
+    String[] jdkMapStrings = {"oldjdk =  jdk:old  ",
+        "currentjdk =  jdk:current",
+        "* =   defaultjdk "};
+    String[] jdkMapStringsNoDefault = {"oldjdk =  jdk:old  ",
+        "currentjdk =  jdk:current"};
 
     Map<String, String> serverMap = ImmutableMap.of(
         "   newjdk| server1", " server1:new",
@@ -30,8 +35,61 @@ public class JdkServerLookupTest {
         "*| server1", "defaultjdk:server1",
         " * | * ", "bothdefaults"
     );
+    String[] serverMapStrings = {"   newjdk| server1 = server1:new",
+        "newjdk |*    = newjdk:defaultserver ",
+        " oldjdk | server1    =     server1:old",
+        "*| server1 =    defaultjdk:server1",
+        " * | *    =    bothdefaults"};
+    String[] serverMapStringsNoDefault = {"   newjdk| server1 = server1:new",
+        "newjdk |*    = newjdk:defaultserver ",
+        " oldjdk | server1    =     server1:old",
+        "*| server1 =    defaultjdk:server1"};
 
     jdkServerLookup = new JdkServerLookupImpl(jdkMap, serverMap);
+    jdkServerLookupFromStrings = new JdkServerLookupImpl(jdkMapStrings, serverMapStrings);
+    jdkServerLookupStringsMissingDefaultJdk = new JdkServerLookupImpl(jdkMapStringsNoDefault,
+        serverMapStrings);
+    jdkServerLookupStringsMissingDefaultServer = new JdkServerLookupImpl(jdkMapStrings,
+        serverMapStringsNoDefault);
+  }
+
+  @Test
+  public void testConstructorsForStringsMaps() {
+    assertEquals(jdkServerLookup.getJdkRuntimeMap(), jdkServerLookupFromStrings.getJdkRuntimeMap());
+    assertEquals(jdkServerLookup.getServerRuntimeMap(),
+        jdkServerLookupFromStrings.getServerRuntimeMap());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateDefaultJdk() {
+    new JdkServerLookup(true) {
+
+      @Override
+      public Map<String, String> getJdkRuntimeMap() {
+        return jdkServerLookupStringsMissingDefaultJdk.getJdkRuntimeMap();
+      }
+
+      @Override
+      public Map<String, String> getServerRuntimeMap() {
+        return jdkServerLookupStringsMissingDefaultJdk.getServerRuntimeMap();
+      }
+    };
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateDefaultServer() {
+    new JdkServerLookup(true) {
+
+      @Override
+      public Map<String, String> getJdkRuntimeMap() {
+        return jdkServerLookupStringsMissingDefaultServer.getJdkRuntimeMap();
+      }
+
+      @Override
+      public Map<String, String> getServerRuntimeMap() {
+        return jdkServerLookupStringsMissingDefaultServer.getServerRuntimeMap();
+      }
+    };
   }
 
   @Test

@@ -24,7 +24,9 @@ import com.google.cloud.runtimes.builder.config.domain.OverrideableSetting;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.injection.RootModule;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -43,6 +45,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -259,33 +262,49 @@ public class Application {
 
     return new JdkServerLookup(true) {
 
-      private Map<String, String> jdkMap;
-      private Map<String, String> serverMap;
-
       @Override
-      public Map<String, String> getJdkRuntimeMap() {
-        if (this.jdkMap == null) {
-          this.jdkMap = mergeMaps(settings.getJdkRuntimeMap(),
-              defaultSettings.getJdkRuntimeMap());
+      public String lookupJdkImage(String jdk) {
+        String desiredImage = settings.lookupJdkImage(jdk);
+        String image = desiredImage == null ? defaultSettings.lookupJdkImage(jdk) : desiredImage;
+
+        if (image == null) {
+          throw new IllegalArgumentException(
+              String.format("The provided runtime_config.jdk option '%s'"
+                      + " is invalid for JAR deployments. Please use a supported jdk option: %s",
+                  Strings.nullToEmpty(jdk), getAvailableJdks()));
         }
-        return this.jdkMap;
+        return image;
       }
 
       @Override
-      public Map<String, String> getServerRuntimeMap() {
-        if (this.serverMap == null) {
-          this.serverMap = mergeMaps(settings.getServerRuntimeMap(),
-              defaultSettings.getServerRuntimeMap());
+      public Set<String> getAvailableJdks() {
+        return Sets.union(settings.getAvailableJdks(), defaultSettings.getAvailableJdks());
+      }
+
+      @Override
+      public String lookupServerImage(String jdk, String serverType) {
+        String desiredImage = settings.lookupServerImage(jdk, serverType);
+        String image = desiredImage == null ? defaultSettings.lookupServerImage(jdk, serverType)
+            : desiredImage;
+
+        if (image == null) {
+          throw new IllegalArgumentException(String.format("The provided runtime_config.jdk and "
+                  + "runtime_config.server configuration (runtime_config.jdk: '%s', "
+                  + "runtime_config.server: '%s') is invalid for WAR "
+                  + "deployments. Please use a supported "
+                  + "jdk/server combination: %s",
+              Strings.nullToEmpty(jdk), Strings.nullToEmpty(serverType),
+              getAvailableJdkServerPairs()));
         }
-        return this.serverMap;
+        return image;
+      }
+
+      @Override
+      public Set<String> getAvailableJdkServerPairs() {
+        return Sets.union(settings.getAvailableJdkServerPairs(),
+            defaultSettings.getAvailableJdkServerPairs());
       }
     };
   }
 
-  private static Map<String, String> mergeMaps(Map<String, String> firstPriority,
-      Map<String, String> secondPriority) {
-    Map<String, String> merged = new HashMap<>(secondPriority);
-    merged.putAll(firstPriority);
-    return merged;
-  }
 }

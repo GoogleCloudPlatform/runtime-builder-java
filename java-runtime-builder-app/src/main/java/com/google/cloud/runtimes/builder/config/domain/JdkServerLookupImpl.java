@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class JdkServerLookupImpl extends JdkServerLookup {
@@ -86,12 +87,34 @@ public class JdkServerLookupImpl extends JdkServerLookup {
   }
 
   @Override
-  public Map<String, String> getJdkRuntimeMap() {
-    return this.jdkRuntimeMap;
+  public Set<String> getAvailableJdks() {
+    return this.jdkRuntimeMap.keySet()
+        .stream()
+        .filter((key) -> !key.contains(KEY_WILDCARD))
+        .map(key -> "'" + key + "'")
+        .collect(Collectors.toSet());
   }
 
   @Override
-  public Map<String, String> getServerRuntimeMap() {
-    return this.serverRuntimeMap;
+  public Set<String> getAvailableJdkServerPairs() {
+    return this.serverRuntimeMap.keySet()
+        .stream()
+        .filter((key) -> !key.contains(KEY_WILDCARD))
+        .map((key) -> key.split("\\" + KEY_DELIMITER))
+        .map((split) -> split[0] + "/" + split[1])
+        .collect(Collectors.toSet());
+  }
+
+  @Override
+  public String lookupJdkImage(String jdk) {
+    if (jdk == null) {
+      return this.jdkRuntimeMap.get(KEY_WILDCARD);
+    }
+    return this.jdkRuntimeMap.get(jdk);
+  }
+
+  @Override
+  public String lookupServerImage(String jdk, String serverType) {
+    return this.serverRuntimeMap.get(buildServerMapKey(jdk, serverType));
   }
 }

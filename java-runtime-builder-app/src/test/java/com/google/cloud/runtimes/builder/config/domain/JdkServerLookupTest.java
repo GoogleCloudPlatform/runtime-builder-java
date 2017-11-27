@@ -1,6 +1,8 @@
 package com.google.cloud.runtimes.builder.config.domain;
 
+import com.google.cloud.runtimes.builder.Application;
 import com.google.common.collect.ImmutableMap;
+import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -13,7 +15,7 @@ import static org.junit.Assert.*;
  */
 public class JdkServerLookupTest {
 
-  private JdkServerLookup jdkServerLookup, jdkServerLookupFromStrings, jdkServerLookupStringsMissingDefaultJdk, jdkServerLookupStringsMissingDefaultServer;
+  private JdkServerLookup jdkServerLookup, jdkServerLookupFromStrings, jdkServerLookupStringsMissingDefaultJdk, jdkServerLookupStringsMissingDefaultServer, jdkServerLookupMergedDefaultSettings;
 
   @Before
   public void before() {
@@ -51,13 +53,24 @@ public class JdkServerLookupTest {
         serverMapStrings);
     jdkServerLookupStringsMissingDefaultServer = new JdkServerLookupImpl(jdkMapStrings,
         serverMapStringsNoDefault);
+    jdkServerLookupMergedDefaultSettings = Application
+        .mergeSettingsWithDefaults(serverMapStrings, jdkMapStrings);
   }
 
   @Test
   public void testConstructorsForStringsMaps() {
-    assertEquals(jdkServerLookup.getJdkRuntimeMap(), jdkServerLookupFromStrings.getJdkRuntimeMap());
-    assertEquals(jdkServerLookup.getServerRuntimeMap(),
-        jdkServerLookupFromStrings.getServerRuntimeMap());
+    assertEquals(jdkServerLookup.lookupJdkImage("*"),
+        jdkServerLookupFromStrings.lookupJdkImage("*"));
+    assertEquals(jdkServerLookup.lookupJdkImage("currentjdk"),
+        jdkServerLookupFromStrings.lookupJdkImage("currentjdk"));
+    assertEquals(jdkServerLookup.lookupServerImage("newjdk", "server1"),
+        jdkServerLookupFromStrings.lookupServerImage("newjdk", "server1"));
+    assertEquals(jdkServerLookup.lookupServerImage("oldjdk", "server1"),
+        jdkServerLookupFromStrings.lookupServerImage("oldjdk", "server1"));
+    assertEquals(jdkServerLookup.lookupServerImage("*", "server1"),
+        jdkServerLookupFromStrings.lookupServerImage("*", "server1"));
+    assertEquals(jdkServerLookup.lookupServerImage("*", "*"),
+        jdkServerLookupFromStrings.lookupServerImage("*", "*"));
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -65,13 +78,23 @@ public class JdkServerLookupTest {
     new JdkServerLookup(true) {
 
       @Override
-      public Map<String, String> getJdkRuntimeMap() {
-        return jdkServerLookupStringsMissingDefaultJdk.getJdkRuntimeMap();
+      public String lookupJdkImage(String jdk) {
+        return jdkServerLookupStringsMissingDefaultJdk.lookupJdkImage(jdk);
       }
 
       @Override
-      public Map<String, String> getServerRuntimeMap() {
-        return jdkServerLookupStringsMissingDefaultJdk.getServerRuntimeMap();
+      public Set<String> getAvailableJdks() {
+        return jdkServerLookupStringsMissingDefaultJdk.getAvailableJdks();
+      }
+
+      @Override
+      public String lookupServerImage(String jdk, String serverType) {
+        return jdkServerLookupStringsMissingDefaultJdk.lookupServerImage(jdk, serverType);
+      }
+
+      @Override
+      public Set<String> getAvailableJdkServerPairs() {
+        return jdkServerLookupStringsMissingDefaultJdk.getAvailableJdkServerPairs();
       }
     };
   }
@@ -81,13 +104,23 @@ public class JdkServerLookupTest {
     new JdkServerLookup(true) {
 
       @Override
-      public Map<String, String> getJdkRuntimeMap() {
-        return jdkServerLookupStringsMissingDefaultServer.getJdkRuntimeMap();
+      public String lookupJdkImage(String jdk) {
+        return jdkServerLookupStringsMissingDefaultServer.lookupJdkImage(jdk);
       }
 
       @Override
-      public Map<String, String> getServerRuntimeMap() {
-        return jdkServerLookupStringsMissingDefaultServer.getServerRuntimeMap();
+      public Set<String> getAvailableJdks() {
+        return jdkServerLookupStringsMissingDefaultServer.getAvailableJdks();
+      }
+
+      @Override
+      public String lookupServerImage(String jdk, String serverType) {
+        return jdkServerLookupStringsMissingDefaultServer.lookupServerImage(jdk, serverType);
+      }
+
+      @Override
+      public Set<String> getAvailableJdkServerPairs() {
+        return jdkServerLookupStringsMissingDefaultServer.getAvailableJdkServerPairs();
       }
     };
   }
@@ -124,17 +157,20 @@ public class JdkServerLookupTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testLookupJdkImageNonexistent() {
-    jdkServerLookup.lookupJdkImage("invalid_jdk");
+    assertNull(jdkServerLookup.lookupJdkImage("invalid_jdk"));
+    jdkServerLookupMergedDefaultSettings.lookupJdkImage("invalid_jdk");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testLookupServerImageInvalidJdk() {
-    jdkServerLookup.lookupServerImage("invalid_jdk", null);
+    assertNull(jdkServerLookup.lookupServerImage("invalid_jdk", null));
+    jdkServerLookupMergedDefaultSettings.lookupServerImage("invalid_jdk", null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testLookupServerImageInvalidServer() {
-    jdkServerLookup.lookupServerImage(null, "invalid_server");
+    assertNull(jdkServerLookup.lookupServerImage(null, "invalid_server"));
+    jdkServerLookupMergedDefaultSettings.lookupServerImage(null, "invalid_server");
   }
 
 

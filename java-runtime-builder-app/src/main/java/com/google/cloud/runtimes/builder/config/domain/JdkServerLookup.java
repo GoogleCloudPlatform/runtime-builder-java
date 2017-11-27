@@ -16,16 +16,12 @@
 
 package com.google.cloud.runtimes.builder.config.domain;
 
-import com.google.common.base.Strings;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 public abstract class JdkServerLookup {
 
-  protected static final String KEY_DELIMITER = "|";
   protected static final String KEY_WILDCARD = "*";
+  protected static final String KEY_DELIMITER = "|";
 
   /**
    * Constructor that optionally validates the settings to ensure wildcards are present.
@@ -41,12 +37,12 @@ public abstract class JdkServerLookup {
   }
 
   private void validate() {
-    if (!getJdkRuntimeMap().containsKey(KEY_WILDCARD)) {
+    if (lookupJdkImage(KEY_WILDCARD) == null) {
       throw new IllegalArgumentException("Expected to find default (" + KEY_WILDCARD + ") key in "
           + "JDK runtime map.");
     }
     String serverMapKey = buildServerMapKey(null, null);
-    if (!getServerRuntimeMap().containsKey(serverMapKey)) {
+    if (lookupServerImage(null, null) == null) {
       throw new IllegalArgumentException("Expected to find default (" + serverMapKey + ") key in "
           + "server runtime map.");
     }
@@ -58,29 +54,14 @@ public abstract class JdkServerLookup {
    * @param jdk the key for the JDK. If {@code null}, a default will be used. If no
    *     valid JDK image is found, an {@link IllegalArgumentException} will be thrown.
    */
-  public String lookupJdkImage(String jdk) {
-    Map<String, String> jdkRuntimeMap = getJdkRuntimeMap();
-    if (jdk == null) {
-      return jdkRuntimeMap.get(KEY_WILDCARD);
-    }
+  public abstract String lookupJdkImage(String jdk);
 
-    if (!jdkRuntimeMap.containsKey(jdk)) {
-      throw new IllegalArgumentException(String.format("The provided runtime_config.jdk option '%s'"
-              + " is invalid for JAR deployments. Please use a supported jdk option: %s",
-          Strings.nullToEmpty(jdk), getAvailableJdks()));
-    }
-    return jdkRuntimeMap.get(jdk);
-  }
-
-  private List<String> getAvailableJdks() {
-    return getJdkRuntimeMap().keySet()
-        .stream()
-        .filter((key) -> !key.contains(KEY_WILDCARD))
-        .map(key -> "'" + key + "'")
-        .collect(Collectors.toList());
-  }
-
-  public abstract Map<String, String> getJdkRuntimeMap();
+  /**
+   * Returns the set of available jdk settings.
+   *
+   * @return the set of available jdk settings.
+   */
+  public abstract Set<String> getAvailableJdks();
 
   /**
    * Lookup a server image for the given JDK name and server type.
@@ -90,32 +71,14 @@ public abstract class JdkServerLookup {
    * @param serverType the type of the server. If {@code null}, a default server type will be used.
    *     If no valid server image is found, an {@link IllegalArgumentException} will be thrown.
    */
-  public String lookupServerImage(String jdk, String serverType) {
-    Map<String, String> serverRuntimeMap = getServerRuntimeMap();
-    String key = buildServerMapKey(jdk, serverType);
+  public abstract String lookupServerImage(String jdk, String serverType);
 
-    if (!serverRuntimeMap.containsKey(key)) {
-      throw new IllegalArgumentException(String.format("The provided runtime_config.jdk and "
-              + "runtime_config.server configuration (runtime_config.jdk: '%s', "
-              + "runtime_config.server: '%s') is invalid for WAR "
-              + "deployments. Please use a supported "
-              + "jdk/server combination: %s",
-          Strings.nullToEmpty(jdk), Strings.nullToEmpty(serverType),
-          getAvailableJdkServerPairs()));
-    }
-    return serverRuntimeMap.get(key);
-  }
-
-  private List<String> getAvailableJdkServerPairs() {
-    return getServerRuntimeMap().keySet()
-        .stream()
-        .filter((key) -> !key.contains(KEY_WILDCARD))
-        .map((key) -> key.split("\\" + KEY_DELIMITER))
-        .map((split) -> split[0] + "/" + split[1])
-        .collect(Collectors.toList());
-  }
-
-  public abstract Map<String, String> getServerRuntimeMap();
+  /**
+   * Returns the set of available jdk and server setting pairs.
+   *
+   * @return the set of setting pairs.
+   */
+  public abstract Set<String> getAvailableJdkServerPairs();
 
   protected String buildServerMapKey(String jdk, String serverType) {
     String jdkKey = jdk == null ? KEY_WILDCARD : jdk;

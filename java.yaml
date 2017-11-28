@@ -28,10 +28,10 @@ steps:
   - '--compat-runtime-image=gcr.io/google-appengine/jetty9-compat:latest'
 
   # Image to use for maven builds
-  - '--maven-docker-image=gcr.io/cloud-builders/java/mvn:3.5.0-jdk-8'
+  - '--maven-docker-image=gcr.io/cloud-builders/mvn:3.5.0-jdk-8'
 
   # Image to use for gradle builds
-  - '--gradle-docker-image=gcr.io/cloud-builders/java/gradle:4.0-jdk-8'
+  - '--gradle-docker-image=gcr.io/cloud-builders/gradle:4.0-jdk-8'
 
   # Disable building from source
   # FIXME: https://github.com/GoogleCloudPlatform/runtime-builder-java/milestone/2

@@ -1,4 +1,4 @@
-FROM gcr.io/cloud-builders/java/mvn:3.5.0-jdk-8
+FROM gcr.io/cloud-builders/mvn:3.5.0-jdk-8
 
 ARG GRADLE_VERSION=3.4
 

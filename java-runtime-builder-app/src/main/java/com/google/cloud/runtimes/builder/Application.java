@@ -73,9 +73,9 @@ public class Application {
   public static final String DEFAULT_COMPAT_RUNTIME_IMAGE =
       "gcr.io/google-appengine/jetty9-compat:latest";
   public static final String DEFAULT_MAVEN_DOCKER_IMAGE =
-      "gcr.io/cloud-builders/java/mvn:3.5.0-jdk-8";
+      "gcr.io/cloud-builders/mvn:3.5.0-jdk-8";
   public static final String DEFAULT_GRADLE_DOCKER_IMAGE =
-      "gcr.io/cloud-builders/java/gradle:4.0-jdk-8";
+      "gcr.io/cloud-builders/gradle:4.0-jdk-8";
   private static final Options CLI_OPTIONS = new Options();
   private static final String EXECUTABLE_NAME = "<BUILDER>";
 

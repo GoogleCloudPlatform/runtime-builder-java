@@ -18,10 +18,12 @@ package com.google.cloud.runtimes.builder;
 
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.BetaSettings;
+import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
 import com.google.cloud.runtimes.builder.config.domain.OverrideableSetting;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.injection.RootModule;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ObjectArrays;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -47,58 +49,84 @@ import java.util.function.Consumer;
  */
 public class Application {
 
+  public static final String[] DEFAULT_JDK_MAPPINGS = {
+      "*=gcr.io/google-appengine/openjdk:8",
+      "openjdk8=gcr.io/google-appengine/openjdk:8",
+      "openjdk9=gcr.io/google-appengine/openjdk:9"
+  };
+  public static final String[] DEFAULT_SERVER_MAPPINGS = {
+      "*|*=gcr.io/google-appengine/jetty:9",
+      "openjdk8|*=gcr.io/google-appengine/jetty:9",
+      "openjdk8|jetty9=gcr.io/google-appengine/jetty:9",
+      "openjdk8|jetty=gcr.io/google-appengine/jetty:9",
+      "openjdk8|tomcat8=gcr.io/google-appengine/tomcat:8",
+      "openjdk8|tomcat=gcr.io/google-appengine/tomcat:8",
+      "*|jetty9=gcr.io/google-appengine/jetty:9",
+      "*|jetty=gcr.io/google-appengine/jetty:latest",
+      "*|tomcat8=gcr.io/google-appengine/tomcat:8",
+      "*|tomcat=gcr.io/google-appengine/tomcat:latest"
+  };
+  public static final String DEFAULT_COMPAT_RUNTIME_IMAGE =
+      "gcr.io/google-appengine/jetty9-compat:latest";
+  public static final String DEFAULT_MAVEN_DOCKER_IMAGE =
+      "gcr.io/cloud-builders/mvn:3.5.0-jdk-8";
+  public static final String DEFAULT_GRADLE_DOCKER_IMAGE =
+      "gcr.io/cloud-builders/gradle:4.0-jdk-8";
   private static final Options CLI_OPTIONS = new Options();
   private static final String EXECUTABLE_NAME = "<BUILDER>";
 
-  static {
-    CLI_OPTIONS.addOption(Option.builder("j")
-        .required()
+  /**
+   * Adds the settings needed for the builder to an Options.
+   *
+   * @param options The options to which to add the required args.
+   */
+  @VisibleForTesting
+  public static void addCliOptions(Options options) {
+
+    options.addOption(Option.builder("j")
         .hasArgs()
         .longOpt("jdk-runtimes-map")
         .desc("Mappings between supported jdk versions and docker images")
         .build());
 
-    CLI_OPTIONS.addOption(Option.builder("s")
-        .required()
+    options.addOption(Option.builder("s")
         .hasArgs()
         .longOpt("server-runtimes-map")
         .desc("Mappings between supported jdk versions, server types, and docker images")
         .build());
 
-    CLI_OPTIONS.addOption(Option.builder("c")
-        .required()
+    options.addOption(Option.builder("c")
         .hasArgs()
         .longOpt("compat-runtime-image")
         .desc("Base runtime image to use for the flex-compat environment")
         .build());
 
-    CLI_OPTIONS.addOption(Option.builder("m")
-        .required()
+    options.addOption(Option.builder("m")
         .hasArg()
         .longOpt("maven-docker-image")
         .desc("Docker image to use for maven builds")
         .build());
 
-    CLI_OPTIONS.addOption(Option.builder("g")
-        .required()
+    options.addOption(Option.builder("g")
         .hasArg()
         .longOpt("gradle-docker-image")
         .desc("Docker image to use for gradle builds")
         .build());
 
-    CLI_OPTIONS.addOption(Option.builder("n")
+    options.addOption(Option.builder("n")
         .hasArg(false)
         .longOpt("no-source-build")
         .desc("Disable building from source")
         .build());
 
-    addOverrideSettingsToOptions(CLI_OPTIONS);
+    addOverrideSettingsToOptions(options);
   }
 
   /**
    * Main method for invocation from the command line. Handles parsing of command line options.
    */
   public static void main(String[] args) throws BuildStepException, IOException {
+    addCliOptions(CLI_OPTIONS);
     CommandLine cmd = parse(args);
     String[] jdkMappings = cmd.getOptionValues("j");
     String[] serverMappings = cmd.getOptionValues("s");
@@ -108,11 +136,14 @@ public class Application {
     boolean disableSourceBuild = cmd.hasOption("n");
 
     Injector injector = Guice.createInjector(
-        new RootModule(jdkMappings, serverMappings, compatImage, mavenImage, gradleImage,
+        new RootModule(mergeSettingsWithDefaults(jdkMappings, serverMappings),
+            compatImage == null ? DEFAULT_COMPAT_RUNTIME_IMAGE : compatImage,
+            mavenImage == null ? DEFAULT_MAVEN_DOCKER_IMAGE : mavenImage,
+            gradleImage == null ? DEFAULT_GRADLE_DOCKER_IMAGE : gradleImage,
             disableSourceBuild, getAppYamlOverrideSettings(cmd)));
 
     // Perform dependency injection and run the application
-    Path workspaceDir  = Paths.get(System.getProperty("user.dir"));
+    Path workspaceDir = Paths.get(System.getProperty("user.dir"));
     injector.getInstance(BuildPipelineConfigurator.class).generateDockerResources(workspaceDir);
   }
 
@@ -122,6 +153,7 @@ public class Application {
       return parser.parse(CLI_OPTIONS, args);
     } catch (ParseException e) {
       // print instructions and exit
+      System.out.println(e.getMessage());
       HelpFormatter formatter = new HelpFormatter();
       formatter.printHelp(EXECUTABLE_NAME, CLI_OPTIONS, true);
       System.exit(1);
@@ -175,6 +207,7 @@ public class Application {
         nonBooleanSettingName -> {
           options.addOption(Option.builder().longOpt(nonBooleanSettingName)
               .desc(overrideSettingDescPrefix + " runtime_config : " + nonBooleanSettingName)
+              .hasArg()
               .build());
         }
     );
@@ -189,6 +222,7 @@ public class Application {
         nonBooleanSettingName -> {
           options.addOption(Option.builder().longOpt(nonBooleanSettingName)
               .desc(overrideSettingDescPrefix + " beta_settings : " + nonBooleanSettingName)
+              .hasArg()
               .build());
         }
     );
@@ -204,5 +238,22 @@ public class Application {
         actionStringSetting.accept(name);
       }
     }
+  }
+
+  /**
+   * Merges the given raw commandline settings with default settings for jdk and server images.
+   *
+   * @param rawJdkSettings the raw commandling jdk mapping settings.
+   * @param rawServerSettings the raw commandline server mapping settings.
+   * @return the merged settings.
+   */
+  @VisibleForTesting
+  public static JdkServerLookup mergeSettingsWithDefaults(String[] rawJdkSettings,
+      String[] rawServerSettings) {
+    String[] jdk = rawJdkSettings == null ? new String[0] : rawJdkSettings;
+    String[] server = rawServerSettings == null ? new String[0] : rawServerSettings;
+    return new JdkServerLookup(
+        ObjectArrays.concat(jdk, DEFAULT_JDK_MAPPINGS, String.class),
+        ObjectArrays.concat(server, DEFAULT_SERVER_MAPPINGS, String.class));
   }
 }

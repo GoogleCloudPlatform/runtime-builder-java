@@ -97,10 +97,11 @@ public class AppYamlParserTest {
   public void testParseEnableAppEngineApisTrueWithCmdSetting() throws IOException {
     Map<String, Object> overrideSettings = new HashMap<>();
     overrideSettings.put("enable_app_engine_apis", true);
-    appYamlParser = new AppYamlParser(overrideSettings);
+    appYamlParser = new AppYamlParser();
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "beta_settings:\n"
         + "  enable_app_engine_apis: false");
+    result.applyOverrideSettings(overrideSettings);
     assertTrue(result.getBetaSettings().isEnableAppEngineApis());
   }
 
@@ -124,8 +125,9 @@ public class AppYamlParserTest {
   public void testParseEnableAppEngineApisTrueWithoutYaml() throws Exception {
     Map<String, Object> overrideSettings = new HashMap<>();
     overrideSettings.put("enable_app_engine_apis", true);
-    appYamlParser = new AppYamlParser(overrideSettings);
+    appYamlParser = new AppYamlParser();
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE);
+    result.applyOverrideSettings(overrideSettings);
     assertTrue(result.getBetaSettings().isEnableAppEngineApis());
   }
 
@@ -167,11 +169,12 @@ public class AppYamlParserTest {
 
     Map<String, Object> overrideSettings = new HashMap<>();
     overrideSettings.put("artifact", otherArtifact);
-    appYamlParser = new AppYamlParser(overrideSettings);
+    appYamlParser = new AppYamlParser();
 
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "runtime_config:\n"
         + "  artifact: " + artifact);
+    result.applyOverrideSettings(overrideSettings);
     assertEquals(otherArtifact, result.getRuntimeConfig().getArtifact());
   }
 
@@ -182,11 +185,12 @@ public class AppYamlParserTest {
 
     Map<String, Object> overrideSettings = new HashMap<>();
     overrideSettings.put("jdk", otherJdk);
-    appYamlParser = new AppYamlParser(overrideSettings);
+    appYamlParser = new AppYamlParser();
 
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "runtime_config:\n"
         + "  jdk: " + jdk);
+    result.applyOverrideSettings(overrideSettings);
     assertEquals(otherJdk, result.getRuntimeConfig().getJdk());
   }
 
@@ -197,11 +201,12 @@ public class AppYamlParserTest {
 
     Map<String, Object> overrideSettings = new HashMap<>();
     overrideSettings.put("build_script", otherBuildScript);
-    appYamlParser = new AppYamlParser(overrideSettings);
+    appYamlParser = new AppYamlParser();
 
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE
         + "runtime_config:\n"
         + "  build_script: " + buildScript);
+    result.applyOverrideSettings(overrideSettings);
     assertEquals(otherBuildScript, result.getRuntimeConfig().getBuildScript());
   }
 
@@ -211,9 +216,10 @@ public class AppYamlParserTest {
 
     Map<String, Object> overrideSettings = new HashMap<>();
     overrideSettings.put("artifact", otherArtifact);
-    appYamlParser = new AppYamlParser(overrideSettings);
+    appYamlParser = new AppYamlParser();
 
     AppYaml result = parseFileWithContents(APP_YAML_PREAMBLE);
+    result.applyOverrideSettings(overrideSettings);
     assertEquals(otherArtifact, result.getRuntimeConfig().getArtifact());
   }
 
@@ -284,19 +290,19 @@ public class AppYamlParserTest {
     assertEquals("Replaces the setting from app.yaml under runtime_config : jetty_quickstart",
         options.getOption("jetty_quickstart").getDescription());
 
-    assertTrue(options.hasOption("build_script"));
+    assertTrue(options.getOption("build_script").hasArg());
     assertEquals("Replaces the setting from app.yaml under runtime_config : build_script",
         options.getOption("build_script").getDescription());
 
-    assertTrue(options.hasOption("jdk"));
+    assertTrue(options.getOption("jdk").hasArg());
     assertEquals("Replaces the setting from app.yaml under runtime_config : jdk",
         options.getOption("jdk").getDescription());
 
-    assertTrue(options.hasOption("server"));
+    assertTrue(options.getOption("server").hasArg());
     assertEquals("Replaces the setting from app.yaml under runtime_config : server",
         options.getOption("server").getDescription());
 
-    assertTrue(options.hasOption("artifact"));
+    assertTrue(options.getOption("artifact").hasArg());
     assertEquals("Replaces the setting from app.yaml under runtime_config : artifact",
         options.getOption("artifact").getDescription());
   }

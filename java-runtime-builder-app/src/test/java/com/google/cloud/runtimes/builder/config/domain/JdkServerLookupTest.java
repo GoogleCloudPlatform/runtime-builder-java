@@ -1,10 +1,8 @@
 package com.google.cloud.runtimes.builder.config.domain;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.cloud.runtimes.builder.Application;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -13,25 +11,45 @@ import static org.junit.Assert.*;
  */
 public class JdkServerLookupTest {
 
+  private final static String[] jdkMapStrings = {
+      "oldjdk =  jdk:old  ",
+      "currentjdk =  jdk:current",
+      "* =   defaultjdk "};
+  private final static String[] serverMapStrings = {
+      "   newjdk| server1 = server1:new",
+      "newjdk |*    = newjdk:defaultserver ",
+      " oldjdk | server1    =     server1:old",
+      "*| server1 =    defaultjdk:server1",
+      " * | *    =    bothdefaults"};
+
   private JdkServerLookup jdkServerLookup;
+  private JdkServerLookup jdkServerLookupMergedDefaultSettings;
 
   @Before
   public void before() {
-    Map<String, String> jdkMap = ImmutableMap.of(
-        "oldjdk", "jdk:old",
-        "currentjdk", "jdk:current",
-        "*", "defaultjdk"
-    );
+    jdkServerLookup = new JdkServerLookup(
+        jdkMapStrings, serverMapStrings);
+    jdkServerLookupMergedDefaultSettings = Application
+        .mergeSettingsWithDefaults(jdkMapStrings, serverMapStrings);
+  }
 
-    Map<String, String> serverMap = ImmutableMap.of(
-       "newjdk|server1", "server1:new",
-       "newjdk|*", "newjdk:defaultserver",
-       "oldjdk|server1", "server1:old",
-       "*|server1", "defaultjdk:server1",
-       "*|*", "bothdefaults"
-    );
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateDefaultJdk() {
+    String[] jdkMapStringsNoDefault = {
+        "oldjdk =  jdk:old  ",
+        "currentjdk =  jdk:current"};
 
-    jdkServerLookup = new JdkServerLookup(jdkMap, serverMap);
+    new JdkServerLookup(jdkMapStringsNoDefault, serverMapStrings);
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testValidateDefaultServer() {
+    String[] serverMapStringsNoDefault = {"   newjdk| server1 = server1:new",
+        "newjdk |*    = newjdk:defaultserver ",
+        " oldjdk | server1    =     server1:old",
+        "*| server1 =    defaultjdk:server1"};
+
+    new JdkServerLookup(jdkMapStrings, serverMapStringsNoDefault);
   }
 
   @Test
@@ -66,41 +84,43 @@ public class JdkServerLookupTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void testLookupJdkImageNonexistent() {
-    jdkServerLookup.lookupJdkImage("invalid_jdk");
+    assertNull(jdkServerLookup.lookupJdkImage("invalid_jdk"));
+    jdkServerLookupMergedDefaultSettings.lookupJdkImage("invalid_jdk");
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testLookupServerImageInvalidJdk() {
-    jdkServerLookup.lookupServerImage("invalid_jdk", null);
+    assertNull(jdkServerLookup.lookupServerImage("invalid_jdk", null));
+    jdkServerLookupMergedDefaultSettings.lookupServerImage("invalid_jdk", null);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testLookupServerImageInvalidServer() {
-    jdkServerLookup.lookupServerImage(null, "invalid_server");
+    assertNull(jdkServerLookup.lookupServerImage(null, "invalid_server"));
+    jdkServerLookupMergedDefaultSettings.lookupServerImage(null, "invalid_server");
   }
 
 
   @Test(expected = IllegalArgumentException.class)
   public void testConstructorNoJdkDefaultPresent() {
-    Map<String, String> jdkMap = ImmutableMap.of(
-        "jdk", "value"
-    );
-    Map<String, String> serverMap = ImmutableMap.of(
-        "jdk#server", "value",
-        "_#_", "value"
-    );
+    String[] jdkMap = {
+        "jdk=value"
+    };
+    String[] serverMap = {
+        "jdk#server=value",
+        "_#_=value"
+    };
     new JdkServerLookup(jdkMap, serverMap);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testConstructorNoServerDefaultPresent() {
-    Map<String, String> jdkMap = ImmutableMap.of(
-        "jdk", "value",
-        "_", "value"
-    );
-    Map<String, String> serverMap = ImmutableMap.of(
-        "jdk#server", "value"
-    );
+    String[] jdkMap = {
+        "jdk=value",
+        "_=value"};
+    String[] serverMap = {
+        "jdk#server=value"
+    };
     new JdkServerLookup(jdkMap, serverMap);
   }
 }

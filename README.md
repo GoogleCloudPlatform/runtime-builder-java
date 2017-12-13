@@ -35,12 +35,7 @@ LOCAL_APPLICATION_DIR=/path/to/my/app
 
 # Generate docker resources
 # See java.yaml for the fully specified jdk-runtimes-map server-runtimes-map args
-docker run -v $LOCAL_APPLICATION_DIR:/workspace -w /workspace runtime-builder \
-    --jdk-runtimes-map='*=gcr.io/google-appengine/openjdk:8' \
-    --server-runtimes-map='*|*=gcr.io/google-appengine/jetty:9' \
-    --compat-docker-image='gcr.io/google-appengine/jetty9-compat' \
-    --maven-docker-image='gcr.io/cloud-builders/mvn:3.5.0-jdk-8' \
-    --gradle-docker-image='gcr.io/cloud-builders/gradle:4.0-jdk-8'
+docker run -v $LOCAL_APPLICATION_DIR:/workspace -w /workspace runtime-builder 
 
 # package my application into a docker container
 docker build -t my-app-container $LOCAL_APPLICATION_DIR
@@ -76,6 +71,38 @@ runtime_config:
   build_script: "mvn clean install -Pcloud-build-profile"
   jetty_quickstart: true
 ```
+### Images
+
+The `--jdk-runtimes-map` and `--server-runtimes-map` settings are optional in both
+[java.yaml](java.yaml) when using the Cloud Container Builder as well as when building locally.
+These are the default mappings and will be available unless individually overridden:
+
+| JDK Runtime Mapping | Default |
+|-----------------|-------------|
+|`*`| `gcr.io/google-appengine/openjdk:8`|
+|`openjdk8`|`gcr.io/google-appengine/openjdk:8`|
+|`openjdk9`|`gcr.io/google-appengine/openjdk:9`|
+
+| Server Runtime Mapping | Default |
+|-----------------|-------------|
+|`*`&#124;`*`|`gcr.io/google-appengine/jetty:9`|
+|`openjdk8`&#124;`*`|`gcr.io/google-appengine/jetty:9`|
+|`openjdk8`&#124;`jetty9`|`gcr.io/google-appengine/jetty:9`|
+|`openjdk8`&#124;`jetty`|`gcr.io/google-appengine/jetty:9`|
+|`openjdk8`&#124;`tomcat8`|`gcr.io/google-appengine/tomcat:8`|
+|`openjdk8`&#124;`tomcat`|`gcr.io/google-appengine/tomcat:8`|
+|`*`&#124;`jetty9`|`gcr.io/google-appengine/jetty:9`|
+|`*`&#124;`jetty`|`gcr.io/google-appengine/jetty:latest`|
+|`*`&#124;`tomcat8`|`gcr.io/google-appengine/tomcat:8`|
+|`*`&#124;`tomcat`|`gcr.io/google-appengine/tomcat:latest`|
+
+These settings are also optional:
+
+| Command Line Settings | Default |
+|-----|-----|
+|`--compat-runtime-image`|`gcr.io/google-appengine/jetty9-compat:latest`|
+|`--maven-docker-image`|`gcr.io/cloud-builders/java/mvn:3.5.0-jdk-8`|
+|`--gradle-docker-image`|`gcr.io/cloud-builders/java/gradle:4.0-jdk-8`|
 
 ## Development guide
 * See [DEVELOPING.md](DEVELOPING.md) for instructions on how to build and test this pipeline.

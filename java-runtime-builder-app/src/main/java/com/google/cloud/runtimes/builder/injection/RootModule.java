@@ -30,19 +30,16 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Module class for configuring Guice bindings.
  */
 public class RootModule extends AbstractModule {
 
-  private final String[] jdkMappings;
-  private final String[] serverMappings;
+  private final JdkServerLookup jdkServerLookup;
   private final String compatImage;
   private final String mavenDockerImage;
   private final String gradleDockerImage;
@@ -55,26 +52,23 @@ public class RootModule extends AbstractModule {
   /**
    * Constructs a new {@link RootModule} for Guice.
    *
-   * @param jdkMappings mappings between supported jdk versions and docker images
-   * @param serverMappings mappings between supported jdk versions, server types, and docker images
+   * @param jdkServerLookup the object from which to lookup image names
    * @param compatImage compat runtime docker image
    * @param mavenDockerImage maven builder docker image
    * @param gradleDockerImage gradle builder docker image
    * @param disableSourceBuild disables the building of images from source
    * @param commandLineOverrideSettings a map of settings from commandline to override
    */
-  public RootModule(String[] jdkMappings, String[] serverMappings, String compatImage,
+  public RootModule(JdkServerLookup jdkServerLookup, String compatImage,
       String mavenDockerImage, String gradleDockerImage, boolean disableSourceBuild,
       Map<String, Object> commandLineOverrideSettings) {
-    Preconditions.checkNotNull(jdkMappings);
-    Preconditions.checkNotNull(serverMappings);
+    Preconditions.checkNotNull(jdkServerLookup);
     Preconditions.checkNotNull(compatImage);
     Preconditions.checkNotNull(mavenDockerImage);
     Preconditions.checkNotNull(gradleDockerImage);
     Preconditions.checkNotNull(commandLineOverrideSettings);
 
-    this.jdkMappings = jdkMappings;
-    this.serverMappings = serverMappings;
+    this.jdkServerLookup = jdkServerLookup;
     this.compatImage = compatImage;
     this.mavenDockerImage = mavenDockerImage;
     this.gradleDockerImage = gradleDockerImage;
@@ -86,17 +80,15 @@ public class RootModule extends AbstractModule {
   /**
    * Constructs a new {@link RootModule} for Guice.
    *
-   * @param jdkMappings mappings between supported jdk versions and docker images
-   * @param serverMappings mappings between supported jdk versions, server types, and docker images
+   * @param jdkServerLookup the object from which to lookup image names
    * @param compatImage compat runtime docker image
    * @param mavenDockerImage maven builder docker image
    * @param gradleDockerImage gradle builder docker image
    * @param disableSourceBuild disables the building of images from source
    */
-  public RootModule(String[] jdkMappings, String[] serverMappings, String compatImage,
+  public RootModule(JdkServerLookup jdkServerLookup, String compatImage,
       String mavenDockerImage, String gradleDockerImage, boolean disableSourceBuild) {
-    this(jdkMappings, serverMappings, compatImage, mavenDockerImage, gradleDockerImage,
-        disableSourceBuild,
+    this(jdkServerLookup,compatImage,mavenDockerImage,gradleDockerImage,disableSourceBuild,
         Collections.emptyMap());
   }
 
@@ -136,25 +128,6 @@ public class RootModule extends AbstractModule {
 
   @Provides
   protected JdkServerLookup provideJdkServerLookup() throws IOException {
-    return new JdkServerLookup(buildMap(jdkMappings), buildMap(serverMappings));
+    return this.jdkServerLookup;
   }
-
-  /*
-   * Converts an array of mapping strings, with keys and values separated by an '=' character, into
-   * a Map<String,String>.
-   */
-  private static Map<String, String> buildMap(String[] mappings) {
-    return Arrays.stream(mappings)
-        .map(s -> {
-          String[] split = s.split("=");
-          // make sure mappings are formatted correctly
-          if (split.length != 2)  {
-            throw new IllegalArgumentException("Invalid mapping: '" + s + "'. "
-                + "All jdk/server mappings must be formatted as: KEY=VAL");
-          }
-          return split;
-        })
-        .collect(Collectors.toMap(a -> a[0], a -> a[1]));
-  }
-
 }

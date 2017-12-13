@@ -19,8 +19,6 @@ package com.google.cloud.runtimes.builder.config;
 import com.google.cloud.runtimes.builder.config.domain.AppYaml;
 import com.google.cloud.runtimes.builder.config.domain.BetaSettings;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
-import com.google.cloud.runtimes.builder.injection.CommandLineOverrideSettings;
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -29,8 +27,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * YamlParser implementation that handles parsing of files in the {@link AppYaml} format.
@@ -39,26 +35,13 @@ public class AppYamlParser implements YamlParser<AppYaml> {
 
   private final ObjectMapper objectMapper;
 
-  private final Map<String, Object> overrideSettings;
-
   /**
    * Constructs a new {@link AppYamlParser}.
-   * @param overrideSettings A map of the settings from the commandline.
    */
   @Inject
-  public AppYamlParser(@CommandLineOverrideSettings Map<String, Object> overrideSettings) {
-    Preconditions.checkNotNull(overrideSettings);
+  public AppYamlParser() {
     this.objectMapper = new ObjectMapper(new YAMLFactory());
     objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
-    this.overrideSettings = overrideSettings;
-  }
-
-  /**
-   * Constructs an instance without any overriding settings to the yaml file being parsed.
-   */
-  public AppYamlParser() {
-    this(Collections.emptyMap());
   }
 
   @Override
@@ -70,7 +53,11 @@ public class AppYamlParser implements YamlParser<AppYaml> {
     if (appYaml.getRuntimeConfig() == null) {
       appYaml.setRuntimeConfig(new RuntimeConfig());
     }
-    appYaml.applyOverrideSettings(this.overrideSettings);
     return appYaml;
+  }
+
+  @Override
+  public AppYaml getEmpty() {
+    return new AppYaml();
   }
 }

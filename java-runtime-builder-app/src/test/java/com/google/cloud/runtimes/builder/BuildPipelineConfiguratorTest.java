@@ -20,6 +20,7 @@ import static junit.framework.TestCase.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -43,10 +44,12 @@ import com.google.cloud.runtimes.builder.config.domain.BuildContext;
 import com.google.cloud.runtimes.builder.config.domain.BuildContextFactory;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.common.base.Objects;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.junit.Before;
@@ -54,6 +57,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 
 /**
  * Unit tests for {@link BuildPipelineConfigurator}
@@ -69,15 +73,17 @@ public class BuildPipelineConfiguratorTest {
   @Mock private SourceBuildRuntimeImageBuildStep sourceBuildRuntimeImageBuildStep;
   @Mock private JettyOptionsBuildStep jettyOptionsBuildStep;
   @Mock private AppYamlFinder appYamlFinder;
+  @Mock
+  private YamlParser<AppYaml> appYamlYamlParser;
+  @Spy
+  private AppYaml appYaml = new AppYaml();
 
-  // use the actual yaml parser and yaml finders instead of mocks
-  private YamlParser<AppYaml> appYamlYamlParser = new AppYamlParser();
   private BuildPipelineConfigurator buildPipelineConfigurator;
 
   private boolean disableSourceBuild;
 
   @Before
-  public void setup() throws BuildStepException {
+  public void setUp() throws BuildStepException, IOException {
     MockitoAnnotations.initMocks(this);
 
     when(buildStepFactory.createMavenBuildStep()).thenReturn(mavenBuildStep);
@@ -90,6 +96,9 @@ public class BuildPipelineConfiguratorTest {
         .thenReturn(sourceBuildRuntimeImageBuildStep);
     when(buildStepFactory.createJettyOptionsBuildStep())
         .thenReturn(jettyOptionsBuildStep);
+
+    when(appYamlYamlParser.parse(any())).thenReturn(appYaml);
+    when(appYamlYamlParser.getEmpty()).thenReturn(appYaml);
 
     disableSourceBuild = false;
 
@@ -104,16 +113,17 @@ public class BuildPipelineConfiguratorTest {
 
   private BuildPipelineConfigurator initConfigurator() {
     return new BuildPipelineConfigurator(appYamlYamlParser, appYamlFinder, buildStepFactory,
-        buildContextFactory);
+        buildContextFactory, Collections.emptyMap());
   }
 
   private void assertBuildStepsCalledWithRuntimeConfig(RuntimeConfig expected,
-      BuildStep... buildSteps) throws BuildStepException {
+      BuildStep... buildSteps) throws BuildStepException, IOException {
     for (BuildStep buildStep : buildSteps) {
       ArgumentCaptor<BuildContext> captor = ArgumentCaptor.forClass(BuildContext.class);
       verify(buildStep, times(1)).run(captor.capture());
       assertRuntimeConfigEquals(expected, captor.getValue().getRuntimeConfig());
     }
+    verify(appYaml, times(1)).applyOverrideSettings(any());
   }
 
   private void assertRuntimeConfigEquals(RuntimeConfig expected, RuntimeConfig actual) {
@@ -193,18 +203,26 @@ public class BuildPipelineConfiguratorTest {
   }
 
   @Test
-  public void testMavenBuildWithCustomScript() throws BuildStepException, IOException {
+  public void testMavenBuildWithCustomScriptAndOverrides() throws BuildStepException, IOException {
     String customScript = "custom mvn goals";
     Path workspace = new TestWorkspaceBuilder()
         .file("pom.xml").build()
         .file("app.yaml").withContents(
             "runtime_config:\n"
+                + "  jdk: openjdk8\n"
             + "  build_script: " + customScript).build()
         .build();
 
+    Path yamlPath = workspace.resolve("app.yaml");
     when(appYamlFinder.findAppYamlFile(workspace))
-        .thenReturn(Optional.of(workspace.resolve("app.yaml")));
+        .thenReturn(Optional.of(yamlPath));
 
+    // real parsing is needed for this test
+    appYaml = spy(new AppYamlParser().parse(yamlPath));
+    when(appYamlYamlParser.parse(yamlPath)).thenReturn(appYaml);
+    buildPipelineConfigurator = new BuildPipelineConfigurator(appYamlYamlParser, appYamlFinder,
+        buildStepFactory,
+        buildContextFactory, ImmutableMap.of("jdk", "fakeJdk"));
     buildPipelineConfigurator.generateDockerResources(workspace);
 
     verify(buildStepFactory, times(1)).createScriptExecutionBuildStep(eq(customScript));
@@ -214,6 +232,7 @@ public class BuildPipelineConfiguratorTest {
 
     RuntimeConfig expectedConfig = new RuntimeConfig();
     expectedConfig.setBuildScript(customScript);
+    expectedConfig.setJdk("fakeJdk");
     assertBuildStepsCalledWithRuntimeConfig(expectedConfig, scriptExecutionBuildStep,
         sourceBuildRuntimeImageBuildStep, jettyOptionsBuildStep);
   }

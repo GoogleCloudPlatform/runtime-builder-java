@@ -21,7 +21,8 @@ import org.mockito.MockitoAnnotations;
  */
 public class SourceBuildRuntimeImageBuildStepTest {
 
-  @Mock JdkServerLookup jdkServerLookup;
+  @Mock
+  JdkServerLookup jdkServerLookup;
 
   private SourceBuildRuntimeImageBuildStep buildStep;
   private RuntimeConfig runtimeConfig;

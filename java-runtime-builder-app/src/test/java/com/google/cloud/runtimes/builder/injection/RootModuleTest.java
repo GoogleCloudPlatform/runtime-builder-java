@@ -1,6 +1,7 @@
 package com.google.cloud.runtimes.builder.injection;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,8 +15,8 @@ import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.DefaultParser;
@@ -67,7 +68,7 @@ public class RootModuleTest {
     };
 
     JdkServerLookup jdkServerLookup
-        = new RootModule(Application.mergeSettingsWithDefaults(serverMappings, jdkMappings),
+        = new RootModule(Application.mergeSettingsWithDefaults(jdkMappings, serverMappings),
         COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
         DISABLE_BUILD)
         .provideJdkServerLookup();
@@ -84,7 +85,7 @@ public class RootModuleTest {
     String[] serverMappings = {"*|*=gcr.io/server:latest"};
     // test that the bindings can be created without errors
     Guice.createInjector(
-        new RootModule(Application.mergeSettingsWithDefaults(serverMappings, jdkMappings),
+        new RootModule(Application.mergeSettingsWithDefaults(jdkMappings, serverMappings),
             COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
             DISABLE_BUILD))
         .getInstance(BuildPipelineConfigurator.class);
@@ -116,7 +117,7 @@ public class RootModuleTest {
     String[] serverMappings = {"*|*=gcr.io/server:latest",
         "  openjdk8   | tomcat  = gcr.io/google-appengine/tomcat:8-many-spaces"};
     JdkServerLookup jdkServerLookup
-        = new RootModule(Application.mergeSettingsWithDefaults(serverMappings, jdkMappings),
+        = new RootModule(Application.mergeSettingsWithDefaults(jdkMappings, serverMappings),
         COMPAT_IMAGE, MVN_IMAGE, GRADLE_IMAGE,
         DISABLE_BUILD, Collections.emptyMap())
         .provideJdkServerLookup();
@@ -156,25 +157,8 @@ public class RootModuleTest {
     String[] jdkMappings = cmd.getOptionValues("j");
     String[] serverMappings = cmd.getOptionValues("s");
 
-    Map<String, String> defaultJdk = new HashMap<String, String>();
-    defaultJdk.putAll(Application.DEFAULT_JDK_MAPPINGS);
-
-    for (String jdk : jdkMappings) {
-      String[] parts = jdk.split("=");
-      assertEquals(parts[1], defaultJdk.get(parts[0]));
-      defaultJdk.remove(parts[0]);
-    }
-    assertEquals(0, defaultJdk.size());
-
-    Map<String, String> defaultServer = new HashMap<String, String>();
-    defaultServer.putAll(Application.DEFAULT_SERVER_MAPPINGS);
-
-    for (String server : serverMappings) {
-      String[] parts = server.split("=");
-      assertEquals(parts[1], defaultServer.get(parts[0]));
-      defaultServer.remove(parts[0]);
-    }
-    assertEquals(0, defaultServer.size());
+    assertTrue(Arrays.equals(jdkMappings, Application.DEFAULT_JDK_MAPPINGS));
+    assertTrue(Arrays.equals(serverMappings, Application.DEFAULT_SERVER_MAPPINGS));
 
     String compatImage = cmd.getOptionValue("c");
     String mavenImage = cmd.getOptionValue("m");

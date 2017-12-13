@@ -19,14 +19,11 @@ package com.google.cloud.runtimes.builder;
 import com.google.cloud.runtimes.builder.buildsteps.base.BuildStepException;
 import com.google.cloud.runtimes.builder.config.domain.BetaSettings;
 import com.google.cloud.runtimes.builder.config.domain.JdkServerLookup;
-import com.google.cloud.runtimes.builder.config.domain.JdkServerLookupImpl;
 import com.google.cloud.runtimes.builder.config.domain.OverrideableSetting;
 import com.google.cloud.runtimes.builder.config.domain.RuntimeConfig;
 import com.google.cloud.runtimes.builder.injection.RootModule;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Sets;
+import com.google.common.collect.ObjectArrays;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -45,7 +42,6 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -53,23 +49,23 @@ import java.util.function.Consumer;
  */
 public class Application {
 
-  public static final ImmutableMap<String, String> DEFAULT_JDK_MAPPINGS = ImmutableMap.of(
-      "*", "gcr.io/google-appengine/openjdk:8",
-      "openjdk8", "gcr.io/google-appengine/openjdk:8",
-      "openjdk9", "gcr.io/google-appengine/openjdk:9"
-  );
-  public static final ImmutableMap<String, String> DEFAULT_SERVER_MAPPINGS =
-      new ImmutableMap.Builder<String, String>()
-          .put("*|*", "gcr.io/google-appengine/jetty:9")
-          .put("openjdk8|*", "gcr.io/google-appengine/jetty:9")
-          .put("openjdk8|jetty9", "gcr.io/google-appengine/jetty:9")
-          .put("openjdk8|jetty", "gcr.io/google-appengine/jetty:9")
-          .put("openjdk8|tomcat8", "gcr.io/google-appengine/tomcat:8")
-          .put("openjdk8|tomcat", "gcr.io/google-appengine/tomcat:8")
-          .put("*|jetty9", "gcr.io/google-appengine/jetty:9")
-          .put("*|jetty", "gcr.io/google-appengine/jetty:latest")
-          .put("*|tomcat8", "gcr.io/google-appengine/tomcat:8")
-          .put("*|tomcat", "gcr.io/google-appengine/tomcat:latest").build();
+  public static final String[] DEFAULT_JDK_MAPPINGS = {
+      "*=gcr.io/google-appengine/openjdk:8",
+      "openjdk8=gcr.io/google-appengine/openjdk:8",
+      "openjdk9=gcr.io/google-appengine/openjdk:9"
+  };
+  public static final String[] DEFAULT_SERVER_MAPPINGS = {
+      "*|*=gcr.io/google-appengine/jetty:9",
+      "openjdk8|*=gcr.io/google-appengine/jetty:9",
+      "openjdk8|jetty9=gcr.io/google-appengine/jetty:9",
+      "openjdk8|jetty=gcr.io/google-appengine/jetty:9",
+      "openjdk8|tomcat8=gcr.io/google-appengine/tomcat:8",
+      "openjdk8|tomcat=gcr.io/google-appengine/tomcat:8",
+      "*|jetty9=gcr.io/google-appengine/jetty:9",
+      "*|jetty=gcr.io/google-appengine/jetty:latest",
+      "*|tomcat8=gcr.io/google-appengine/tomcat:8",
+      "*|tomcat=gcr.io/google-appengine/tomcat:latest"
+  };
   public static final String DEFAULT_COMPAT_RUNTIME_IMAGE =
       "gcr.io/google-appengine/jetty9-compat:latest";
   public static final String DEFAULT_MAVEN_DOCKER_IMAGE =
@@ -140,7 +136,7 @@ public class Application {
     boolean disableSourceBuild = cmd.hasOption("n");
 
     Injector injector = Guice.createInjector(
-        new RootModule(mergeSettingsWithDefaults(serverMappings, jdkMappings),
+        new RootModule(mergeSettingsWithDefaults(jdkMappings, serverMappings),
             compatImage == null ? DEFAULT_COMPAT_RUNTIME_IMAGE : compatImage,
             mavenImage == null ? DEFAULT_MAVEN_DOCKER_IMAGE : mavenImage,
             gradleImage == null ? DEFAULT_GRADLE_DOCKER_IMAGE : gradleImage,
@@ -245,66 +241,23 @@ public class Application {
   }
 
   /**
-   * Merges the given raw commandline settings with default settings for server and jdk images.
+   * Merges the given raw commandline settings with default settings for jdk and server images.
    *
-   * @param rawServerSettings the raw commandline server mapping settings.
    * @param rawJdkSettings the raw commandling jdk mapping settings.
+   * @param rawServerSettings the raw commandline server mapping settings.
    * @return the merged settings.
    */
   @VisibleForTesting
-  public static JdkServerLookup mergeSettingsWithDefaults(String[] rawServerSettings,
-      String[] rawJdkSettings) {
-
-    JdkServerLookup settings = new JdkServerLookupImpl(rawJdkSettings, rawServerSettings);
-
-    JdkServerLookup defaultSettings = new JdkServerLookupImpl(DEFAULT_JDK_MAPPINGS,
-        DEFAULT_SERVER_MAPPINGS);
-
-    return new JdkServerLookup(true) {
-
-      @Override
-      public String lookupJdkImage(String jdk) {
-        String desiredImage = settings.lookupJdkImage(jdk);
-        String image = desiredImage == null ? defaultSettings.lookupJdkImage(jdk) : desiredImage;
-
-        if (image == null) {
-          throw new IllegalArgumentException(
-              String.format("The provided runtime_config.jdk option '%s'"
-                      + " is invalid for JAR deployments. Please use a supported jdk option: %s",
-                  Strings.nullToEmpty(jdk), getAvailableJdks()));
-        }
-        return image;
-      }
-
-      @Override
-      public Set<String> getAvailableJdks() {
-        return Sets.union(settings.getAvailableJdks(), defaultSettings.getAvailableJdks());
-      }
-
-      @Override
-      public String lookupServerImage(String jdk, String serverType) {
-        String desiredImage = settings.lookupServerImage(jdk, serverType);
-        String image = desiredImage == null ? defaultSettings.lookupServerImage(jdk, serverType)
-            : desiredImage;
-
-        if (image == null) {
-          throw new IllegalArgumentException(String.format("The provided runtime_config.jdk and "
-                  + "runtime_config.server configuration (runtime_config.jdk: '%s', "
-                  + "runtime_config.server: '%s') is invalid for WAR "
-                  + "deployments. Please use a supported "
-                  + "jdk/server combination: %s",
-              Strings.nullToEmpty(jdk), Strings.nullToEmpty(serverType),
-              getAvailableJdkServerPairs()));
-        }
-        return image;
-      }
-
-      @Override
-      public Set<String> getAvailableJdkServerPairs() {
-        return Sets.union(settings.getAvailableJdkServerPairs(),
-            defaultSettings.getAvailableJdkServerPairs());
-      }
-    };
+  public static JdkServerLookup mergeSettingsWithDefaults(String[] rawJdkSettings,
+      String[] rawServerSettings) {
+    if (rawJdkSettings == null) {
+      rawJdkSettings = new String[0];
+    }
+    if (rawServerSettings == null) {
+      rawServerSettings = new String[0];
+    }
+    return new JdkServerLookup(
+        ObjectArrays.concat(rawJdkSettings, DEFAULT_JDK_MAPPINGS, String.class),
+        ObjectArrays.concat(rawServerSettings, DEFAULT_SERVER_MAPPINGS, String.class));
   }
-
 }

@@ -250,14 +250,10 @@ public class Application {
   @VisibleForTesting
   public static JdkServerLookup mergeSettingsWithDefaults(String[] rawJdkSettings,
       String[] rawServerSettings) {
-    if (rawJdkSettings == null) {
-      rawJdkSettings = new String[0];
-    }
-    if (rawServerSettings == null) {
-      rawServerSettings = new String[0];
-    }
+    String[] jdk = rawJdkSettings == null ? new String[0] : rawJdkSettings;
+    String[] server = rawServerSettings == null ? new String[0] : rawServerSettings;
     return new JdkServerLookup(
-        ObjectArrays.concat(rawJdkSettings, DEFAULT_JDK_MAPPINGS, String.class),
-        ObjectArrays.concat(rawServerSettings, DEFAULT_SERVER_MAPPINGS, String.class));
+        ObjectArrays.concat(jdk, DEFAULT_JDK_MAPPINGS, String.class),
+        ObjectArrays.concat(server, DEFAULT_SERVER_MAPPINGS, String.class));
   }
 }

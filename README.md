@@ -101,8 +101,8 @@ These settings are also optional:
 | Command Line Settings | Default |
 |-----|-----|
 |`--compat-runtime-image`|`gcr.io/google-appengine/jetty9-compat:latest`|
-|`--maven-docker-image`|`gcr.io/cloud-builders/java/mvn:3.5.0-jdk-8`|
-|`--gradle-docker-image`|`gcr.io/cloud-builders/java/gradle:4.0-jdk-8`|
+|`--maven-docker-image`|`gcr.io/cloud-builders/mvn:3.5.0-jdk-8`|
+|`--gradle-docker-image`|`gcr.io/cloud-builders/gradle:4.0-jdk-8`|
 
 ## Development guide
 * See [DEVELOPING.md](DEVELOPING.md) for instructions on how to build and test this pipeline.

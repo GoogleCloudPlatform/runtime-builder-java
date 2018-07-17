@@ -18,7 +18,7 @@ provided [java.yaml](java.yaml) file:
 OUTPUT_IMAGE=gcr.io/my-gcp-project/my-application-container
 
 # initiate the cloud container build
-gcloud container builds submit /path/to/my/java/app \ 
+gcloud builds submit /path/to/my/java/app \ 
     --config java.yaml \
     --substitutions _OUTPUT_IMAGE=$OUTPUT_IMAGE
 ```

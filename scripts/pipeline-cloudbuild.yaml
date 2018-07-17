@@ -2,6 +2,10 @@
 # https://cloud.google.com/container-builder/docs/overview
 
 steps:
+# Pull the latest version of gcr.io/cloud-builders/mvn
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['pull', 'gcr.io/cloud-builders/mvn:3.5.0-jdk-8']
+
 # Build the maven project, omitting the docker build step
 - name: 'gcr.io/cloud-builders/mvn:3.5.0-jdk-8'
   args: ['-B', '-P-local-docker-build', 'clean', 'install']

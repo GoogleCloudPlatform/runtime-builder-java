@@ -36,7 +36,7 @@ IMAGE="${DOCKER_NAMESPACE}/${RUNTIME_NAME}:${DOCKER_TAG}"
 echo "IMAGE: $IMAGE"
 
 # build and test the runtime image
-gcloud container builds submit \
+gcloud builds submit \
   --config=$dir/pipeline-cloudbuild.yaml \
   --substitutions="_IMAGE=$IMAGE" \
   $projectRoot

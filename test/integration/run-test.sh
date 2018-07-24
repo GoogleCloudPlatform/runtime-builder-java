@@ -88,7 +88,7 @@ echo 'Invoking container test build with configuration:'
 cat $PIPELINE_CONFIG
 
 set -x
-gcloud container builds submit $TEST_STAGING_DIR \
+gcloud builds submit $TEST_STAGING_DIR \
   --config $PIPELINE_CONFIG \
   --substitutions "_OUTPUT_IMAGE=output-image,_STRUCTURE_TEST_SPEC=structure.yaml"
 

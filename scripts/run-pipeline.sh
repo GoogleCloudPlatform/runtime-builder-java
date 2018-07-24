@@ -47,7 +47,7 @@ ESCAPED_BUILDER_IMAGE=$(echo $BUILDER_IMAGE | sed -e 's/[\/&]/\\&/g')
 PIPELINE_CONFIG=$PROJECT_ROOT/target/java_temlated.yaml
 sed -e "s/gcr.io\/gcp-runtimes\/java\/runtime-builder\:latest/$ESCAPED_BUILDER_IMAGE/" $PROJECT_ROOT/java.yaml > $PIPELINE_CONFIG
 
-gcloud container builds submit $SOURCE_DIR \
+gcloud builds submit $SOURCE_DIR \
   --config $PIPELINE_CONFIG \
   --substitutions "_OUTPUT_IMAGE=$OUTPUT_IMAGE"
 

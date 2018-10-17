@@ -37,8 +37,6 @@ steps:
   # FIXME: https://github.com/GoogleCloudPlatform/runtime-builder-java/milestone/2
   - '--no-source-build'
 
-# execute the docker build to produce the resulting image
-- name: 'gcr.io/cloud-builders/docker:latest'
-  args: ['build', '--tag=$_OUTPUT_IMAGE', '.']
-
-images: ['$_OUTPUT_IMAGE']
+# Use Kaniko to build and push the image described by Dockerfile.
+- name: 'gcr.io/kaniko-project/executor:v0.4.0'
+  args: ['--destination=$_OUTPUT_IMAGE']

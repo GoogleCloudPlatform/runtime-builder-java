@@ -2,6 +2,8 @@ FROM gcr.io/cloud-builders/mvn:3.5.0-jdk-8
 
 ARG GRADLE_VERSION=3.4
 
+RUN apt-get update && apt-get upgrade -yq && rm /var/lib/apt/lists/*_*
+
 # download and install gradle
 ADD https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip gradle-$GRADLE_VERSION-bin.zip
 RUN unzip -qq gradle-$GRADLE_VERSION-bin.zip \

@@ -19,6 +19,7 @@ services:
 
 jdk:
   - oraclejdk8
+  - oraclejdk11
 
 script: mvn --batch-mode clean package
 

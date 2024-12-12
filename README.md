@@ -1,9 +1,5 @@
 # Java Runtime Builder
 
-![Build Status](https://storage.googleapis.com/java-runtimes-kokoro-build-badges/runtime-builder-java-master.png)
-[![codecov](https://codecov.io/gh/GoogleCloudPlatform/runtime-builder-java/branch/master/graph/badge.svg)](https://codecov.io/gh/GoogleCloudPlatform/runtime-builder-java)
-[![unstable](http://badges.github.io/stability-badges/dist/unstable.svg)](http://github.com/badges/stability-badges)
-
 A [Google Cloud Container Builder](https://cloud.google.com/container-builder/docs/) pipeline for 
 packaging Java applications into supported Google Cloud Runtime containers. It consists of a series
 of docker containers, used as build steps, and a build pipeline configuration file.
